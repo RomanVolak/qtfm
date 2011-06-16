@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=qtFM
+GenericName=Qt File Manager
+Type=Application
+Comment=A lightweight file manager based on pure Qt
+Icon=qtfm
+Exec=qtfm
+Terminal=false
+MimeType=application/x-directory
+Categories=Qt;Utility;FileManager

@@ -28,9 +28,6 @@
 
 class icondlg : public QDialog
 {
-
-Q_OBJECT
-
 public:
     icondlg();
     QString result;

@@ -25,7 +25,7 @@
 //---------------------------------------------------------------------------
 icondlg::icondlg()
 {
-    setWindowTitle(tr("Select icon"));
+    setWindowTitle("Select icon");
 
     iconList = new QListWidget;
     iconList->setIconSize(QSize(24,24));

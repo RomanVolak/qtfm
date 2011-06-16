@@ -37,10 +37,10 @@ customActionsDialog::customActionsDialog(MainWindow *parent)
     connect(treeWidget,SIGNAL(itemDoubleClicked(QTreeWidgetItem *,int)),this,SLOT(getIcon(QTreeWidgetItem *,int)));
 
     QTreeWidgetItem *header = treeWidget->headerItem();
-    header->setText(0,tr("Filetype"));
-    header->setText(1,tr("Text"));
-    header->setText(2,tr("Icon"));
-    header->setText(3,tr("Command"));
+    header->setText(0,"Filetype");
+    header->setText(1,"Text");
+    header->setText(2,"Icon");
+    header->setText(3,"Command");
 
     treeWidget->setColumnWidth(1,160);
     treeWidget->setColumnWidth(2,160);
@@ -78,7 +78,7 @@ customActionsDialog::customActionsDialog(MainWindow *parent)
 
     resize(600,360);
 
-    setWindowTitle(tr("Custom Actions"));
+    setWindowTitle("Custom Actions");
 }
 
 //---------------------------------------------------------------------------
@@ -125,14 +125,14 @@ void customActionsDialog::delItem()
 //---------------------------------------------------------------------------
 void customActionsDialog::infoItem()
 {
-    QMessageBox::question(this,tr("Usage"),tr("Use 'folder' to match all folders.<br>" \
+    QMessageBox::question(this,"Usage","Use 'folder' to match all folders.<br>" \
                                "Use a folder name to match a specific folder.<br>" \
                                "Set text to 'Open' to override xdg default." \
                                "<p>%f - selected files<br>" \
                                "%F - selected files with full path<br>" \
                                "%n - current filename</p>" \
                                "<p>[] - tick checkbox to monitor output and errors.</p>" \
-                               "<p>See <a href='http://www.qtfm.org/home/readme'>readme</a> for more help.</p>"));
+                               "<p>See <a href=http://www.qtfm.org/home/readme>readme</a> for more help.</p>");
 }
 
 //---------------------------------------------------------------------------
@@ -164,9 +164,9 @@ void customActionsDialog::readItems()
 
     if(keys.count()==0)
     {
-	QTreeWidgetItem *item1 = new QTreeWidgetItem(treeWidget, QStringList() << "gz,bz2" << tr("Extract here") << "package-x-generic" << "tar xf %f",0);
-	QTreeWidgetItem *item2 = new QTreeWidgetItem(treeWidget, QStringList() << "folder" << tr("Term here") << "terminal" << "urxvt -cd %F",0);
-	QTreeWidgetItem *item3 = new QTreeWidgetItem(treeWidget, QStringList() << "*" << tr("Compress") << "filesave" << "tar czf %n.tar.gz %f",0);
+	QTreeWidgetItem *item1 = new QTreeWidgetItem(treeWidget, QStringList() << "gz,bz2" << "Extract here" << "package-x-generic" << "tar xf %f",0);
+	QTreeWidgetItem *item2 = new QTreeWidgetItem(treeWidget, QStringList() << "folder" << "Term here" << "terminal" << "urxvt -cd %F",0);
+	QTreeWidgetItem *item3 = new QTreeWidgetItem(treeWidget, QStringList() << "*" << "Compress" << "filesave" << "tar czf %n.tar.gz %f",0);
 	item1->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEditable|Qt::ItemIsEnabled|Qt::ItemIsUserCheckable);
 	item2->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEditable|Qt::ItemIsEnabled|Qt::ItemIsUserCheckable);
 	item3->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEditable|Qt::ItemIsEnabled|Qt::ItemIsUserCheckable);

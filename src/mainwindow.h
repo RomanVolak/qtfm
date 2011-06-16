@@ -43,7 +43,6 @@
 #include "progressdlg.h"
 #include "propertiesdlg.h"
 #include "icondlg.h"
-#include "tabbar.h"
 
 QT_BEGIN_NAMESPACE
 class QAction;
@@ -103,7 +102,6 @@ public slots:
     void editShortcuts();
     void folderPropertiesLauncher();
     void bookmarkClicked(QModelIndex);
-    void bookmarkPressed(QModelIndex);
     void contextMenuEvent(QContextMenuEvent *);
     void toggleLockLayout();
     void pasteLauncher(const QMimeData * data, QString newPath, QStringList cutList);
@@ -111,11 +109,6 @@ public slots:
     void progressFinished(bool,QStringList);
     void fileWatcherTriggered(QString);
     void listItemClicked(QModelIndex);
-
-    void listItemPressed(QModelIndex);
-    void tabChanged(int index);
-    void openTab();
-
     void itemHover(QModelIndex);
     void refresh();
     void clearCutItems();
@@ -149,8 +142,6 @@ private:
 
     QCompleter *customComplete;
 
-    tabBar *tabs;
-
     bool isDaemon;
     QLocalServer daemon;
 
@@ -165,7 +156,6 @@ private:
     QListView *list;
     QListView *bookmarksList;
     QComboBox *pathEdit;
-
     QString term;
     QFileInfo curIndex;
     QModelIndex backIndex;
@@ -230,8 +220,6 @@ private:
     QAction *zoomOutAct;
     QAction *addressAct;
     QAction *openFolderAct;
-    QAction *openTabAct;
-    QAction *closeTabAct;
 };
 
 //---------------------------------------------------------------------------------
@@ -260,5 +248,4 @@ public:
 QString formatSize(qint64);
 QString getDriveInfo(QString);
 QString getMimeType(QString);
-
 #endif

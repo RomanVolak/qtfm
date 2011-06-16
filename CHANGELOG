@@ -1,12 +1,3 @@
-5.0	10-June-2011
-- added tabs
-- modified address bar to not reset text while editing.
-- modified keyboard search delay.
-- fixed difference in folder sorting between tree and list views.
-- fixed issue with icon size in 'Edit filetype' dropdown.
-- fixed issue with startup path sent from firefox.
-- fixed issue with custom submenus not appearing on tree folders.
-
 4.9	8-April-2011
 - added daemon mode.
 - added custom action grouping in submenus. See README.

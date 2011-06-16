@@ -19,8 +19,6 @@
 *
 ****************************************************************************/
 
-#ifndef ACTIONS_CPP
-#define ACTIONS_CPP
 
 #include "mainwindow.h"
 
@@ -62,7 +60,7 @@ void MainWindow::createActionIcons()
 	actionIcons->append(QIcon::fromTheme("zoom-in"));
 	actionIcons->append(QIcon::fromTheme("zoom-out"));
         actionIcons->append(QIcon::fromTheme("window-close"));      //25
-
+qDebug() << "here";
         icons.open(QIODevice::WriteOnly);
         QDataStream out(&icons);
         out << *actionIcons;
@@ -87,14 +85,6 @@ void MainWindow::createActions()
     connect(newFileAct, SIGNAL(triggered()), this, SLOT(newFile()));
     newFileAct->setIcon(actionIcons->at(1));
     actionList->append(newFileAct);
-
-    openTabAct = new QAction(tr("Open tab"), this);
-    connect(openTabAct, SIGNAL(triggered()), this, SLOT(openTab()));
-    actionList->append(openTabAct);
-
-    closeTabAct = new QAction(tr("Close tab"), this);
-    connect(closeTabAct, SIGNAL(triggered()), tabs, SLOT(closeTab()));
-    actionList->append(closeTabAct);
 
     cutAct = new QAction(tr("Cut"), this);
     cutAct->setStatusTip(tr("Move the current file"));
@@ -307,8 +297,6 @@ void MainWindow::readShortcuts()
 
     if(shortcuts.count() == 0)
     {
-        shortcuts.insert(openTabAct->text(),"ctrl+t");
-        shortcuts.insert(closeTabAct->text(),"ctrl+w");
 	shortcuts.insert(cutAct->text(),"ctrl+x");
 	shortcuts.insert(copyAct->text(),"ctrl+c");
 	shortcuts.insert(pasteAct->text(),"ctrl+v");
@@ -318,7 +306,6 @@ void MainWindow::readShortcuts()
 	shortcuts.insert(hiddenAct->text(),"ctrl+h");
 	shortcuts.insert(deleteAct->text(),"del");
 	shortcuts.insert(terminalAct->text(),"f4");
-        shortcuts.insert(terminalAct->text(),"f4");
 	shortcuts.insert(exitAct->text(),"ctrl+q");
 	shortcuts.insert(refreshAct->text(),"f5");
 	shortcuts.insert(escapeAct->text(),"esc");
@@ -409,7 +396,7 @@ void MainWindow::editShortcuts()
     }
 
     if(duplicates.count())
-        QMessageBox::information(this,"Warning",QString(tr("Duplicate shortcuts detected:<p>%1")).arg(duplicates.join("<p>")));
+	QMessageBox::information(this,"Warning",QString("Duplicate shortcuts detected:<p>%1").arg(duplicates.join("<p>")));
 
     delete shortcutConfig;
 }
@@ -417,14 +404,14 @@ void MainWindow::editShortcuts()
 //---------------------------------------------------------------------------
 void MainWindow::createMenus()
 {
-    QMenu *fileMenu = new QMenu(tr("File"));
+    QMenu *fileMenu = new QMenu("File");
     fileMenu->addAction(newDirAct);
     fileMenu->addAction(newFileAct);
     fileMenu->addSeparator();
     fileMenu->addAction(closeAct);
     fileMenu->addAction(exitAct);
 
-    QMenu *editMenu = new QMenu(tr("Edit"));
+    QMenu *editMenu = new QMenu("Edit");
     editMenu->addAction(cutAct);
     editMenu->addAction(copyAct);
     editMenu->addAction(pasteAct);
@@ -438,12 +425,12 @@ void MainWindow::createMenus()
     editMenu->addSeparator();
     editMenu->addAction(deleteAct);
 
-    QMenu *viewMenu = new QMenu(tr("View"));
+    QMenu *viewMenu = new QMenu("View");
 
     QMenu * autoMenu = createPopupMenu();
     autoMenu->addSeparator();
     autoMenu->addAction(lockLayoutAct);
-    autoMenu->setTitle(tr("Layout"));
+    autoMenu->setTitle("Layout");
     viewMenu->addMenu(autoMenu);
 
     viewMenu->addSeparator();
@@ -468,7 +455,7 @@ void MainWindow::createMenus()
 //---------------------------------------------------------------------------
 void MainWindow::createToolBars()
 {
-    menuToolBar = addToolBar(tr("Menu"));
+    menuToolBar = addToolBar("Menu");
     menuToolBar->setObjectName("Menu");
     addToolBarBreak();
 
@@ -533,7 +520,7 @@ void MainWindow::zoomInAction()
         }
     }
 
-    status->showMessage(QString(tr("Zoom: %1")).arg(zoomLevel));
+    status->showMessage(QString("Zoom: %1").arg(zoomLevel));
 }
 
 //---------------------------------------------------------------------------
@@ -571,7 +558,7 @@ void MainWindow::zoomOutAction()
         }
     }
 
-    status->showMessage(QString(tr("Zoom: %1")).arg(zoomLevel));
+    status->showMessage(QString("Zoom: %1").arg(zoomLevel));
 }
 
 //---------------------------------------------------------------------------
@@ -579,6 +566,3 @@ void MainWindow::addressAction()
 {
     pathEdit->setFocus(Qt::TabFocusReason);
 }
-
-#endif
-

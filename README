@@ -15,17 +15,12 @@ Install
 
 If you install qtFM through your distro as a package then everything should be taken care of already.
 
-If you build qtFM from source you can simply run the binary from the build directory, or to install it
-run the following:
+If you build qtFM from source you can simply run the binary from the build directory, or to install it manually
+you should do the following (as root):
 
->sudo make install
-
-
-This will basically:
-
- - copy the qtfm binary to '/usr/bin'
- - copy 'qtfm.desktop' to '/usr/share/applications'
- - copy './images/qtfm.png' to '/usr/share/pixmaps'
+	- copy qtfm binary to '/usr/bin'
+	- copy 'qtfm.desktop' to '/usr/share/applications'
+	- copy './images/qtfm.png' to '/usr/share/pixmaps'
  
 
 
@@ -122,35 +117,8 @@ mp3,ogg		Open			audio-x-generic		xmms %f
 mp3,ogg		Enqueue			audio-x-generic		xmms -e %f
 folder		Term here		terminal		urxvt -cd %F
 Trash		Empty trash		dialog-warning		emptyTrash.sh
-/media		Unmount			drive-harddisk		sudo umount %f
+/media		Unmount			drive-harddisk		umount %f
 *		Trash			user-trash-full		mv -b %f ~/Trash
 *		Compress / gz		package-x-generic	tar czf %n.tar.gz %f
 *		Compress / bz2		filesave		tar cjf %n.tar.bz2 %f
 *		Compress / lrz		preferences-other	lrztar %f
-
-
-
-#####################
-Tip & Tricks
-#####################
-
-- If you 'Edit filetype' on a folder and set the handler to Qtfm you can then right-click->Open
-  on a folder to open in a new instance.
-
-- Middle-click folders or bookmarks to open in a new tab. Ctrl+middle-click to open in a new instance.
-
-- Middle-click tabs to close.
-
-- Ctrl+drag&drop will copy instead of move.
-
-- Right-click on the status bar will bring up the 'View' options.  Useful if you have hidden the main menu.
-
-
-
-
-
-
-
-
-
-

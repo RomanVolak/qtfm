@@ -34,15 +34,10 @@ MainWindow::MainWindow()
     startPath = QDir::currentPath();
     QStringList args = QApplication::arguments();
 
-    modelList = new myModel();
-    modelList->setReadOnly(false);
-    modelList->setResolveSymlinks(false);
-    //modelList->setRootPath("");
-
     if(args.count() > 1)
     {
         if(args.at(1) == "-d") isDaemon = 1;
-        else startPath = QUrl(args.at(1)).toLocalFile();
+        else startPath = args.at(1);
     }
 
     settings = new QSettings();
@@ -52,7 +47,9 @@ MainWindow::MainWindow()
     QSettings gtkFile(QDir::homePath() + "/" + ".gtkrc-2.0",QSettings::IniFormat,this);
 
     temp = gtkFile.value("gtk-icon-theme-name").toString().remove("\"");
+
     if(temp.isNull()) temp = QIcon::themeName();
+
     QIcon::setThemeName(temp);
 
     if(temp != settings->value("currentTheme").toString())
@@ -62,6 +59,11 @@ MainWindow::MainWindow()
         QFile::remove(QDir::homePath() + "/.config/qtfm/file.cache");
         QFile::remove(QDir::homePath() + "/.config/qtfm/thumb.cache");
     }
+
+    modelList = new myModel();
+    modelList->setReadOnly(false);
+    modelList->setResolveSymlinks(false);
+    //modelList->setRootPath("");
 
     dockTree = new QDockWidget("Tree",this,Qt::SubWindow);
     dockTree->setObjectName("treeDock");
@@ -77,12 +79,6 @@ MainWindow::MainWindow()
     bookmarksList->setMinimumHeight(24);	// Docks get the minimum size from their content widget
     dockBookmarks->setWidget(bookmarksList);
     addDockWidget(Qt::LeftDockWidgetArea, dockBookmarks);
-
-
-    QWidget *main = new QWidget;
-    QVBoxLayout *mainLayout = new QVBoxLayout(main);
-    mainLayout->setSpacing(0);
-    mainLayout->setContentsMargins(0,0,0,0);
 
     stackWidget = new QStackedWidget();
     QWidget *page = new QWidget();
@@ -101,20 +97,10 @@ MainWindow::MainWindow()
     hl1->addWidget(detailTree);
     stackWidget->addWidget(page2);
 
-    mainLayout->addWidget(stackWidget);
-
-    tabs = new tabBar(modelList->folderIcons);
-    mainLayout->addWidget(tabs);
-
-    tabs->setDrawBase(0);
-    tabs->setExpanding(0);
-    tabs->setShape(QTabBar::RoundedSouth);
-
-    setCentralWidget(main);
+    setCentralWidget(stackWidget);
 
     modelTree = new FileFilterProxyModel();
     modelTree->setSourceModel(modelList);
-    modelTree->setSortCaseSensitivity(Qt::CaseInsensitive);
 
     tree->setHeaderHidden(true);
     tree->setUniformRowHeights(true);
@@ -152,7 +138,6 @@ MainWindow::MainWindow()
     tree->setRootIndex(modelTree->mapFromSource(modelList->index("/")));
     treeSelectionModel = tree->selectionModel();
     connect(treeSelectionModel,SIGNAL(currentChanged(QModelIndex,QModelIndex)),this,SLOT(treeSelectionChanged(QModelIndex,QModelIndex)));
-
     tree->setCurrentIndex(modelTree->mapFromSource(modelList->index(startPath)));
     tree->scrollTo(tree->currentIndex());
 
@@ -240,8 +225,8 @@ void MainWindow::lateStart()
 
     if(settings->value("singleClick").toInt() == 1)
     {
-        connect(list,SIGNAL(clicked(QModelIndex)),this,SLOT(listItemClicked(QModelIndex)));
-        connect(detailTree,SIGNAL(clicked(QModelIndex)),this,SLOT(listItemClicked(QModelIndex)));
+	connect(list,SIGNAL(clicked(QModelIndex)),this,SLOT(listItemClicked(QModelIndex)));
+	connect(detailTree,SIGNAL(clicked(QModelIndex)),this,SLOT(listItemClicked(QModelIndex)));
     }
     if(settings->value("singleClick").toInt() == 2)
     {
@@ -263,15 +248,12 @@ void MainWindow::lateStart()
     statusName = new QLabel();
     statusSize = new QLabel();
     statusDate = new QLabel();
-
     status->addPermanentWidget(statusName);
     status->addPermanentWidget(statusSize);
     status->addPermanentWidget(statusDate);
 
     connect(bookmarksList,SIGNAL(activated(QModelIndex)),this,SLOT(bookmarkClicked(QModelIndex)));
     connect(bookmarksList,SIGNAL(clicked(QModelIndex)),this,SLOT(bookmarkClicked(QModelIndex)));
-    connect(bookmarksList,SIGNAL(pressed(QModelIndex)),this,SLOT(bookmarkPressed(QModelIndex)));
-
     connect(pathEdit,SIGNAL(activated(int)),this,SLOT(pathEditChanged(int)));
     connect(QApplication::clipboard(),SIGNAL(changed(QClipboard::Mode)),this,SLOT(clipboardChanged()));
     connect(detailTree,SIGNAL(activated(QModelIndex)),this,SLOT(listDoubleClicked(QModelIndex)));
@@ -282,13 +264,6 @@ void MainWindow::lateStart()
     connect(modelBookmarks,SIGNAL(bookmarkPaste(const QMimeData *, QString, QStringList)),this,SLOT(pasteLauncher(const QMimeData *, QString, QStringList)));
     connect(modelList,SIGNAL(dragDropPaste(const QMimeData *, QString, QStringList)),this,SLOT(pasteLauncher(const QMimeData *, QString, QStringList)));
 
-    connect(tabs,SIGNAL(currentChanged(int)),this,SLOT(tabChanged(int)));
-    connect(tabs,SIGNAL(dragDropTab(const QMimeData *, QString, QStringList)),this,SLOT(pasteLauncher(const QMimeData *, QString, QStringList)));
-    connect(list,SIGNAL(pressed(QModelIndex)),this,SLOT(listItemPressed(QModelIndex)));
-    connect(detailTree,SIGNAL(pressed(QModelIndex)),this,SLOT(listItemPressed(QModelIndex)));
-
-    qApp->setKeyboardInputInterval(1000);
-    
     tree->setMouseTracking(true);
     connect(tree,SIGNAL(entered(QModelIndex)),this,SLOT(itemHover(QModelIndex)));
 
@@ -310,10 +285,8 @@ void MainWindow::closeEvent(QCloseEvent *event)
         this->setVisible(0);
         startDaemon();
         tree->collapseAll();
-        tabs->setCurrentIndex(0);
         tree->setCurrentIndex(modelTree->mapFromSource(modelList->index(startPath)));
         tree->scrollTo(tree->currentIndex());
-
         event->ignore();
     }
     else
@@ -336,52 +309,46 @@ void MainWindow::treeSelectionChanged(QModelIndex current,QModelIndex previous)
     QFileInfo name = modelList->fileInfo(modelTree->mapToSource(current));
     if(!name.exists()) return;
 
-    if(tree->hasFocus() && QApplication::mouseButtons() == Qt::MidButton)
-    {
-        listItemPressed(modelList->index(name.filePath()));
-        tabs->setCurrentIndex(tabs->count() - 1);
-    }
+    modelList->setRootPath(name.filePath());
 
     curIndex = name.filePath();
-    setWindowTitle(curIndex.fileName() + " - qtFM v5.0.beta");
-
-    pathEdit->insertItem(0,curIndex.filePath());
+    setWindowTitle(curIndex.fileName() + " - qtFM v4.9");
+    pathEdit->insertItem(0,name.filePath());
     pathEdit->setCurrentIndex(0);
 
-    if(!bookmarksList->hasFocus()) bookmarksList->clearSelection();
-        
+    if(stackWidget->currentIndex() == 0)                //list view
+    {
+        list->setSelectionModel(unused);
+        listSelectionModel->clear();
+        list->setSelectionModel(listSelectionModel);
+    }
+
+    if(QApplication::focusWidget() != bookmarksList) bookmarksList->clearSelection();
+
     if(list->viewMode() == QListView::IconMode)
-        if(thumbsAct->isChecked()) modelList->loadThumbs(curIndex.filePath());
-    
-    modelList->setRootPath(name.filePath());
-    
-    QTimer::singleShot(2,this,SLOT(treeSelectionChangedLate()));
+        if(thumbsAct->isChecked()) modelList->loadThumbs(name.filePath());
+
+    QTimer::singleShot(0,this,SLOT(treeSelectionChangedLate()));
 }
 
 //---------------------------------------------------------------------------
 void MainWindow::treeSelectionChangedLate()
 {
     QModelIndex baseIndex = modelList->index(curIndex.filePath());
-    
-    if(tabs->tabText(tabs->currentIndex()) != curIndex.fileName())
+
+    if(detailAct->isChecked())
     {
-	tabs->setTabText(tabs->currentIndex(),curIndex.fileName());
-	tabs->setTabData(tabs->currentIndex(),curIndex.filePath());
-        tabs->setIcon(tabs->currentIndex());
+        detailTree->setSelectionModel(unused);
+        listSelectionModel->clear();
+        detailTree->setSelectionModel(listSelectionModel);
     }
 
-    list->setSelectionModel(unused);
-    detailTree->setSelectionModel(unused);
-    listSelectionModel->clear();
-    detailTree->setSelectionModel(listSelectionModel);
-    list->setSelectionModel(listSelectionModel);
-    
     list->setRootIndex(baseIndex);
     detailTree->setRootIndex(baseIndex);
-  
+
     if(backIndex.parent() == baseIndex)
     {
-        if(detailAct->isChecked()) detailTree->scrollTo(backIndex,QAbstractItemView::EnsureVisible);
+        if(detailAct->isChecked())detailTree->scrollTo(backIndex,QAbstractItemView::EnsureVisible);
         else list->scrollTo(backIndex,QAbstractItemView::EnsureVisible);
         listSelectionModel->setCurrentIndex(backIndex,QItemSelectionModel::Select);
     }
@@ -471,51 +438,11 @@ QString formatSize(qint64 num)
 //---------------------------------------------------------------------------
 void MainWindow::listItemClicked(QModelIndex current)
 {
-    if(current.data(32).toString() == pathEdit->currentText()) return;
-
     Qt::KeyboardModifiers mods = QApplication::keyboardModifiers();
     if(mods == Qt::ControlModifier || mods == Qt::ShiftModifier) return;
     if(modelList->isDir(current))
 	tree->setCurrentIndex(modelTree->mapFromSource(current));
 }
-
-//---------------------------------------------------------------------------
-void MainWindow::listItemPressed(QModelIndex current)
-{
-    //middle-click -> open new tab
-    //ctrl+middle-click -> open new instance
-
-    if(QApplication::mouseButtons() == Qt::MidButton)
-        if(modelList->isDir(current))
-        {
-            Qt::KeyboardModifiers mods = QApplication::keyboardModifiers();
-
-            if(mods == Qt::ControlModifier)
-                openFile();
-            else
-            {
-                if(tabs->count() == 0) tabs->addNewTab(pathEdit->currentText());
-                tabs->addNewTab(modelList->filePath(current));
-            }
-        }
-        else
-            openFile();
-}
-
-//---------------------------------------------------------------------------
-void MainWindow::openTab()
-{
-    if(tabs->count() == 0) tabs->addNewTab(pathEdit->currentText());
-    tabs->addNewTab(curIndex.filePath());
-}
-
-//---------------------------------------------------------------------------
-void MainWindow::tabChanged(int index)
-{
-    if(!tabs->tabData(index).toString().isEmpty())
-        tree->setCurrentIndex(modelTree->mapFromSource(modelList->index(tabs->tabData(index).toString())));
-}
-
 
 //---------------------------------------------------------------------------
 void MainWindow::listDoubleClicked(QModelIndex current)
@@ -614,8 +541,12 @@ void MainWindow::pathEditChanged(int index)
     if(index == 0) return;			    //hit return on current item
 
     QString info(pathEdit->itemText(index));
-    if(!QFileInfo(info).exists()) return;
-
+    if(!QFileInfo(info).exists())
+    {
+	pathEdit->removeItem(index);
+	pathEdit->setCurrentIndex(0);
+	return;
+    }
 
     info.replace("~",QDir::homePath());
 
@@ -655,7 +586,7 @@ void MainWindow::newDir()
 
     if(!QFileInfo(pathEdit->itemText(0)).isWritable())
     {
-        status->showMessage(tr("Read only...cannot create folder"));
+        status->showMessage("Read only...cannot create folder");
         return;
     }
 
@@ -680,7 +611,7 @@ void MainWindow::newFile()
 
     if(!QFileInfo(pathEdit->itemText(0)).isWritable())
     {
-        status->showMessage(tr("Read only...cannot create file"));
+        status->showMessage("Read only...cannot create file");
         return;
     }
 
@@ -721,7 +652,7 @@ void MainWindow::deleteFile()
 
     if(settings->value("confirmDelete").isNull())					//not defined yet
     {
-        if(QMessageBox::question(this,tr("Delete confirmation"),tr("Do you want to confirm all delete operations?"),QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) confirm = 1;
+	if(QMessageBox::question(this,"Delete confirmation","Do you want to confirm all delete operations?",QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) confirm = 1;
 	else confirm = 0;
 	settings->setValue("confirmDelete",confirm);
     }
@@ -740,7 +671,7 @@ void MainWindow::deleteFile()
 		{
 		    if(confirm)
 		    {
-                        int ret = QMessageBox::information(this,tr("Careful"),"Are you sure you want to delete <p><b>\"" + file.filePath() + "</b>?",QMessageBox::Yes | QMessageBox::No | QMessageBox::YesToAll);
+                        int ret = QMessageBox::information(this,"Careful","Are you sure you want to delete <p><b>\"" + file.filePath() + "</b>?",QMessageBox::Yes | QMessageBox::No | QMessageBox::YesToAll);
 			if(ret == QMessageBox::YesToAll) yesToAll = true;
 			if(ret == QMessageBox::No) return;
 		    }
@@ -752,7 +683,7 @@ void MainWindow::deleteFile()
     }
 
     backIndex = QModelIndex();
-    if(!ok) QMessageBox::information(this,tr("Failed"),tr("Could not delete some items...do you have the right permissions?"));
+    if(!ok) QMessageBox::information(this,"Failed","Could not delete some items...do you have the right permissions?");
 
     return;
 }
@@ -949,7 +880,7 @@ void MainWindow::pasteLauncher(const QMimeData * data, QString newPath, QStringL
 
     if(!QFile(files.at(0).path()).exists())
     {
-        QMessageBox::information(this,tr("No paste for you!"),tr("File no longer exists!"));
+	QMessageBox::information(this,"No paste for you!","File no longer exists!");
 	pasteAct->setEnabled(false);
 	return;
     }
@@ -965,11 +896,11 @@ void MainWindow::pasteLauncher(const QMimeData * data, QString newPath, QStringL
 	    QFileInfo temp(file.toLocalFile());
 	    if(temp.isDir() && QFileInfo(newPath + "/" + temp.fileName()).exists())	//merge or replace?
 	    {
-                QMessageBox message(QMessageBox::Question,tr("Existing folder"),QString("<b>%1</b><p>Already exists!<p>What do you want to do?")
+		QMessageBox message(QMessageBox::Question,"Existing folder",QString("<b>%1</b><p>Already exists!<p>What do you want to do?")
 		    .arg(newPath + "/" + temp.fileName()),QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
 
-                message.button(QMessageBox::Yes)->setText(tr("Merge"));
-                message.button(QMessageBox::No)->setText(tr("Replace"));
+		message.button(QMessageBox::Yes)->setText("Merge");
+		message.button(QMessageBox::No)->setText("Replace");
 
 		int merge = message.exec();
 		if(merge == QMessageBox::Cancel) return;
@@ -986,7 +917,7 @@ void MainWindow::pasteLauncher(const QMimeData * data, QString newPath, QStringL
 	    {
 		QFileInfo orig(baseName + "/" + file);
 		if(replace != QMessageBox::YesToAll && replace != QMessageBox::NoToAll)
-                    replace = QMessageBox::question(0,tr("Replace"),QString("Do you want to replace:<p><b>%1</p><p>Modified: %2<br>Size: %3 bytes</p><p>with:<p><b>%4</p><p>Modified: %5<br>Size: %6 bytes</p>")
+		    replace = QMessageBox::question(0,"Replace",QString("Do you want to replace:<p><b>%1</p><p>Modified: %2<br>Size: %3 bytes</p><p>with:<p><b>%4</p><p>Modified: %5<br>Size: %6 bytes</p>")
 						    .arg(temp.filePath()).arg(temp.lastModified().toString()).arg(temp.size())
 						    .arg(orig.filePath()).arg(orig.lastModified().toString()).arg(orig.size()),QMessageBox::Yes | QMessageBox::YesToAll | QMessageBox::No | QMessageBox::NoToAll | QMessageBox::Cancel);
 
@@ -999,8 +930,8 @@ void MainWindow::pasteLauncher(const QMimeData * data, QString newPath, QStringL
     }
 
     QString title;
-    if(cutList.count() == 0) title = tr("Copying...");
-    else title = tr("Moving...");
+    if(cutList.count() == 0) title = "Copying...";
+    else title = "Moving...";
 
     progress = new myProgressDialog(title);
     connect(this,SIGNAL(updateCopyProgress(qint64, qint64, QString)),progress,SLOT(update(qint64, qint64, QString)));
@@ -1311,7 +1242,7 @@ void MainWindow::xdgConfig()
     if(!listSelectionModel->currentIndex().isValid()) return;
 
     QDialog *xdgConfig = new QDialog(this);
-    xdgConfig->setWindowTitle(tr("Configure filetype"));
+    xdgConfig->setWindowTitle("Configure filetype");
 
     QString mimeType = getMimeType(curIndex.filePath());
 
@@ -1348,17 +1279,10 @@ void MainWindow::xdgConfig()
     for(int i = 0; i < appList->count(); ++i)
     {
         QString baseName = appList->itemText(i).remove(".desktop");
-        QPixmap temp = QIcon::fromTheme(baseName).pixmap(16,16);
-
-        if(!temp.isNull()) appList->setItemIcon(i,temp);
-        else
-        {
-            QStringList searchIcons = apps.filter(baseName);
-            if(searchIcons.count() > 0) appList->setItemIcon(i,QIcon("/usr/share/pixmaps/" + searchIcons.at(0)));
-            else appList->setItemIcon(i,defaultIcon);
-        }
+        QStringList searchIcons = apps.filter(baseName);
+	if(searchIcons.count() > 0) appList->setItemIcon(i,QIcon("/usr/share/pixmaps/" + searchIcons.at(0)));
+        else appList->setItemIcon(i,QIcon::fromTheme(baseName,defaultIcon));
     }
-
 
     QProcess *myProcess = new QProcess(this);
     myProcess->start("xdg-mime",QStringList() << "query" << "default" << mimeType);
@@ -1529,9 +1453,9 @@ void MainWindow::contextMenuEvent(QContextMenuEvent * event)
 		popup->addAction(renameAct);
 		popup->addSeparator();
 
+                actions = customActions->values("*");
                 foreach(QMenu* parent, customMenus->values("*"))
                     popup->addMenu(parent);
-                actions = customActions->values("*");
 
                 popup->addActions(actions);
                 popup->addAction(deleteAct);
@@ -1547,15 +1471,12 @@ void MainWindow::contextMenuEvent(QContextMenuEvent * event)
 		popup->addSeparator();
 		popup->addAction(renameAct);
 		popup->addSeparator();
-
                 foreach(QMenu* parent, customMenus->values("*"))
                     popup->addMenu(parent);
 		actions = customActions->values("*");
                 popup->addActions(actions);
-
                 popup->addAction(deleteAct);
 		popup->addSeparator();
-
                 foreach(QMenu* parent, customMenus->values("folder"))
                     popup->addMenu(parent);
                 actions = customActions->values(curIndex.fileName());
@@ -1583,10 +1504,8 @@ void MainWindow::contextMenuEvent(QContextMenuEvent * event)
 	    }
 	    popup->addAction(addBookmarkAct);
 	    popup->addSeparator();
-
-            foreach(QMenu* parent, customMenus->values("folder"))
-                popup->addMenu(parent);
             actions = customActions->values(curIndex.fileName());
+
             actions.append(customActions->values("folder"));
             if(actions.count())
             {
@@ -1631,9 +1550,6 @@ void MainWindow::contextMenuEvent(QContextMenuEvent * event)
 	    popup->addAction(deleteAct);
 	}
 	popup->addSeparator();
-
-        foreach(QMenu* parent, customMenus->values("folder"))
-            popup->addMenu(parent);
         actions = customActions->values(curIndex.fileName());
 	actions.append(customActions->values(curIndex.canonicalPath()));
         actions.append(customActions->values("folder"));
@@ -1728,10 +1644,10 @@ void MainWindow::customActionFinished(int ret)
     if(process->processEnvironment().contains("QTFM"))
     {
         QString output = process->readAllStandardError();
-        if(!output.isEmpty()) QMessageBox::warning(this,tr("Error - Custom action"),output);
+        if(!output.isEmpty()) QMessageBox::warning(this,"Error - Custom action",output);
 
         output = process->readAllStandardOutput();
-        if(!output.isEmpty()) QMessageBox::information(this,tr("Output - Custom action"),output);
+        if(!output.isEmpty()) QMessageBox::information(this,"Output - Custom action",output);
     }
 
     process->deleteLater();

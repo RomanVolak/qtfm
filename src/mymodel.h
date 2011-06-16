@@ -44,7 +44,7 @@ public:
         void cacheInfo();
         void setMode(bool);
         bool remove(const QModelIndex & index ) const;
-        bool dropMimeData(const QMimeData * data,Qt::DropAction action,int row,int column,const QModelIndex & parent);
+        bool dropMimeData(const QMimeData * data,Qt::DropAction action,int row,int column,const QModelIndex & parent );
         static QHash<QString,QByteArray> thumbsMap(QString);
 	void loadThumbs(QString);
 	void addCutItems(QStringList);
@@ -53,7 +53,7 @@ public:
         QHash<QString,QIcon> *folderIcons;
 
 signals:
-        void dragDropPaste(const QMimeData * data, QString newPath, QStringList cutList);
+    void dragDropPaste(const QMimeData * data, QString newPath, QStringList cutList);
 
 protected:
         QVariant data(const QModelIndex & index, int role) const;

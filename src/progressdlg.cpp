@@ -28,7 +28,7 @@ myProgressDialog::myProgressDialog(QString title)
 {
    setWindowTitle(title);
 
-   filename = new QLabel(tr("Initializing..."));
+   filename = new QLabel("Initializing...");
    bar = new QProgressBar();
    button = new QPushButton("Cancel");
 
@@ -92,7 +92,7 @@ void myProgressDialog::update(qint64 bytes, qint64 total, QString name)
         if (currentSecondsRemaining < 60) formattedTime = QString("%1 seconds").arg(currentSecondsRemaining);
         else formattedTime = QString("%1 min %2 sec").arg(currentSecondsRemaining / 60).arg(currentSecondsRemaining % 60);
 
-        transferInfo->setText(QString(tr("<p>Transfer rate: %2 MB/s<br>Time remaining: %3</p>"))
+        transferInfo->setText(QString("<p>Transfer rate: %2 MB/s<br>Time remaining: %3</p>")
                                    .arg(cumulativeTransferRateMB, 0, 'f', 1).arg(formattedTime));
 
         oldSeconds = currentSeconds;

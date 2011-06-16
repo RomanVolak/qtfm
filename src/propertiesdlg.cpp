@@ -29,7 +29,7 @@
 //---------------------------------------------------------------------------
 propertiesDialog::propertiesDialog(QStringList paths, QHash<QString,QIcon> *modelFolderIcons, QHash<QString,QIcon> *modelFileIcons)
 {
-    setWindowTitle(tr("Properties"));
+    setWindowTitle("Properties");
     pathName = paths.at(0);
     QFileInfo file(pathName);
 
@@ -57,7 +57,7 @@ propertiesDialog::propertiesDialog(QStringList paths, QHash<QString,QIcon> *mode
     layoutPath->addWidget(path,0,1);
     layoutPath->setRowMinimumHeight(0,30);
 
-    layoutPath->addWidget(new QLabel(tr("Size:")),2,0);
+    layoutPath->addWidget(new QLabel("Size:"),2,0);
     layoutPath->addWidget(sizeInfo,2,1,Qt::AlignRight);
     layoutPath->addWidget(containsInfo,3,1,Qt::AlignRight);
 
@@ -77,7 +77,7 @@ propertiesDialog::propertiesDialog(QStringList paths, QHash<QString,QIcon> *mode
             connect(iconButton,SIGNAL(clicked()),this,SLOT(changeIcon()));
 
             layoutPath->addWidget(iconButton,0,0);
-            layoutPath->addWidget(new QLabel(tr("Contains:")),3,0);
+            layoutPath->addWidget(new QLabel("Contains:"),3,0);
         }
         else
         {
@@ -98,14 +98,14 @@ propertiesDialog::propertiesDialog(QStringList paths, QHash<QString,QIcon> *mode
             iconLabel->setPixmap(theIcon.pixmap(24,24));
 
             layoutPath->addWidget(iconLabel,0,0);
-            layoutPath->addWidget(new QLabel(tr("FileType:")),3,0);
+            layoutPath->addWidget(new QLabel("FileType:"),3,0);
             containsInfo->setText(getMimeType(pathName));
         }
 
         path->setWordWrap(1);
         path->setMinimumWidth(140);
         path->setText("<b>" + pathName);
-        layoutPath->addWidget(new QLabel(tr("Modified:")),4,0);
+        layoutPath->addWidget(new QLabel("Modified:"),4,0);
         layoutPath->addWidget(modifiedInfo,4,1,Qt::AlignRight);
 
         //permissions
@@ -136,16 +136,16 @@ propertiesDialog::propertiesDialog(QStringList paths, QHash<QString,QIcon> *mode
         connect(otherWrite,SIGNAL(clicked(bool)),this,SLOT(checkboxesChanged()));
         connect(otherExec,SIGNAL(clicked(bool)),this,SLOT(checkboxesChanged()));
 
-        layoutPermissions->addWidget(new QLabel(tr("Read")),1,0);
-        layoutPermissions->addWidget(new QLabel(tr("Write")),2,0);
-        layoutPermissions->addWidget(new QLabel(tr("Execute")),3,0);
+        layoutPermissions->addWidget(new QLabel("Read"),1,0);
+        layoutPermissions->addWidget(new QLabel("Write"),2,0);
+        layoutPermissions->addWidget(new QLabel("Execute"),3,0);
 
         layoutPermissions->addWidget(new QLabel(" "),0,1);     //blank column
         layoutPermissions->setColumnStretch(1,1);
 
-        layoutPermissions->addWidget(new QLabel(tr("Owner")),0,2);
-        layoutPermissions->addWidget(new QLabel(tr("Group")),0,3);
-        layoutPermissions->addWidget(new QLabel(tr("Other")),0,4);
+        layoutPermissions->addWidget(new QLabel("Owner"),0,2);
+        layoutPermissions->addWidget(new QLabel("Group"),0,3);
+        layoutPermissions->addWidget(new QLabel("Other"),0,4);
 
         layoutPermissions->addWidget(ownerRead,1,2);
         layoutPermissions->addWidget(ownerWrite,2,2);
@@ -162,7 +162,7 @@ propertiesDialog::propertiesDialog(QStringList paths, QHash<QString,QIcon> *mode
         layoutPermissions->setVerticalSpacing(2);
 
         connect(permissionsNumeric,SIGNAL(textChanged(QString)),this,SLOT(numericChanged(QString)));
-        layoutPermissions->addWidget(new QLabel(tr("Numeric")),4,0,1,1);
+        layoutPermissions->addWidget(new QLabel("Numeric"),4,0,1,1);
         layoutPermissions->addWidget(permissionsNumeric,4,2,1,3);
 
         struct stat perms;
@@ -202,7 +202,7 @@ propertiesDialog::propertiesDialog(QStringList paths, QHash<QString,QIcon> *mode
         QLabel *iconLabel = new QLabel();
         iconLabel->setPixmap(QIcon::fromTheme("folder-new").pixmap(24,24));
         layoutPath->addWidget(iconLabel,0,0);
-        layoutPath->addWidget(new QLabel(tr("Total:")),3,0);
+        layoutPath->addWidget(new QLabel("Total:"),3,0);
     }
 
 
@@ -279,7 +279,7 @@ void propertiesDialog::recurseProperties(QString path)
 void propertiesDialog::update()
 {
     sizeInfo->setText(formatSize(totalSize));
-    if(type != 2) containsInfo->setText(QString(tr("%1 Files, %2 folders")).arg(files).arg(folders));
+    if(type != 2) containsInfo->setText(QString("%1 Files, %2 folders").arg(files).arg(folders));
 }
 
 //---------------------------------------------------------------------------

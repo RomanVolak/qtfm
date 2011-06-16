@@ -204,8 +204,8 @@ QVariant myModel::data(const QModelIndex & index, int role) const
     {
         QFileInfo type(filePath(index));
 	if(cutItems.contains(type.filePath())) return QBrush(QColor(Qt::lightGray));
-        if(type.isSymLink()) return QBrush(QColor(Qt::blue));
         if(type.isDir()) return QFileSystemModel::data(index,role);
+        if(type.isSymLink()) return QBrush(QColor(Qt::blue));
         if(type.isExecutable()) return QBrush(QColor(Qt::darkGreen));
         if(type.isHidden()) return QBrush(QColor(Qt::darkGray));
     }
@@ -332,9 +332,8 @@ bool myModel::dropMimeData(const QMimeData * data,Qt::DropAction action,int row,
     //don't do anything if you drag and drop in same folder
     if(QFileInfo(files.at(0).path()).canonicalPath() == filePath(parent)) return false;
 
-    if(action == 2)                             //cut, holding ctrl to copy is action 1
-        foreach(QUrl item, files)
-            cutList.append(item.path());
+    foreach(QUrl item, files)
+	cutList.append(item.path());
 
     emit dragDropPaste(data, filePath(parent), cutList);
     return false;

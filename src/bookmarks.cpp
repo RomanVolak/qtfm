@@ -19,8 +19,6 @@
 *
 ****************************************************************************/
 
-#ifndef BOOKMARKS_CPP
-#define BOOKMARKS_CPP
 
 #include <QtGui>
 #include "bookmarkmodel.h"
@@ -170,20 +168,8 @@ void MainWindow::toggleWrapBookmarks()
 }
 
 //---------------------------------------------------------------------------
-void MainWindow::bookmarkPressed(QModelIndex current)
-{
-    if(QApplication::mouseButtons() == Qt::MidButton)
-    {
-        if(tabs->count() == 0) tabs->addNewTab(pathEdit->currentText());
-        tabs->setCurrentIndex(tabs->addNewTab(current.data(32).toString()));
-    }
-}
-
-//---------------------------------------------------------------------------
 void MainWindow::bookmarkClicked(QModelIndex item)
 {
-    if(item.data(32).toString() == pathEdit->currentText()) return;
-
     QString info(item.data(32).toString());
     if(info.isEmpty()) return;                                  //separator
     if(info.contains("/.")) modelList->setRootPath(info);       //hidden folders
@@ -217,18 +203,16 @@ bool bookmarkmodel::dropMimeData(const QMimeData * data,Qt::DropAction action,in
 	if(parent.column() == -1)
 	{
             if(file.isDir()) this->addBookmark(file.fileName(),file.filePath(),0,"");
-            return false;
 	}
 	else
-            if(action == 2)                             //cut
-                cutList.append(file.filePath());
+	   cutList.append(file.filePath());
     }
 
-    emit bookmarkPaste(data, parent.data(32).toString(), cutList);
+    if(cutList.count())
+    {
+	emit bookmarkPaste(data, parent.data(32).toString(), cutList);
+    }
 
     return false;
 }
-
-#endif
-
 

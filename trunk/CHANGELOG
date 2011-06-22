@@ -1,5 +1,6 @@
-5.0	10-June-2011
+5.0	16-June-2011
 - added tabs
+- modified $Parent custom action type to include everything below this folder, files and folders.
 - modified address bar to not reset text while editing.
 - modified keyboard search delay.
 - fixed difference in folder sorting between tree and list views.

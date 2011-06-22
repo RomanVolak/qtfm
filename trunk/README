@@ -71,7 +71,7 @@ Filetype:
 
  $suffix	-	matches files of that type.  Multiple suffix can be separated by commas. eg 'png,jpg'.
  $folder	-	$folder is a specific folder name. Matches only that folder. eg 'Trash'
- $parent 	-	$parent is the full path to a folder. Matches all folders below this one. eg. '/media'	
+ $parent 	-	$parent is the full path to a folder. Matches everything below this, files and folders. eg. '/media'	
  folder		-	matches all folders.
  *		-	matches everything, all files and folders.
 
@@ -144,6 +144,9 @@ Tip & Tricks
 - Ctrl+drag&drop will copy instead of move.
 
 - Right-click on the status bar will bring up the 'View' options.  Useful if you have hidden the main menu.
+
+- When you copy things in Qtfm it places the paths in the selection buffer so you can then middle-click in
+  a text editor or term for example to 'paste as text'.
 
 
 

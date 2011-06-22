@@ -343,7 +343,7 @@ void MainWindow::treeSelectionChanged(QModelIndex current,QModelIndex previous)
     }
 
     curIndex = name.filePath();
-    setWindowTitle(curIndex.fileName() + " - qtFM v5.0.beta");
+    setWindowTitle(curIndex.fileName() + " - qtFM v5.0");
 
     pathEdit->insertItem(0,curIndex.filePath());
     pathEdit->setCurrentIndex(0);
@@ -1531,11 +1531,18 @@ void MainWindow::contextMenuEvent(QContextMenuEvent * event)
 
                 foreach(QMenu* parent, customMenus->values("*"))
                     popup->addMenu(parent);
-                actions = customActions->values("*");
 
+                actions = (customActions->values("*"));
                 popup->addActions(actions);
                 popup->addAction(deleteAct);
                 popup->addSeparator();
+                actions = customActions->values(curIndex.canonicalPath());    //children of $parent
+                if(actions.count())
+                {
+                    popup->addActions(actions);
+                    popup->addSeparator();
+                }
+
 	    }
 	    else
 	    {	//folder
@@ -1550,6 +1557,7 @@ void MainWindow::contextMenuEvent(QContextMenuEvent * event)
 
                 foreach(QMenu* parent, customMenus->values("*"))
                     popup->addMenu(parent);
+
 		actions = customActions->values("*");
                 popup->addActions(actions);
 
@@ -1558,13 +1566,13 @@ void MainWindow::contextMenuEvent(QContextMenuEvent * event)
 
                 foreach(QMenu* parent, customMenus->values("folder"))
                     popup->addMenu(parent);
-                actions = customActions->values(curIndex.fileName());
-		actions.append(customActions->values(curIndex.canonicalPath()));
-                actions.append(customActions->values("folder"));
+
+                actions = customActions->values(curIndex.fileName());               //specific folder
+                actions.append(customActions->values(curIndex.canonicalPath()));    //children of $parent
+                actions.append(customActions->values("folder"));                    //all folders
                 if(actions.count())
                 {
-                    foreach(QAction*action, actions)
-                        popup->addAction(action);
+                    popup->addActions(actions);
                     popup->addSeparator();
                 }
 	    }

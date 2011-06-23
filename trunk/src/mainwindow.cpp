@@ -48,11 +48,36 @@ MainWindow::MainWindow()
     settings = new QSettings();
     QString temp;
 
-    //Qt doesn't detect the theme very well for non-DE systems, so manually read '.gtkrc-2.0' file
-    QSettings gtkFile(QDir::homePath() + "/" + ".gtkrc-2.0",QSettings::IniFormat,this);
+// TODO/FIXME: This icon theme recognition works on minimal systems (non-gtk) too.
+//             But I'm not sure if it's fine enough. We have full support in razor
+//             library already for it. (petr)
 
-    temp = gtkFile.value("gtk-icon-theme-name").toString().remove("\"");
-    if(temp.isNull()) temp = QIcon::themeName();
+    //Qt doesn't detect the theme very well for non-DE systems, so manually read '.gtkrc-2.0' file
+//    QSettings gtkFile(QDir::homePath() + "/" + ".gtkrc-2.0",QSettings::IniFormat,this);
+
+//    temp = gtkFile.value("gtk-icon-theme-name").toString().remove("\"");
+//    if(temp.isNull()) temp = QIcon::themeName();
+//    if (temp.isNull())
+//    {
+        QStringList failback;
+        failback << "/usr/share/icons/oxygen/index.theme"
+                 << "/usr/share/icons/Tango/index.theme"
+                 << "/usr/share/icons/nuvola/index.theme"
+                 << "/usr/share/icons/hicolor/index.theme";
+        foreach (QString theme, failback)
+        {
+            qDebug() << "Looking for failback icon theme:" << theme;
+            if (QFile::exists(theme))
+            {
+                temp = theme.split("/").at(4);
+                qDebug() << "    LOADED" << temp;
+                break;
+            }
+            else
+                qDebug() << "    skipped - not found";
+        }
+//    }
+
     QIcon::setThemeName(temp);
 
     if(temp != settings->value("currentTheme").toString())

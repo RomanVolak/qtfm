@@ -355,6 +355,16 @@ void MainWindow::exitAction()
     close();
 }
 
+void MainWindow::about()
+{
+	QMessageBox::about(this, tr("About"), QString("%1 v.%2\n(c) %3").arg(QCoreApplication::applicationName()).arg(QCoreApplication::applicationVersion()).arg(QCoreApplication::organizationName()));
+}
+
+void MainWindow::aboutQt()
+{
+	QMessageBox::aboutQt(this, tr("About Qt"));
+}
+
 //---------------------------------------------------------------------------
 void MainWindow::treeSelectionChanged(QModelIndex current,QModelIndex previous)
 {

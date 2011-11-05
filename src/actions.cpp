@@ -288,6 +288,18 @@ void MainWindow::createActions()
     connect(addressAct, SIGNAL(triggered()), this, SLOT(addressAction()));
     actionList->append(addressAct);
 
+    aboutAct = new QAction(tr("About..."), this);
+    aboutAct->setStatusTip(tr("About this programm"));
+    connect(aboutAct, SIGNAL(triggered()), this, SLOT(about()));
+    //aboutAct->setIcon(actionIcons->at(0));
+    actionList->append(aboutAct);
+
+    aboutQtAct = new QAction(tr("About Qt"), this);
+    aboutQtAct->setStatusTip(tr("About Qt toolkit"));
+    connect(aboutQtAct, SIGNAL(triggered()), this, SLOT(aboutQt()));
+    //aboutQtAct->setIcon(actionIcons->at(0));
+    actionList->append(aboutQtAct);
+
     //we don't need the icon list anymore
     delete actionIcons;
 }
@@ -457,10 +469,15 @@ void MainWindow::createMenus()
     viewMenu->addSeparator();
     viewMenu->addAction(refreshAct);
 
+    QMenu *helpMenu = new QMenu(tr("Help"));
+    helpMenu->addAction(aboutAct);
+    helpMenu->addAction(aboutQtAct);
+
     QMenuBar *menuBar = new QMenuBar;
     menuBar->addMenu(fileMenu);
     menuBar->addMenu(editMenu);
     menuBar->addMenu(viewMenu);
+    menuBar->addMenu(helpMenu);
 
     menuToolBar->addWidget(menuBar);
 }

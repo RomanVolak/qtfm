@@ -29,7 +29,21 @@ int main(int argc, char *argv[])
 
     QApplication app(argc, argv);
     app.setOrganizationName("qtfm");
+    app.setApplicationVersion("5.0");
+    app.setOrganizationDomain("qtfm.org");
     app.setApplicationName("qtfm");
+
+	// <tr>
+	QTranslator appTranslator;
+	QString trpath = QLibraryInfo::location(QLibraryInfo::TranslationsPath);	// /usr/share/qt4/translations
+	QString trfile = QCoreApplication::applicationName() + "_" + QLocale::system().name().left(2);
+	if (not QFile::exists(trpath + QDir::separator() + trfile + ".qm")) {
+		qDebug() << app.applicationDirPath();
+		trpath = app.applicationDirPath() + QDir::separator() + "l10n";
+	}
+	appTranslator.load(trpath + QDir::separator() + trfile);
+	app.installTranslator(&appTranslator);
+	// </tr>
 
     //connect to daemon if available, otherwise create new instance
     if(app.arguments().count() == 1)
@@ -53,4 +67,3 @@ int main(int argc, char *argv[])
     MainWindow mainWin;
     return app.exec();
 }
-

@@ -129,9 +129,6 @@ public slots:
     void startDaemon();
     void exitAction();
 
-    void about();
-    void aboutQt();
-
 signals:
     void updateCopyProgress(qint64, qint64, QString);
     void copyProgressFinished(bool,QStringList);
@@ -235,8 +232,6 @@ private:
     QAction *openFolderAct;
     QAction *openTabAct;
     QAction *closeTabAct;
-    QAction *aboutAct;
-    QAction *aboutQtAct;
 };
 
 //---------------------------------------------------------------------------------

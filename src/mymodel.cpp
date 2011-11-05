@@ -200,12 +200,7 @@ QHash<QString,QByteArray> myModel::thumbsMap(QString item)
 //---------------------------------------------------------------------------------
 QVariant myModel::data(const QModelIndex & index, int role) const
 {
-    if (!index.isValid())
-        return QVariant();
- 
-    switch (role)
-    {
-    case Qt::ForegroundRole:
+    if(role == Qt::ForegroundRole)
     {
         QFileInfo type(filePath(index));
 	if(cutItems.contains(type.filePath())) return QBrush(QColor(Qt::lightGray));
@@ -213,12 +208,14 @@ QVariant myModel::data(const QModelIndex & index, int role) const
         if(type.isDir()) return QFileSystemModel::data(index,role);
         if(type.isExecutable()) return QBrush(QColor(Qt::darkGreen));
         if(type.isHidden()) return QBrush(QColor(Qt::darkGray));
-        break;
     }
-    case Qt::TextAlignmentRole:
+    else
+    if(role == Qt::TextAlignmentRole)
+    {
 	if(index.column() == 1) return Qt::AlignRight + Qt::AlignVCenter;
-        break;
-    case Qt::DisplayRole:
+    }
+    else
+    if(role == Qt::DisplayRole)
     {
 	if(index.column() == 4)
 	{
@@ -236,9 +233,9 @@ QVariant myModel::data(const QModelIndex & index, int role) const
 	    str.append(" " + fileInfo(index).owner() + " " + fileInfo(index).group());
 	    return str;
 	}
-        break;
     }
-    case Qt::DecorationRole:
+    else
+    if(role == Qt::DecorationRole)
     {
         if(index.column() != 0) return QVariant();
 
@@ -251,21 +248,17 @@ QVariant myModel::data(const QModelIndex & index, int role) const
         else
         {
 	    if(showThumbs)
-            {
 		if(thumbs->contains(type.filePath()))
 		{
 		    QPixmap pic;
 		    pic.loadFromData(thumbs->value(type.filePath()));
 		    return QIcon(pic);
 		}
-            }
 
 	    QIcon theIcon;
-	    QString suffix(type.suffix());
+	    QString suffix = type.suffix();
 
-            if(mimeIcons->contains(suffix))
-                return mimeIcons->value(suffix);
-
+            if(mimeIcons->contains(suffix)) return mimeIcons->value(suffix);
             if(suffix.isEmpty())
             {
                 if(type.isExecutable())
@@ -278,38 +271,24 @@ QVariant myModel::data(const QModelIndex & index, int role) const
                     suffix = "none";
                     theIcon = QIcon::fromTheme("text-x-generic");
                 }
-                if(mimeIcons->contains(suffix))
-                    return mimeIcons->value(suffix);
+                if(mimeIcons->contains(suffix)) return mimeIcons->value(suffix);
             }
             else
             {
-		if(mimeGlob->count() == 0)
-                    loadMimeTypes();
+		if(mimeGlob->count() == 0) loadMimeTypes();
 
                 //try mimeType as it is
-		QString mimeType(mimeGlob->value(type.suffix().toLower()));
-                if(QIcon::hasThemeIcon(mimeType))
-                {
-                    theIcon = QIcon::fromTheme(mimeType);
-                }
+		QString mimeType = mimeGlob->value(type.suffix().toLower());
+                if(QIcon::hasThemeIcon(mimeType)) theIcon = QIcon::fromTheme(mimeType);
                 else
                 {
                     //try matching generic icon
-		    if(QIcon::hasThemeIcon(mimeGeneric->value(mimeType)))
-                    {
-                        theIcon = QIcon::fromTheme(mimeGeneric->value(mimeType));
-                    }
+		    if(QIcon::hasThemeIcon(mimeGeneric->value(mimeType))) theIcon = QIcon::fromTheme(mimeGeneric->value(mimeType));
                     else
                     {
                         //last resort try adding "-x-generic" to base type
-                        if(QIcon::hasThemeIcon(mimeType.split("-").at(0) + "-x-generic"))
-                        {
-                            theIcon = QIcon::fromTheme(mimeType.split("-").at(0) + "-x-generic");
-                        }
-                        else
-                        {
-                            theIcon = QIcon::fromTheme("text-x-generic");
-                        }
+                        if(QIcon::hasThemeIcon(mimeType.split("-").at(0) + "-x-generic")) theIcon = QIcon::fromTheme(mimeType.split("-").at(0) + "-x-generic");
+                        else theIcon = QIcon::fromTheme("text-x-generic");
                     }
                 }
             }
@@ -317,13 +296,7 @@ QVariant myModel::data(const QModelIndex & index, int role) const
 	    mimeIcons->insert(suffix,theIcon);
 	    return theIcon;
         }
-        break;
     }
-    default:
-        return QFileSystemModel::data(index,role);
-    } // switch
-
-    // failback
     return QFileSystemModel::data(index,role);
 }
 

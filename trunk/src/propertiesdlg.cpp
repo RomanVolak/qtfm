@@ -1,6 +1,6 @@
 /****************************************************************************
 * This file is part of qtFM, a simple, fast file manager.
-* Copyright (C) 2010 Wittfella
+* Copyright (C) 2010,2011 Wittfella
 *
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -193,11 +193,11 @@ propertiesDialog::propertiesDialog(QStringList paths, QHash<QString,QIcon> *mode
         }
 
         if ((files) && (folders))
-            path->setText(QString("<b>%1 files, %2 folders").arg(files).arg(folders));
+            path->setText(QString(tr("<b>%1 files, %2 folders")).arg(files).arg(folders));
         else if ((!files) && (folders)) //no files, folders only
-            path->setText(QString("<b>%1 folders").arg(folders));
+            path->setText(QString(tr("<b>%1 folders")).arg(folders));
         else if ((files) && (!folders)) //no folders, files only
-            path->setText(QString("<b>%1 files").arg(files));
+            path->setText(QString(tr("<b>%1 files")).arg(files));
 
         QLabel *iconLabel = new QLabel();
         iconLabel->setPixmap(QIcon::fromTheme("folder-new").pixmap(24,24));
@@ -356,7 +356,7 @@ void propertiesDialog::changeIcon()
 QString getDriveInfo(QString path)
 {
     struct statfs info;
-    statfs(path.toLocal8Bit(), & info);
+    statfs(path.toLocal8Bit(), &info);
 
     return QString("%1  /  %2  (%3%)").arg(formatSize((qint64) (info.f_blocks - info.f_bavail)*4096))
                        .arg(formatSize((qint64) info.f_blocks*4096))
@@ -371,6 +371,12 @@ QString getMimeType(QString path)
     myProcess.waitForFinished();
     QString mimeType = QString(myProcess.readAllStandardOutput()).split(" ").last().trimmed();
     myProcess.close();
+
+//  LIBS += -lmagic
+//    magic_t cookie = magic_open(MAGIC_MIME);
+//    magic_load(cookie,0);
+//    QString mimeType = magic_file(cookie,path.toLocal8Bit());
+//    magic_close(cookie);
 
     return mimeType;
 }

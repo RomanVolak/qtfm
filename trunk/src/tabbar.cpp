@@ -1,6 +1,6 @@
 /****************************************************************************
 * This file is part of qtFM, a simple, fast file manager.
-* Copyright (C) 2010 Wittfella
+* Copyright (C) 2010,2011 Wittfella
 *
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -35,7 +35,16 @@ void tabBar::mousePressEvent(QMouseEvent * event)
 {
     //middle-click to close tab
     if(event->button() == Qt::MidButton)
-        this->removeTab(tabAt(event->pos()));
+    {
+        int tab = tabAt(event->pos());
+        if(tab != -1)
+        {
+            delete history.at(tab);
+            history.removeAt(tab);
+            viewType.removeAt(tab);
+            this->removeTab(tab);
+        }
+    }
 
     return QTabBar::mousePressEvent(event);
 }
@@ -52,7 +61,6 @@ void tabBar::dragMoveEvent(QDragMoveEvent *event)
 {
     this->setCurrentIndex(tabAt(event->pos()));
     event->acceptProposedAction();
-
 }
 
 //---------------------------------------------------------------------------
@@ -62,7 +70,7 @@ void tabBar::dropEvent(QDropEvent *event)
     QFileInfo file = QFileInfo(paths.at(0).path());
 
     if(tabAt(event->pos()) == -1 && file.isDir())           //new tab
-        addNewTab(file.filePath());
+        addNewTab(file.filePath(),0);
     else
     {
         QStringList cutList;
@@ -85,14 +93,16 @@ void tabBar::dropEvent(QDropEvent *event)
 }
 
 //---------------------------------------------------------------------------
-int tabBar::addNewTab(QString path)
+int tabBar::addNewTab(QString path, int type)
 {
     QFileInfo file(path);
+
+    history.append(new QStringList(path));
+    viewType.append(type);
 
     int newtab = addTab(file.fileName());
     setTabData(newtab,file.filePath());
     setIcon(newtab);
-
     return newtab;
 }
 
@@ -104,8 +114,42 @@ void tabBar::setIcon(int index)
 }
 
 //---------------------------------------------------------------------------
+void tabBar::addHistory(QString path)
+{
+    history.at(currentIndex())->insert(0,path);
+}
+
+//---------------------------------------------------------------------------
+void tabBar::remHistory()
+{
+    history.at(currentIndex())->removeFirst();
+}
+
+//---------------------------------------------------------------------------
+QStringList *tabBar::getHistory(int index)
+{
+    return history.value(index);
+}
+
+//---------------------------------------------------------------------------
+int tabBar::getType(int index)
+{
+    return viewType.at(index);
+}
+
+//---------------------------------------------------------------------------
+void tabBar::setType(int type)
+{
+    viewType.removeAt(currentIndex());
+    viewType.insert(currentIndex(),type);
+}
+
+//---------------------------------------------------------------------------
 void tabBar::closeTab()
 {
+    delete history.at(currentIndex());
+    history.removeAt(currentIndex());
+    viewType.removeAt(this->currentIndex());
     removeTab(this->currentIndex());
 }
 

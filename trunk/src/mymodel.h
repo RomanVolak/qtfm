@@ -1,6 +1,6 @@
 /****************************************************************************
 * This file is part of qtFM, a simple, fast file manager.
-* Copyright (C) 2010 Wittfella
+* Copyright (C) 2010,2011 Wittfella
 *
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -45,15 +45,18 @@ public:
         void setMode(bool);
         bool remove(const QModelIndex & index ) const;
         bool dropMimeData(const QMimeData * data,Qt::DropAction action,int row,int column,const QModelIndex & parent);
-        static QHash<QString,QByteArray> thumbsMap(QString);
-	void loadThumbs(QString);
+        void loadThumbs(QModelIndexList);
 	void addCutItems(QStringList);
 	void clearCutItems();
+
+        QByteArray getThumb(QString item);
 	QHash<QString,QIcon> *mimeIcons;
         QHash<QString,QIcon> *folderIcons;
+        QHash<QString,QIcon> *icons;
 
 signals:
         void dragDropPaste(const QMimeData * data, QString newPath, QStringList cutList);
+        void thumbUpdate(const QModelIndex index);
 
 protected:
         QVariant data(const QModelIndex & index, int role) const;

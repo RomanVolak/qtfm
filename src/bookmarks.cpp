@@ -1,6 +1,6 @@
 /****************************************************************************
 * This file is part of qtFM, a simple, fast file manager.
-* Copyright (C) 2010 Wittfella
+* Copyright (C) 2010,2011 Wittfella
 *
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -112,13 +112,16 @@ void MainWindow::autoBookmarkMounts()
     foreach(QString item, mtabMounts)
         if(item[0] == '/')
         {
-            mounts.append(item.split(" ").at(1));
-            if(!dontShowList.contains(item.split(" ").at(1)))
-                if(!autoBookmarks.contains(item.split(" ").at(1)))	    //add a new auto bookmark if it doesn't exist
+            QString path = item.split(" ").at(1);
+            path.replace("\\040"," ");
+
+            mounts.append(path);
+            if(!dontShowList.contains(path))
+                if(!autoBookmarks.contains(path))	    //add a new auto bookmark if it doesn't exist
                 {
-                    if(item.split(" ").at(2) == "iso9660") modelBookmarks->addBookmark(item.split(" ").at(1),item.split(" ").at(1),"1","drive-optical");
-                    else if(item.split(" ").at(2) == "fat") modelBookmarks->addBookmark(item.split(" ").at(1),item.split(" ").at(1),"1","drive-removable-media");
-                    else modelBookmarks->addBookmark(item.split(" ").at(1),item.split(" ").at(1),"1","drive-harddisk");
+                    if(item.split(" ").at(2) == "iso9660") modelBookmarks->addBookmark(path,path,"1","drive-optical");
+                    else if(item.split(" ").at(2).contains("fat")) modelBookmarks->addBookmark(path,path,"1","drive-removable-media");
+                    else modelBookmarks->addBookmark(path,path,"1","drive-harddisk");
                 }
         }
 
@@ -174,8 +177,9 @@ void MainWindow::bookmarkPressed(QModelIndex current)
 {
     if(QApplication::mouseButtons() == Qt::MidButton)
     {
-        if(tabs->count() == 0) tabs->addNewTab(pathEdit->currentText());
-        tabs->setCurrentIndex(tabs->addNewTab(current.data(32).toString()));
+        tabs->setCurrentIndex(addTab(current.data(32).toString()));
+        //if(tabs->count() == 0) tabs->addNewTab(pathEdit->currentText(),type);
+        //tabs->setCurrentIndex(tabs->addNewTab(current.data(32).toString(),type));
     }
 }
 
@@ -189,6 +193,7 @@ void MainWindow::bookmarkClicked(QModelIndex item)
     if(info.contains("/.")) modelList->setRootPath(info);       //hidden folders
 
     tree->setCurrentIndex(modelTree->mapFromSource(modelList->index(item.data(32).toString())));
+    status->showMessage(getDriveInfo(curIndex.filePath()));
 }
 
 //---------------------------------------------------------------------------------

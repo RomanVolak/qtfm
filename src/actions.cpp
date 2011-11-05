@@ -1,6 +1,6 @@
 /****************************************************************************
 * This file is part of qtFM, a simple, fast file manager.
-* Copyright (C) 2010 Wittfella
+* Copyright (C) 2010,2011 Wittfella
 *
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -19,49 +19,47 @@
 *
 ****************************************************************************/
 
-#ifndef ACTIONS_CPP
-#define ACTIONS_CPP
-
 #include "mainwindow.h"
 
 //---------------------------------------------------------------------------
 void MainWindow::createActionIcons()
 {
     actionIcons = new QList<QIcon>;
+
     QFile icons(QDir::homePath() + "/.config/qtfm/icon.cache");
     icons.open(QIODevice::ReadOnly);
     QDataStream out(&icons);
     out >> *actionIcons;
     icons.close();
 
-    if(actionIcons->count() < 26)           //catch 4.8->4.9 upgrade
+    if(actionIcons->count() == 0)
     {
-	actionIcons->append(QIcon::fromTheme("folder-new"));
-	actionIcons->append(QIcon::fromTheme("document-new"));
-	actionIcons->append(QIcon::fromTheme("edit-cut"));
-	actionIcons->append(QIcon::fromTheme("edit-copy"));
-	actionIcons->append(QIcon::fromTheme("edit-paste"));
-	actionIcons->append(QIcon::fromTheme("go-up"));
-	actionIcons->append(QIcon::fromTheme("go-previous"));
-	actionIcons->append(QIcon::fromTheme("go-home"));
-	actionIcons->append(QIcon::fromTheme("view-list-details",QIcon(":/images/details.png")));
-	actionIcons->append(QIcon::fromTheme("view-list-icons",QIcon(":/images/icons.png")));
-	actionIcons->append(QIcon::fromTheme("folder-saved-search",QIcon(":/images/hidden.png")));
-	actionIcons->append(QIcon::fromTheme("address-book-new"));
-	actionIcons->append(QIcon::fromTheme("bookmark-new"));
-	actionIcons->append(QIcon::fromTheme("edit-clear"));
-	actionIcons->append(QIcon::fromTheme("edit-delete"));
-	actionIcons->append(QIcon::fromTheme("preferences-system",QIcon(":/images/details.png")));
-	actionIcons->append(QIcon::fromTheme("document-properties",QIcon(":/images/details.png")));
+        actionIcons->append(QIcon::fromTheme("folder-new",QIcon(":/images/folder-new.png")));
+        actionIcons->append(QIcon::fromTheme("document-new",QIcon(":/images/document-new.png")));
+        actionIcons->append(QIcon::fromTheme("edit-cut",QIcon(":/images/cut.png")));
+        actionIcons->append(QIcon::fromTheme("edit-copy",QIcon(":/images/copy.png")));
+        actionIcons->append(QIcon::fromTheme("edit-paste",QIcon(":/images/paste.png")));
+        actionIcons->append(QIcon::fromTheme("go-up",QIcon(":/images/up.png")));
+        actionIcons->append(QIcon::fromTheme("go-previous",QIcon(":/images/back.png")));
+        actionIcons->append(QIcon::fromTheme("go-home",QIcon(":/images/home.png")));
+        actionIcons->append(QIcon::fromTheme("view-list-details",QIcon(":/images/details.png")));
+        actionIcons->append(QIcon::fromTheme("view-list-icons",QIcon(":/images/icons.png")));
+        actionIcons->append(QIcon::fromTheme("folder-saved-search",QIcon(":/images/hidden.png")));
+        actionIcons->append(QIcon::fromTheme("address-book-new",QIcon(":/images/bookmark.png")));
+        actionIcons->append(QIcon::fromTheme("bookmark-new",QIcon(":/images/bookmark.png")));
+        actionIcons->append(QIcon::fromTheme("edit-clear",QIcon(":/images/clear.png")));
+        actionIcons->append(QIcon::fromTheme("edit-delete",QIcon(":/images/delete.png")));
+        actionIcons->append(QIcon::fromTheme("preferences-system",QIcon(":/images/preferences.png")));
+        actionIcons->append(QIcon::fromTheme("document-properties",QIcon(":/images/properties.png")));
         actionIcons->append(QIcon::fromTheme("utilities-terminal",QIcon(":/images/terminal.png")));
-	actionIcons->append(QIcon::fromTheme("document-open"));
-	actionIcons->append(QIcon::fromTheme("view-refresh"));
-	actionIcons->append(QIcon::fromTheme("application-exit",QIcon(":/images/exit.png")));
-	actionIcons->append(QIcon::fromTheme("lock",QIcon(":/images/lock.png")));
-	actionIcons->append(QIcon::fromTheme("key_bindings",QIcon(":/images/key_bindings.png")));
-	actionIcons->append(QIcon::fromTheme("zoom-in"));
-	actionIcons->append(QIcon::fromTheme("zoom-out"));
-        actionIcons->append(QIcon::fromTheme("window-close"));      //25
+        actionIcons->append(QIcon::fromTheme("document-open",QIcon(":/images/document-open.png")));
+        actionIcons->append(QIcon::fromTheme("view-refresh",QIcon(":/images/refresh.png")));
+        actionIcons->append(QIcon::fromTheme("application-exit",QIcon(":/images/exit.png")));
+        actionIcons->append(QIcon::fromTheme("lock",QIcon(":/images/lock.png")));
+        actionIcons->append(QIcon::fromTheme("key_bindings",QIcon(":/images/key_bindings.png")));
+        actionIcons->append(QIcon::fromTheme("zoom-in",QIcon(":/images/zoom-in.png")));
+        actionIcons->append(QIcon::fromTheme("zoom-out",QIcon(":/images/zoom-out.png")));
+        actionIcons->append(QIcon::fromTheme("window-close",QIcon(":/images/window-close.png")));      //25
 
         icons.open(QIODevice::WriteOnly);
         QDataStream out(&icons);
@@ -254,7 +252,7 @@ void MainWindow::createActions()
     actionList->append(thumbsAct);
 
     folderPropertiesAct = new QAction(tr("Properties"), this);
-    folderPropertiesAct->setStatusTip(tr("View properties of selected folder"));
+    folderPropertiesAct->setStatusTip(tr("View properties of selected items"));
     connect(folderPropertiesAct, SIGNAL(triggered()), this, SLOT(folderPropertiesLauncher()));
     folderPropertiesAct->setIcon(actionIcons->at(16));
     actionList->append(folderPropertiesAct);
@@ -287,18 +285,6 @@ void MainWindow::createActions()
     addressAct = new QAction(tr("Focus address"), this);
     connect(addressAct, SIGNAL(triggered()), this, SLOT(addressAction()));
     actionList->append(addressAct);
-
-    aboutAct = new QAction(tr("About..."), this);
-    aboutAct->setStatusTip(tr("About this programm"));
-    connect(aboutAct, SIGNAL(triggered()), this, SLOT(about()));
-    //aboutAct->setIcon(actionIcons->at(0));
-    actionList->append(aboutAct);
-
-    aboutQtAct = new QAction(tr("About Qt"), this);
-    aboutQtAct->setStatusTip(tr("About Qt toolkit"));
-    connect(aboutQtAct, SIGNAL(triggered()), this, SLOT(aboutQt()));
-    //aboutQtAct->setIcon(actionIcons->at(0));
-    actionList->append(aboutQtAct);
 
     //we don't need the icon list anymore
     delete actionIcons;
@@ -353,7 +339,7 @@ void MainWindow::readShortcuts()
 void MainWindow::editShortcuts()
 {
     QDialog *shortcutConfig = new QDialog(this);
-    shortcutConfig->setWindowTitle("Configure shortcuts");
+    shortcutConfig->setWindowTitle(tr("Configure shortcuts"));
 
     QGridLayout *gridLayout = new QGridLayout();
 
@@ -363,8 +349,8 @@ void MainWindow::editShortcuts()
     treeWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
 
     QTreeWidgetItem *header = treeWidget->headerItem();
-    header->setText(0,"Action");
-    header->setText(1,"Shortcut");
+    header->setText(0,tr("Action"));
+    header->setText(1,tr("Shortcut"));
     treeWidget->setColumnWidth(0,160);
     //treeWidget->setIndentation(10);
 
@@ -421,7 +407,7 @@ void MainWindow::editShortcuts()
     }
 
     if(duplicates.count())
-        QMessageBox::information(this,"Warning",QString(tr("Duplicate shortcuts detected:<p>%1")).arg(duplicates.join("<p>")));
+        QMessageBox::information(this,tr("Warning"),QString(tr("Duplicate shortcuts detected:<p>%1")).arg(duplicates.join("<p>")));
 
     delete shortcutConfig;
 }
@@ -432,6 +418,7 @@ void MainWindow::createMenus()
     QMenu *fileMenu = new QMenu(tr("File"));
     fileMenu->addAction(newDirAct);
     fileMenu->addAction(newFileAct);
+    fileMenu->addAction(openTabAct);
     fileMenu->addSeparator();
     fileMenu->addAction(closeAct);
     fileMenu->addAction(exitAct);
@@ -469,15 +456,10 @@ void MainWindow::createMenus()
     viewMenu->addSeparator();
     viewMenu->addAction(refreshAct);
 
-    QMenu *helpMenu = new QMenu(tr("Help"));
-    helpMenu->addAction(aboutAct);
-    helpMenu->addAction(aboutQtAct);
-
     QMenuBar *menuBar = new QMenuBar;
     menuBar->addMenu(fileMenu);
     menuBar->addMenu(editMenu);
     menuBar->addMenu(viewMenu);
-    menuBar->addMenu(helpMenu);
 
     menuToolBar->addWidget(menuBar);
 }
@@ -596,6 +578,4 @@ void MainWindow::addressAction()
 {
     pathEdit->setFocus(Qt::TabFocusReason);
 }
-
-#endif
 

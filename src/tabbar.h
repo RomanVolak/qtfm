@@ -1,6 +1,6 @@
 /****************************************************************************
 * This file is part of qtFM, a simple, fast file manager.
-* Copyright (C) 2010 Wittfella
+* Copyright (C) 2010,2011 Wittfella
 *
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -30,9 +30,14 @@ class tabBar : public QTabBar
 
 public:
     tabBar(QHash<QString,QIcon> *);
-    int addNewTab(QString path);
+    int addNewTab(QString path,int type);
     void setIcon(int index);
     void mousePressEvent(QMouseEvent * event);
+    void addHistory(QString);
+    void remHistory();
+    QStringList *getHistory(int);
+    int getType(int index);
+    void setType(int type);
 
 protected:
     void dragEnterEvent(QDragEnterEvent *event);
@@ -47,6 +52,8 @@ public slots:
 
 private:
         QHash<QString,QIcon> *folderIcons;
+        QList<QStringList*> history;
+        QList<int> viewType;
 
 };
 

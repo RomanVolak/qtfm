@@ -1,3 +1,13 @@
+5.1	15-October-2011
+- added 'per tab' view selection.
+- added 'per tab' history-back functionality.
+- added check for free space before copy/move. 
+- added input variables to custom actions.
+- added 'forceTheme' fallback to settings.
+- modified thumb loading, loads in realtime, more responsive.
+- modified theme detection and icon cache, including gtk-3.0 support.
+- fixed issue with auto bookmarks for mount points with a space in the name.
+
 5.0	16-June-2011
 - added tabs
 - modified $Parent custom action type to include everything below this folder, files and folders.

@@ -1,6 +1,6 @@
 /****************************************************************************
 * This file is part of qtFM, a simple, fast file manager.
-* Copyright (C) 2010 Wittfella
+* Copyright (C) 2010,2011 Wittfella
 *
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -25,25 +25,7 @@
 
 int main(int argc, char *argv[])
 {
-    Q_INIT_RESOURCE(resources);
-
     QApplication app(argc, argv);
-    app.setOrganizationName("qtfm");
-    app.setApplicationVersion("5.0");
-    app.setOrganizationDomain("qtfm.org");
-    app.setApplicationName("qtfm");
-
-	// <tr>
-	QTranslator appTranslator;
-	QString trpath = QLibraryInfo::location(QLibraryInfo::TranslationsPath);	// /usr/share/qt4/translations
-	QString trfile = QCoreApplication::applicationName() + "_" + QLocale::system().name().left(2);
-	if (not QFile::exists(trpath + QDir::separator() + trfile + ".qm")) {
-		qDebug() << app.applicationDirPath();
-		trpath = app.applicationDirPath() + QDir::separator() + "l10n";
-	}
-	appTranslator.load(trpath + QDir::separator() + trfile);
-	app.installTranslator(&appTranslator);
-	// </tr>
 
     //connect to daemon if available, otherwise create new instance
     if(app.arguments().count() == 1)
@@ -64,6 +46,20 @@ int main(int argc, char *argv[])
         server.close();
     }
 
+    Q_INIT_RESOURCE(resources);
+
+    app.setOrganizationName("qtfm");
+    app.setApplicationName("qtfm");
+
+    QTranslator qtTranslator;
+    qtTranslator.load("qt_" + QLocale::system().name(),QLibraryInfo::location(QLibraryInfo::TranslationsPath));
+    app.installTranslator(&qtTranslator);
+
+    QTranslator qtfmTranslator;
+    qtfmTranslator.load(":/translations/qtfm_" + QLocale::system().name());
+    app.installTranslator(&qtfmTranslator);
+
     MainWindow mainWin;
     return app.exec();
 }
+

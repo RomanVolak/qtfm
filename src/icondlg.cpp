@@ -1,6 +1,6 @@
 /****************************************************************************
 * This file is part of qtFM, a simple, fast file manager.
-* Copyright (C) 2010 Wittfella
+* Copyright (C) 2010,2011 Wittfella
 *
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -41,27 +41,48 @@ icondlg::icondlg()
     layout->addWidget(buttons);
     setLayout(layout);
 
-    QStringList themes, fileNames;
     QSettings inherits("/usr/share/icons/" + QIcon::themeName() + "/index.theme",QSettings::IniFormat,this);
     foreach(QString theme, inherits.value("Icon Theme/Inherits").toStringList())
 	themes.prepend(theme);
     themes.append(QIcon::themeName());
 
+    thread.setFuture(QtConcurrent::run(this,&icondlg::scanTheme));
+    connect(&thread,SIGNAL(finished()),this,SLOT(loadIcons()));
+}
+
+//---------------------------------------------------------------------------
+void icondlg::scanTheme()
+{
     foreach(QString theme, themes)
     {
-	QDirIterator it("/usr/share/icons/" + theme,QDir::Files | QDir::NoDotAndDotDot | QDir::NoSymLinks, QDirIterator::Subdirectories);
-	while (it.hasNext())
-	{
-	    it.next();
-	    if(it.filePath().contains("22"))
-		fileNames.append(QFileInfo(it.fileName()).baseName());
-	}
+        QDirIterator it("/usr/share/icons/" + theme,QStringList("*.png"),QDir::Files | QDir::NoDotAndDotDot | QDir::NoSymLinks, QDirIterator::Subdirectories);
+        while (it.hasNext())
+        {
+            it.next();
+            fileNames.append(QFileInfo(it.fileName()).baseName());
+        }
     }
 
     fileNames.removeDuplicates();
     fileNames.sort();
+}
+
+//---------------------------------------------------------------------------
+void icondlg::loadIcons()
+{
+    int counter = 0;
+
     foreach(QString name, fileNames)
-	new QListWidgetItem(QIcon::fromTheme(name),name,iconList);
+    {
+        new QListWidgetItem(QIcon::fromTheme(name),name,iconList);
+        fileNames.removeOne(name);
+        counter++;
+        if(counter == 20)
+        {
+            QTimer::singleShot(50,this,SLOT(loadIcons()));
+            return;
+        }
+    }
 }
 
 //---------------------------------------------------------------------------

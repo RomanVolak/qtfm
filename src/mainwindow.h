@@ -1,6 +1,6 @@
 /****************************************************************************
 * This file is part of qtFM, a simple, fast file manager.
-* Copyright (C) 2010 Wittfella
+* Copyright (C) 2010,2011 Wittfella
 *
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -108,13 +108,14 @@ public slots:
     void toggleLockLayout();
     void pasteLauncher(const QMimeData * data, QString newPath, QStringList cutList);
     void pasteClipboard();
-    void progressFinished(bool,QStringList);
+    void progressFinished(int,QStringList);
     void fileWatcherTriggered(QString);
     void listItemClicked(QModelIndex);
 
     void listItemPressed(QModelIndex);
     void tabChanged(int index);
     void openTab();
+    int addTab(QString path);
 
     void itemHover(QModelIndex);
     void refresh();
@@ -129,12 +130,11 @@ public slots:
     void startDaemon();
     void exitAction();
 
-    void about();
-    void aboutQt();
+    void dirLoaded();
 
 signals:
     void updateCopyProgress(qint64, qint64, QString);
-    void copyProgressFinished(bool,QStringList);
+    void copyProgressFinished(int,QStringList);
 
 private:
     void createActions();
@@ -149,10 +149,12 @@ private:
     int zoomTree;
     int zoomList;
     int zoomDetail;
+    int currentView;        //0=list, 1=icons, 2=details
 
     QCompleter *customComplete;
 
     tabBar *tabs;
+    QTimer timer;
 
     bool isDaemon;
     QLocalServer daemon;
@@ -177,7 +179,6 @@ private:
     bookmarkmodel *modelBookmarks;
     QItemSelectionModel *treeSelectionModel;
     QItemSelectionModel *listSelectionModel;
-    QItemSelectionModel *unused;
     QFileSystemWatcher *watcher;
     QStringList mounts;
 
@@ -235,8 +236,6 @@ private:
     QAction *openFolderAct;
     QAction *openTabAct;
     QAction *closeTabAct;
-    QAction *aboutAct;
-    QAction *aboutQtAct;
 };
 
 //---------------------------------------------------------------------------------

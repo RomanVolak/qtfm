@@ -108,6 +108,10 @@ Command:
  %F	-	selected filenames with full path
  %n	-	current filename (ie. the file you right-clicked on)
 
+ %iVar	-	Input variable - used to input a run-time variable contained in the custom action.
+		'Var' can be any text you like and is used as the hint for the input dialog.
+		 eg. '%iPassword'
+			
  []	-	tick the checkbox to monitor the output of the command. qtFM will be notified and report stdout and stderr
 		messages after the command has completed.
 
@@ -126,7 +130,7 @@ Trash		Empty trash		dialog-warning		emptyTrash.sh
 *		Trash			user-trash-full		mv -b %f ~/Trash
 *		Compress / gz		package-x-generic	tar czf %n.tar.gz %f
 *		Compress / bz2		filesave		tar cjf %n.tar.bz2 %f
-*		Compress / lrz		preferences-other	lrztar %f
+*		Compress / 7z		preferences-other	7za a -p%iPassword %n.7z %f
 
 
 

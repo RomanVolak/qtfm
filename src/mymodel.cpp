@@ -1,6 +1,6 @@
 /****************************************************************************
 * This file is part of qtFM, a simple, fast file manager.
-* Copyright (C) 2010 Wittfella
+* Copyright (C) 2010,2011 Wittfella
 *
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -30,6 +30,7 @@ myModel::myModel()
     mimeIcons = new QHash<QString,QIcon>;
     folderIcons = new QHash<QString,QIcon>;
     thumbs = new QHash<QString,QByteArray>;
+    icons = new QHash<QString,QIcon>;
 
     QFile fileIcons(QDir::homePath() + "/.config/qtfm/file.cache");
     fileIcons.open(QIODevice::ReadOnly);
@@ -61,11 +62,11 @@ void myModel::cacheInfo()
 
     if(thumbs->count() > thumbCount)
     {
-	fileIcons.setFileName(QDir::homePath() + "/.config/qtfm/thumbs.cache");
-	fileIcons.open(QIODevice::WriteOnly);
-	out.setDevice(&fileIcons);
-	out << *thumbs;
-	fileIcons.close();
+        fileIcons.setFileName(QDir::homePath() + "/.config/qtfm/thumbs.cache");
+        fileIcons.open(QIODevice::WriteOnly);
+        out.setDevice(&fileIcons);
+        out << *thumbs;
+        fileIcons.close();
     }
 }
 
@@ -120,35 +121,40 @@ void myModel::loadMimeTypes() const
 }
 
 //---------------------------------------------------------------------------
-void myModel::loadThumbs(QString path)
+void myModel::loadThumbs(QModelIndexList indexes)
 {
-    QFileInfoList list = QDir(path,"*.jpg;*.png;*.svg;*.gif",0,QDir::Files).entryInfoList();
-    if(list.count() == 0) return;
+    QStringList files,types;
+    types << "jpg" << "png" << "bmp" << "ico" << "svg" << "gif";
 
-    if(thumbs->count() == 0)
+    foreach(QModelIndex item,indexes)
     {
-	QFile fileIcons(QDir::homePath() + "/.config/qtfm/thumbs.cache");
-	fileIcons.open(QIODevice::ReadOnly);
-	QDataStream out(&fileIcons);
-	out >> *thumbs;
-	fileIcons.close();
-	thumbCount = thumbs->count();
+        if(types.contains(QFileInfo(fileName(item)).suffix(),Qt::CaseInsensitive))
+            files.append(filePath(item));
     }
 
-    QStringList files;
-    for(int x = 0; x < list.count(); ++x)
-        if(!thumbs->contains(list.at(x).filePath())) files.append(list.at(x).filePath());
+    if(files.count())
+    {
+        if(thumbs->count() == 0)
+        {
+            QFile fileIcons(QDir::homePath() + "/.config/qtfm/thumbs.cache");
+            fileIcons.open(QIODevice::ReadOnly);
+            QDataStream out(&fileIcons);
+            out >> *thumbs;
+            fileIcons.close();
+            thumbCount = thumbs->count();
+        }
 
-    if(files.count() == 0) return;
-
-    QList<QHash<QString,QByteArray> > icons = QtConcurrent::blockingMapped(files,thumbsMap);
-
-    for(int i = 0; i < icons.count(); ++i)
-	thumbs->unite(icons.at(i));
+        foreach(QString item, files)
+        {
+            if(!thumbs->contains(item)) thumbs->insert(item,getThumb(item));
+            emit thumbUpdate(this->index(item));
+        }
+    }
 }
 
+
 //---------------------------------------------------------------------------
-QHash<QString,QByteArray> myModel::thumbsMap(QString item)
+QByteArray myModel::getThumb(QString item)
 {
     QImage theThumb, background;
     QImageReader pic(item);
@@ -158,12 +164,12 @@ QHash<QString,QByteArray> myModel::thumbsMap(QString item)
 
     if( w > 128 || h > 128)
     {
-        target = 110;
-        background.load(":/images/back.jpg");
+        target = 114;
+        background.load(":/images/background.jpg");
     }
     else
     {
-        target =64;
+        target = 64;
         background = QImage(128,128,QImage::Format_ARGB32);
         background.fill(QApplication::palette().color(QPalette::Base).rgb());
     }
@@ -192,33 +198,28 @@ QHash<QString,QByteArray> myModel::thumbsMap(QString item)
     writer.setQuality(50);
     writer.write(background);
 
-    QHash<QString,QByteArray> temp;
-    temp.insert(item,buffer.buffer());
-    return temp;
+    return buffer.buffer();
 }
 
 //---------------------------------------------------------------------------------
 QVariant myModel::data(const QModelIndex & index, int role) const
 {
-    if (!index.isValid())
-        return QVariant();
- 
-    switch (role)
-    {
-    case Qt::ForegroundRole:
+    if(role == Qt::ForegroundRole)
     {
         QFileInfo type(filePath(index));
 	if(cutItems.contains(type.filePath())) return QBrush(QColor(Qt::lightGray));
+        if(type.isHidden()) return QBrush(QColor(Qt::darkGray));
         if(type.isSymLink()) return QBrush(QColor(Qt::blue));
         if(type.isDir()) return QFileSystemModel::data(index,role);
         if(type.isExecutable()) return QBrush(QColor(Qt::darkGreen));
-        if(type.isHidden()) return QBrush(QColor(Qt::darkGray));
-        break;
     }
-    case Qt::TextAlignmentRole:
+    else
+    if(role == Qt::TextAlignmentRole)
+    {
 	if(index.column() == 1) return Qt::AlignRight + Qt::AlignVCenter;
-        break;
-    case Qt::DisplayRole:
+    }
+    else
+    if(role == Qt::DisplayRole)
     {
 	if(index.column() == 4)
 	{
@@ -236,9 +237,9 @@ QVariant myModel::data(const QModelIndex & index, int role) const
 	    str.append(" " + fileInfo(index).owner() + " " + fileInfo(index).group());
 	    return str;
 	}
-        break;
     }
-    case Qt::DecorationRole:
+    else
+    if(role == Qt::DecorationRole)
     {
         if(index.column() != 0) return QVariant();
 
@@ -250,80 +251,58 @@ QVariant myModel::data(const QModelIndex & index, int role) const
         }
         else
         {
-	    if(showThumbs)
+            if(showThumbs)
             {
-		if(thumbs->contains(type.filePath()))
-		{
-		    QPixmap pic;
-		    pic.loadFromData(thumbs->value(type.filePath()));
-		    return QIcon(pic);
-		}
+                if(icons->contains(type.filePath())) return icons->value(type.filePath());
+                else
+                    if(thumbs->contains(type.filePath()))
+                    {
+                        QPixmap pic;
+                        pic.loadFromData(thumbs->value(type.filePath()));
+                        icons->insert(type.filePath(),QIcon(pic));
+                        return icons->value(type.filePath());
+                    }
             }
 
-	    QIcon theIcon;
-	    QString suffix(type.suffix());
+            QString suffix = type.suffix();
+            if(mimeIcons->contains(suffix)) return mimeIcons->value(suffix);
 
-            if(mimeIcons->contains(suffix))
-                return mimeIcons->value(suffix);
+            QIcon theIcon;
 
             if(suffix.isEmpty())
             {
-                if(type.isExecutable())
-                {
-                    suffix = "exec";
-                    theIcon = QIcon::fromTheme("application-x-executable");
-                }
-                else
-                {
-                    suffix = "none";
-                    theIcon = QIcon::fromTheme("text-x-generic");
-                }
-                if(mimeIcons->contains(suffix))
-                    return mimeIcons->value(suffix);
-            }
+                if(type.isExecutable()) suffix = "exec";
+                else suffix = "none";
+
+                if(mimeIcons->contains(suffix)) return mimeIcons->value(suffix);
+
+                if(suffix == "exec") theIcon = QIcon::fromTheme("application-x-executable");
+                else theIcon = QIcon(qApp->style()->standardIcon(QStyle::SP_FileIcon));
+             }
             else
             {
-		if(mimeGlob->count() == 0)
-                    loadMimeTypes();
+		if(mimeGlob->count() == 0) loadMimeTypes();
 
                 //try mimeType as it is
-		QString mimeType(mimeGlob->value(type.suffix().toLower()));
-                if(QIcon::hasThemeIcon(mimeType))
-                {
-                    theIcon = QIcon::fromTheme(mimeType);
-                }
+		QString mimeType = mimeGlob->value(type.suffix().toLower());
+                if(QIcon::hasThemeIcon(mimeType)) theIcon = QIcon::fromTheme(mimeType);
                 else
                 {
                     //try matching generic icon
-		    if(QIcon::hasThemeIcon(mimeGeneric->value(mimeType)))
-                    {
-                        theIcon = QIcon::fromTheme(mimeGeneric->value(mimeType));
-                    }
+		    if(QIcon::hasThemeIcon(mimeGeneric->value(mimeType))) theIcon = QIcon::fromTheme(mimeGeneric->value(mimeType));
                     else
                     {
                         //last resort try adding "-x-generic" to base type
-                        if(QIcon::hasThemeIcon(mimeType.split("-").at(0) + "-x-generic"))
-                        {
-                            theIcon = QIcon::fromTheme(mimeType.split("-").at(0) + "-x-generic");
-                        }
-                        else
-                        {
-                            theIcon = QIcon::fromTheme("text-x-generic");
-                        }
+                        if(QIcon::hasThemeIcon(mimeType.split("-").at(0) + "-x-generic")) theIcon = QIcon::fromTheme(mimeType.split("-").at(0) + "-x-generic");
+                        else theIcon = QIcon(qApp->style()->standardIcon(QStyle::SP_FileIcon));
                     }
                 }
             }
 
-	    mimeIcons->insert(suffix,theIcon);
+            mimeIcons->insert(suffix,theIcon);
 	    return theIcon;
         }
-        break;
     }
-    default:
-        return QFileSystemModel::data(index,role);
-    } // switch
-
-    // failback
     return QFileSystemModel::data(index,role);
 }
 
@@ -359,7 +338,8 @@ bool myModel::dropMimeData(const QMimeData * data,Qt::DropAction action,int row,
     //don't do anything if you drag and drop in same folder
     if(QFileInfo(files.at(0).path()).canonicalPath() == filePath(parent)) return false;
 
-    if(action == 2)                             //cut, holding ctrl to copy is action 1
+    Qt::KeyboardModifiers mods = QApplication::keyboardModifiers();
+    if(mods != Qt::ControlModifier)                                     //cut by default, holding ctrl is copy
         foreach(QUrl item, files)
             cutList.append(item.path());
 
@@ -373,11 +353,11 @@ QVariant myModel::headerData(int section, Qt::Orientation orientation, int role)
     if(role == Qt::DisplayRole)
 	switch(section)
 	{
-	    case 0: return "Name";
-	    case 1: return "Size";
-	    case 2: return "Type";
-	    case 4: return "Owner";
-	    case 3: return "Date Modified";
+            case 0: return tr("Name");
+            case 1: return tr("Size");
+            case 2: return tr("Type");
+            case 4: return tr("Owner");
+            case 3: return tr("Date Modified");
 	    default: return QVariant();
 	}
 
@@ -402,6 +382,5 @@ void myModel::clearCutItems()
     cutItems.clear();
     QFile(QDir::tempPath() + "/qtfm.temp").remove();
 }
-
 
 

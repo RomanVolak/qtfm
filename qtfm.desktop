@@ -1,10 +1,29 @@
 [Desktop Entry]
 Name=qtFM
+Name[de]=Dateimanager qtFM
+Name[sr]=кјутФМ
+Name[sr@ijekavian]=кјутФМ
+Name[sr@latin]=qtFM
+Name[sr@ijekavianlatin]=qtFM
+
 GenericName=Qt File Manager
-Type=Application
+GenericName[sr]=Кјут менаџер фајлова
+GenericName[sr@ijekavian]=Кјут менаџер фајлова
+GenericName[sr@latin]=qtFM menadžer fajlova
+GenericName[sr@ijekavianlatin]=qtFM menadžer fajlova
+
 Comment=A lightweight file manager based on pure Qt
+comment[ru]=Легкий файловый менеджер на основе чистого Qt
+Comment[de]=Ein schlanker, Qt-basierter, Dateimanager
+Comment[it]=Un file manager leggero basato su puro Qt
+Comment[sr]=Лагани менаџер фајлова базиран на чистом КјуТ-у
+Comment[sr@ijekavian]=Лагани менаџер фајлова базиран на чистом КјуТ-у
+Comment[sr@latin]=Lagani menadžer fajlova baziran na čistom Qt-u
+Comment[sr@ijekavianlatin]=Lagani menadžer fajlova baziran na čistom Qt-u
+
+Type=Application
 Icon=qtfm
 Exec=qtfm
 Terminal=false
-MimeType=application/x-directory
+MimeType=application/x-directory;inode/directory
 Categories=Qt;Utility;FileManager

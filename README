@@ -26,7 +26,8 @@ This will basically:
  - copy the qtfm binary to '/usr/bin'
  - copy 'qtfm.desktop' to '/usr/share/applications'
  - copy './images/qtfm.png' to '/usr/share/pixmaps'
- 
+ - copy translations to '/usr/share/qtfm'
+ - copy docs to '/usr/share/doc/qtfm' 
 
 
 #####################
@@ -36,7 +37,7 @@ Run
 Command Line Parameters:
 
  $folder	startup folder		- qtFM will start in this folder. Starts in $HOME by default.  
- -d		daemon mode		- starts qtfm and remains running in the background.
+ -d		daemon mode		- starts qtFM and remains running in the background.
 
 				  
 Try adding:
@@ -44,6 +45,30 @@ Try adding:
  sleep 4s && qtfm -d &
 
 to your '.xinitrc' file to start automatically at login.
+
+
+
+#####################
+Icon Themes
+#####################
+
+qtFM will try to detect your icon theme by first asking the system, which should work fine under full
+Gnome/KDE environments.  For some reason Xfce always reports 'gnome' icon theme. (See below)
+
+If this fails it will then try to read '~/.gtkrc-2.0' file for 'gtk-icon-theme-name'.
+If this fails it will then try to read '~/.config/gtk-3.0/settings.ini' file for 'gtk-fallback-icon-theme'.
+
+If all else fails it will then look for either 'gnome' or 'oxygen' in '/usr/share/icons/*'.
+
+You can override all of the above and force it to use your desired icon theme by adding a new key
+to the [General] section of '~/.config/qtfm/qtfm.conf' called 'forceTheme'.
+
+eg.
+	forceTheme=Tango
+	forceTheme=Faenza
+
+nb. The name must match the theme folder exactly (ie. case sensitive)
+
 
 
 
@@ -135,10 +160,27 @@ Trash		Empty trash		dialog-warning		emptyTrash.sh
 
 
 #####################
+Translations
+#####################
+
+Many thanks to the following for contributing translations:
+
+ - DE German		quax		
+ - IT Italian		zereal
+ - RU Russian		Alexey
+ - SR Serbian		Mladen
+
+If you would like to contribute to the translations you can grab the 'qtfm_XX.ts' template
+in the source, rename it to your country code (qtfm_fr.ts) and then edit it with Qt's 'linguist'
+is easiest.  Send me the completed ts file and I'll add it to the package.
+
+
+
+#####################
 Tip & Tricks
 #####################
 
-- If you 'Edit filetype' on a folder and set the handler to Qtfm you can then right-click->Open
+- If you 'Edit filetype' on a folder and set the handler to qtFM you can then 'right-click->Open'
   on a folder to open in a new instance.
 
 - Middle-click folders or bookmarks to open in a new tab. Ctrl+middle-click to open in a new instance.
@@ -149,15 +191,10 @@ Tip & Tricks
 
 - Right-click on the status bar will bring up the 'View' options.  Useful if you have hidden the main menu.
 
-- When you copy things in Qtfm it places the paths in the selection buffer so you can then middle-click in
-  a text editor or term for example to 'paste as text'.
+- When you copy things in qtFM it places the paths in the selection buffer so you can then middle-click in
+  a text editor or terminal for example to 'paste as text'.
 
-
-
-
-
-
-
-
+- You can also use sequential shortcuts like vi or emacs instead of the combination shortcuts (ctrl+x).
+  In the shortcuts editor just seperate them with commas. eg. 'a,b,c'
 
 

@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
     app.installTranslator(&qtTranslator);
 
     QTranslator qtfmTranslator;
-    qtfmTranslator.load(":/translations/qtfm_" + QLocale::system().name());
+    qtfmTranslator.load("/usr/share/qtfm/qtfm_" + QLocale::system().name());
     app.installTranslator(&qtfmTranslator);
 
     MainWindow mainWin;

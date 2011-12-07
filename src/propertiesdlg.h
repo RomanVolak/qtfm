@@ -46,6 +46,7 @@ public slots:
 signals:
     void finishedSignal();
     void updateSignal();
+    void propertiesUpdated();
 
 private:
     void folderProperties(QStringList paths);
@@ -75,6 +76,7 @@ private:
     QDialogButtonBox *buttons;
     QFuture<void> thread;
 
+    QStringList fileList;
     QString pathName;
     QString permString;
     bool iconChanged;

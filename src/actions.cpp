@@ -298,8 +298,8 @@ void MainWindow::readShortcuts()
     QStringList keys = settings->childKeys();
     for(int i = 0; i < keys.count(); ++i)
     {
-	QStringList temp(settings->value(keys.at(i)).toStringList());
-	shortcuts.insert(temp.at(0),temp.at(1));
+        QStringList temp(settings->value(keys.at(i)).toStringList());
+        shortcuts.insert(temp.at(0),temp.at(1));
     }
     settings->endGroup();
 
@@ -307,31 +307,31 @@ void MainWindow::readShortcuts()
     {
         shortcuts.insert(openTabAct->text(),"ctrl+t");
         shortcuts.insert(closeTabAct->text(),"ctrl+w");
-	shortcuts.insert(cutAct->text(),"ctrl+x");
-	shortcuts.insert(copyAct->text(),"ctrl+c");
-	shortcuts.insert(pasteAct->text(),"ctrl+v");
-	shortcuts.insert(upAct->text(),"alt+up");
-	shortcuts.insert(backAct->text(),"backspace");
-	shortcuts.insert(homeAct->text(),"f3");
-	shortcuts.insert(hiddenAct->text(),"ctrl+h");
-	shortcuts.insert(deleteAct->text(),"del");
-	shortcuts.insert(terminalAct->text(),"f4");
+        shortcuts.insert(cutAct->text(),"ctrl+x");
+        shortcuts.insert(copyAct->text(),"ctrl+c");
+        shortcuts.insert(pasteAct->text(),"ctrl+v");
+        shortcuts.insert(upAct->text(),"alt+up");
+        shortcuts.insert(backAct->text(),"backspace");
+        shortcuts.insert(homeAct->text(),"f3");
+        shortcuts.insert(hiddenAct->text(),"ctrl+h");
+        shortcuts.insert(deleteAct->text(),"del");
         shortcuts.insert(terminalAct->text(),"f4");
-	shortcuts.insert(exitAct->text(),"ctrl+q");
-	shortcuts.insert(refreshAct->text(),"f5");
-	shortcuts.insert(escapeAct->text(),"esc");
+        shortcuts.insert(terminalAct->text(),"f4");
+        shortcuts.insert(exitAct->text(),"ctrl+q");
+        shortcuts.insert(refreshAct->text(),"f5");
+        shortcuts.insert(escapeAct->text(),"esc");
         shortcuts.insert(zoomOutAct->text(),"ctrl+-");
         shortcuts.insert(zoomInAct->text(),"ctrl++");
     }
 
     foreach(QAction* action, *actionList)
     {
-	QString text = shortcuts.value(action->text());
-	if(!text.isEmpty())
-	{
-	    action->setShortcut(QKeySequence::fromString(text));
-	    addAction(action);					    //add to MainWindow so they work when menu is hidden
-	}
+        QString text = shortcuts.value(action->text());
+        if(!text.isEmpty())
+        {
+            action->setShortcut(QKeySequence::fromString(text));
+            addAction(action);					    //add to MainWindow so they work when menu is hidden
+        }
     }
 }
 
@@ -370,10 +370,10 @@ void MainWindow::editShortcuts()
 
     for(int x = 0; x < actionList->count(); ++x)
     {
-	QTreeWidgetItem *item1 = new QTreeWidgetItem(treeWidget, QStringList() << actionList->at(x)->text() << actionList->at(x)->shortcut().toString());
-	item1->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEditable|Qt::ItemIsEnabled);
-	item1->setIcon(0,actionList->at(x)->icon());
-	if(item1->icon(0).isNull()) item1->setIcon(0,blank);
+        QTreeWidgetItem *item1 = new QTreeWidgetItem(treeWidget, QStringList() << actionList->at(x)->text() << actionList->at(x)->shortcut().toString());
+        item1->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEditable|Qt::ItemIsEnabled);
+        item1->setIcon(0,actionList->at(x)->icon());
+        if(item1->icon(0).isNull()) item1->setIcon(0,blank);
     }
 
 
@@ -381,29 +381,29 @@ void MainWindow::editShortcuts()
 
     if(shortcutConfig->exec() == 1)
     {
-	settings->remove("customShortcuts");
-	settings->beginGroup("customShortcuts");
+        settings->remove("customShortcuts");
+        settings->beginGroup("customShortcuts");
 
-	for(int x = 0; x < actionList->count(); ++x)
-	{
-	    QTreeWidgetItem *item = treeWidget->topLevelItem(x);
-	    actionList->at(x)->setShortcut(QKeySequence::fromString(item->text(1)));
-	    if(!item->text(1).isEmpty())
-	    {
-		int existing = shortcuts.indexOf(actionList->at(x)->shortcut().toString());
-		if(existing != -1)
-		    duplicates.append(QString("<b>%1</b> - %2").arg(shortcuts.at(existing)).arg(actionList->at(x)->text()));
-		shortcuts.append(actionList->at(x)->shortcut().toString());
+        for(int x = 0; x < actionList->count(); ++x)
+        {
+            QTreeWidgetItem *item = treeWidget->topLevelItem(x);
+            actionList->at(x)->setShortcut(QKeySequence::fromString(item->text(1)));
+            if(!item->text(1).isEmpty())
+            {
+                int existing = shortcuts.indexOf(actionList->at(x)->shortcut().toString());
+                if(existing != -1)
+                    duplicates.append(QString("<b>%1</b> - %2").arg(shortcuts.at(existing)).arg(actionList->at(x)->text()));
+                shortcuts.append(actionList->at(x)->shortcut().toString());
 
-		QStringList temp;
-		temp << actionList->at(x)->text() << actionList->at(x)->shortcut().toString();
-		settings->setValue(QString(shortcuts.count()),temp);
+                QStringList temp;
+                temp << actionList->at(x)->text() << actionList->at(x)->shortcut().toString();
+                settings->setValue(QString(shortcuts.count()),temp);
 
-                addAction(actionList->at(x));
-	    }
-	}
+                        addAction(actionList->at(x));
+            }
+        }
 
-	settings->endGroup();
+        settings->endGroup();
     }
 
     if(duplicates.count())

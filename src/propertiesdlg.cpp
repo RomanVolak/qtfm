@@ -30,6 +30,7 @@
 propertiesDialog::propertiesDialog(QStringList paths, QHash<QString,QIcon> *modelFolderIcons, QHash<QString,QIcon> *modelFileIcons)
 {
     setWindowTitle(tr("Properties"));
+    fileList = paths;
     pathName = paths.at(0);
     QFileInfo file(pathName);
 
@@ -107,8 +108,35 @@ propertiesDialog::propertiesDialog(QStringList paths, QHash<QString,QIcon> *mode
         path->setText("<b>" + pathName);
         layoutPath->addWidget(new QLabel(tr("Modified:")),4,0);
         layoutPath->addWidget(modifiedInfo,4,1,Qt::AlignRight);
+    }
+    else
+    {
+        type = 3;
 
-        //permissions
+        //calculate selected files and folders count
+        foreach(QString selectedPaths, paths)
+        {
+            if (QFileInfo(selectedPaths).isDir()) folders++;
+            else files++;
+        }
+
+        if((files) && (folders))
+            path->setText(QString(tr("<b>%1 files, %2 folders")).arg(files).arg(folders));
+        else if((!files) && (folders)) //no files, folders only
+            path->setText(QString(tr("<b>%1 folders")).arg(folders));
+        else if((files) && (!folders)) //no folders, files only
+            path->setText(QString(tr("<b>%1 files")).arg(files));
+
+        QLabel *iconLabel = new QLabel();
+        iconLabel->setPixmap(QIcon::fromTheme("folder-new").pixmap(24,24));
+        layoutPath->addWidget(iconLabel,0,0);
+        layoutPath->addWidget(new QLabel(tr("Total:")),3,0);
+    }
+
+
+    //permissions
+    if(files == 0 || folders == 0)
+    {
         permissions = new QGroupBox(this);
         QGridLayout *layoutPermissions = new QGridLayout(permissions);
 
@@ -181,29 +209,6 @@ propertiesDialog::propertiesDialog(QStringList paths, QHash<QString,QIcon> *mode
         int ret = chmod(pathName.toLocal8Bit(),permString.toInt(0,8));
         if(ret) permissions->setDisabled(1);
     }
-    else
-    {
-        type = 3;
-
-        //calculate selected files and folders count
-        foreach(QString selectedPaths, paths)
-        {
-            if (QFileInfo(selectedPaths).isDir()) folders++;
-            else files++;
-        }
-
-        if ((files) && (folders))
-            path->setText(QString(tr("<b>%1 files, %2 folders")).arg(files).arg(folders));
-        else if ((!files) && (folders)) //no files, folders only
-            path->setText(QString(tr("<b>%1 folders")).arg(folders));
-        else if ((files) && (!folders)) //no folders, files only
-            path->setText(QString(tr("<b>%1 files")).arg(files));
-
-        QLabel *iconLabel = new QLabel();
-        iconLabel->setPixmap(QIcon::fromTheme("folder-new").pixmap(24,24));
-        layoutPath->addWidget(iconLabel,0,0);
-        layoutPath->addWidget(new QLabel(tr("Total:")),3,0);
-    }
 
 
     //drive info frame
@@ -224,7 +229,9 @@ propertiesDialog::propertiesDialog(QStringList paths, QHash<QString,QIcon> *mode
 
     //main layout
     layout->addWidget(fileFrame);
-    if(paths.count() == 1) layout->addWidget(permissions);
+
+    if(files == 0 || folders == 0) layout->addWidget(permissions);
+
     layout->addWidget(driveFrame);
     layout->addWidget(buttons);
     setLayout(layout);
@@ -295,11 +302,15 @@ void propertiesDialog::accept()
     this->setResult(1);
     thread.waitForFinished();
 
-    if(permissionsNumeric->text() != permString)                                //has changed, set new permissions
-        chmod(pathName.toLocal8Bit(),permissionsNumeric->text().toInt(0,8));    //convert to octal
+    if(permissionsNumeric->text() != permString)
+    {
+        foreach(QString file, fileList)
+            chmod(file.toLocal8Bit(),permissionsNumeric->text().toInt(0,8));    //convert to octal
+    }
 
     if(iconChanged) folderIcons->insert(QFileInfo(pathName).fileName(),iconButton->icon());
 
+    emit propertiesUpdated();
     this->done(1);
 }
 
@@ -358,9 +369,9 @@ QString getDriveInfo(QString path)
     struct statfs info;
     statfs(path.toLocal8Bit(), &info);
 
-    return QString("%1  /  %2  (%3%)").arg(formatSize((qint64) (info.f_blocks - info.f_bavail)*4096))
-                       .arg(formatSize((qint64) info.f_blocks*4096))
-                       .arg(100 - (info.f_bavail*100/info.f_blocks));
+    return QString("%1  /  %2  (%3%)").arg(formatSize((qint64) (info.f_blocks - info.f_bavail)*info.f_bsize))
+                       .arg(formatSize((qint64) info.f_blocks*info.f_bsize))
+                       .arg((info.f_blocks - info.f_bavail)*100/info.f_blocks);
 }
 
 //---------------------------------------------------------------------------

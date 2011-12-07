@@ -1,16 +1,21 @@
 TEMPLATE = app
-DEPENDPATH += . src
-INCLUDEPATH += . src
+DEPENDPATH += . \
+    src
+INCLUDEPATH += . \
+    src
 OBJECTS_DIR = build
 MOC_DIR = build
+
+# Input
 HEADERS += src/mainwindow.h \
- src/customactions.h \
- src/mymodel.h \
- src/bookmarkmodel.h \
- src/progressdlg.h \
- src/icondlg.h \
- src/propertiesdlg.h \
- src/tabbar.h
+    src/customactions.h \
+    src/mymodel.h \
+    src/bookmarkmodel.h \
+    src/progressdlg.h \
+    src/icondlg.h \
+    src/propertiesdlg.h \
+    src/tabbar.h \
+    src/mymodelitem.h
 SOURCES += src/main.cpp \
     src/mainwindow.cpp \
     src/customactions.cpp \
@@ -20,15 +25,36 @@ SOURCES += src/main.cpp \
     src/icondlg.cpp \
     src/propertiesdlg.cpp \
     src/tabbar.cpp \
-    src/actions.cpp
+    src/actions.cpp \
+    src/mymodelitem.cpp
 CONFIG += release warn_off thread
-TRANSLATIONS += translations/qtfm_it.ts translations/qtfm_ru.ts
 RESOURCES += resources.qrc
-QT += network core gui
+QT+= network
+
 TARGET = qtfm
 target.path = /usr/bin
 desktop.files += qtfm.desktop
 desktop.path += /usr/share/applications
 icon.files += images/qtfm.png
 icon.path += /usr/share/pixmaps
-INSTALLS += target desktop icon
+
+docs.path += /usr/share/doc/qtfm
+docs.files += README CHANGELOG COPYING
+
+trans.path += /usr/share/qtfm
+trans.files += translations/qtfm_de.qm \
+               translations/qtfm_it.qm \
+               translations/qtfm_ru.qm \
+               translations/qtfm_sr.qm
+
+INSTALLS += target desktop icon docs trans
+
+
+
+
+
+
+
+
+
+

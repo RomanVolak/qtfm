@@ -57,7 +57,7 @@ void bookmarkmodel::addBookmark(QString name, QString path, QString isAuto, QStr
         item->setFlags(flags);
         item->setFont(QFont("sans",8));                 //force size to prevent 2 rows of background tiling
         this->appendRow(item);
-	return;
+        return;
     }
 
     QIcon theIcon;
@@ -155,14 +155,14 @@ void MainWindow::delBookmark()
 //---------------------------------------------------------------------------------
 void MainWindow::editBookmark()
 {
-   icondlg * themeIcons = new icondlg;
-   if(themeIcons->exec() == 1)
-   {
-	QStandardItem * item = modelBookmarks->itemFromIndex(bookmarksList->currentIndex());
-	item->setData(themeIcons->result,33);
-	item->setIcon(QIcon::fromTheme(themeIcons->result));
-   }
-   delete themeIcons;
+    icondlg * themeIcons = new icondlg;
+    if(themeIcons->exec() == 1)
+    {
+        QStandardItem * item = modelBookmarks->itemFromIndex(bookmarksList->currentIndex());
+        item->setData(themeIcons->result,33);
+        item->setIcon(QIcon::fromTheme(themeIcons->result));
+    }
+    delete themeIcons;
 }
 
 //---------------------------------------------------------------------------
@@ -176,11 +176,7 @@ void MainWindow::toggleWrapBookmarks()
 void MainWindow::bookmarkPressed(QModelIndex current)
 {
     if(QApplication::mouseButtons() == Qt::MidButton)
-    {
         tabs->setCurrentIndex(addTab(current.data(32).toString()));
-        //if(tabs->count() == 0) tabs->addNewTab(pathEdit->currentText(),type);
-        //tabs->setCurrentIndex(tabs->addNewTab(current.data(32).toString(),type));
-    }
 }
 
 //---------------------------------------------------------------------------
@@ -197,7 +193,7 @@ void MainWindow::bookmarkClicked(QModelIndex item)
 }
 
 //---------------------------------------------------------------------------------
-QStringList bookmarkmodel::mimeTypes () const
+QStringList bookmarkmodel::mimeTypes() const
 {
     return QStringList() << "application/x-qstandarditemmodeldatalist" << "text/uri-list";
 }
@@ -216,15 +212,15 @@ bool bookmarkmodel::dropMimeData(const QMimeData * data,Qt::DropAction action,in
 
     foreach(QUrl path, files)
     {
-	QFileInfo file(path.toLocalFile());
+        QFileInfo file(path.toLocalFile());
 
-	//drag to bookmark window, add a new bookmark
-	if(parent.column() == -1)
-	{
+        //drag to bookmark window, add a new bookmark
+        if(parent.column() == -1)
+        {
             if(file.isDir()) this->addBookmark(file.fileName(),file.filePath(),0,"");
             return false;
-	}
-	else
+        }
+        else
             if(action == 2)                             //cut
                 cutList.append(file.filePath());
     }

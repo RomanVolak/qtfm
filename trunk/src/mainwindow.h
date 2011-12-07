@@ -32,10 +32,10 @@
 #include <QListView>
 #include <QLabel>
 #include <QStackedWidget>
-#include <QFileSystemModel>
+//#include <QFileSystemModel>
 #include <QSortFilterProxyModel>
 #include <QComboBox>
-#include <QFileIconProvider>
+//#include <QFileIconProvider>
 #include <QSignalMapper>
 
 #include "mymodel.h"
@@ -64,7 +64,6 @@ protected:
 
 public slots:
     void treeSelectionChanged(QModelIndex,QModelIndex);
-    void treeSelectionChangedLate();
     void listSelectionChanged(const QItemSelection, const QItemSelection);
     void listDoubleClicked(QModelIndex);
     void lateStart();
@@ -131,6 +130,7 @@ public slots:
     void exitAction();
 
     void dirLoaded();
+    void thumbUpdate(QModelIndex);
 
 signals:
     void updateCopyProgress(qint64, qint64, QString);
@@ -154,7 +154,6 @@ private:
     QCompleter *customComplete;
 
     tabBar *tabs;
-    QTimer timer;
 
     bool isDaemon;
     QLocalServer daemon;
@@ -176,6 +175,8 @@ private:
     QModelIndex backIndex;
 
     QSortFilterProxyModel *modelTree;
+    QSortFilterProxyModel *modelView;
+
     bookmarkmodel *modelBookmarks;
     QItemSelectionModel *treeSelectionModel;
     QItemSelectionModel *listSelectionModel;
@@ -242,11 +243,23 @@ private:
 // Subclass QSortFilterProxyModel and override 'filterAcceptsRow' to only show
 // directories in tree and not files.
 //---------------------------------------------------------------------------------
-class FileFilterProxyModel : public QSortFilterProxyModel
+class mainTreeFilterProxyModel : public QSortFilterProxyModel
 {
 protected:
     virtual bool filterAcceptsRow(int source_row, const QModelIndex& source_parent) const;
 };
+
+
+//---------------------------------------------------------------------------------
+// Subclass QSortFilterProxyModel and override 'lessThan' for sorting in list/details views
+//---------------------------------------------------------------------------------
+class viewsSortProxyModel : public QSortFilterProxyModel
+{
+protected:
+    bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const;
+    bool lessThan(const QModelIndex &left, const QModelIndex &right) const;
+};
+
 
 //---------------------------------------------------------------------------------
 // Subclass QCompleter so we can use the SortFilterProxyModel above for the address bar.

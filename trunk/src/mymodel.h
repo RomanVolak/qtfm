@@ -24,35 +24,64 @@
 #define MYMODEL_H
 
 #include <QtGui>
+#include "mymodelitem.h"
 
-//---------------------------------------------------------------------------------
-// Subclass QFileSystemModel and override 'data' to show mime filetype icons from
-// current theme. Standard Qt class only ever returns default folder and file icon.
-//
-// Also override 'remove' because of Qt bug not removing hidden files.
-//
-// Also override 'dropMimeData' to fix Qt bug DragDrop not working for folders.
-//---------------------------------------------------------------------------------
+QString formatSize(qint64);
 
-class myModel : public QFileSystemModel
+
+class myModel : public QAbstractItemModel
 {
     Q_OBJECT
 
 public:
-	myModel();
-	void loadMimeTypes() const;
+        myModel();
+        ~myModel();
+
+        void loadMimeTypes() const;
         void cacheInfo();
         void setMode(bool);
-        bool remove(const QModelIndex & index ) const;
-        bool dropMimeData(const QMimeData * data,Qt::DropAction action,int row,int column,const QModelIndex & parent);
         void loadThumbs(QModelIndexList);
-	void addCutItems(QStringList);
-	void clearCutItems();
+        void addCutItems(QStringList);
+        void clearCutItems();
+        void populateItem(myModelItem *item);
+        void fetchMore(const QModelIndex & parent);
+        void refresh();
+        void update();
+
+        bool remove(const QModelIndex & index );
+        bool dropMimeData(const QMimeData * data,Qt::DropAction action,int row,int column,const QModelIndex & parent);
+        bool isDir(const QModelIndex &index);
+        bool canFetchMore (const QModelIndex & parent) const;
+        bool setRootPath(const QString& path);
+
+        QModelIndex index(int row, int column, const QModelIndex &parent) const;
+        QModelIndex index(const QString& path) const;
+        QModelIndex parent(const QModelIndex &index) const;
+        QModelIndex insertFolder(QModelIndex parent);
+        QModelIndex insertFile(QModelIndex parent);
+
+        int rowCount(const QModelIndex &parent) const;
+        qint64 size(const QModelIndex &index);
+
+        QString fileName(const QModelIndex &index);
+        QString filePath(const QModelIndex &index);
+
+        QStringList mimeTypes() const;
 
         QByteArray getThumb(QString item);
-	QHash<QString,QIcon> *mimeIcons;
+
+        QFileInfo fileInfo(const QModelIndex &index);
+
+        Qt::DropActions supportedDropActions () const;
+        QMimeData * mimeData(const QModelIndexList & indexes) const;
+
+        QHash<QString,QIcon> *mimeIcons;
         QHash<QString,QIcon> *folderIcons;
         QHash<QString,QIcon> *icons;
+
+public slots:
+        void notifyChange();
+        void addWatcher(myModelItem* path);
 
 signals:
         void dragDropPaste(const QMimeData * data, QString newPath, QStringList cutList);
@@ -60,17 +89,28 @@ signals:
 
 protected:
         QVariant data(const QModelIndex & index, int role) const;
-	QVariant headerData(int section, Qt::Orientation orientation, int role) const;
-	int columnCount(const QModelIndex &parent) const;
+        QVariant headerData(int section, Qt::Orientation orientation, int role) const;
+        bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole);
+        int columnCount(const QModelIndex &parent) const;
+
+        Qt::ItemFlags flags(const QModelIndex &index) const;
 
 private:
 
         bool showThumbs;
-	int thumbCount;
-	QStringList cutItems;
-	QHash<QString,QString> *mimeGlob;
-	QHash<QString,QString> *mimeGeneric;
-	QHash<QString,QByteArray> *thumbs;
+        int thumbCount;
+        QStringList cutItems;
+        QHash<QString,QString> *mimeGlob;
+        QHash<QString,QString> *mimeGeneric;
+        QHash<QString,QByteArray> *thumbs;
+
+        myModelItem* rootItem;
+        QString currentRootPath;
+        QFileIconProvider* iconFactory;
+
+        int inotifyFD;
+        QSocketNotifier *notifier;
+        QHash<int, QString> watchers;
 };
 
 #endif // MYMODEL_H

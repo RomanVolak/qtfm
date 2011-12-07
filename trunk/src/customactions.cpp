@@ -98,7 +98,7 @@ void customActionsDialog::getIcon(QTreeWidgetItem * item, int column)
         {
             item->setText(column,icons->result);
             item->setIcon(column,QIcon::fromTheme(icons->result));
-	}
+        }
         delete icons;
     }
     return;
@@ -144,18 +144,17 @@ void customActionsDialog::readItems()
     QStringList keys = settings.childKeys();
     for(int i = 0; i < keys.count(); ++i)
     {
-	QStringList temp = settings.value(keys.at(i)).toStringList();
-	bool setChecked = 0;
-	QString cmd = temp.at(3);
-	if(cmd.at(0) == '|')
-	{
-	    cmd.remove(0,1);
-	    setChecked = 1;	
-	}
+        QStringList temp = settings.value(keys.at(i)).toStringList();
+        bool setChecked = 0;
+        QString cmd = temp.at(3);
+        if(cmd.at(0) == '|')
+        {
+            cmd.remove(0,1);
+            setChecked = 1;
+        }
 
-
-	QTreeWidgetItem *item = new QTreeWidgetItem(treeWidget,QStringList() << temp.at(0) << temp.at(1) << temp.at(2) << cmd,0);
-	item->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEditable|Qt::ItemIsEnabled|Qt::ItemIsDragEnabled|Qt::ItemIsUserCheckable);
+        QTreeWidgetItem *item = new QTreeWidgetItem(treeWidget,QStringList() << temp.at(0) << temp.at(1) << temp.at(2) << cmd,0);
+        item->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEditable|Qt::ItemIsEnabled|Qt::ItemIsDragEnabled|Qt::ItemIsUserCheckable);
 	
         if(setChecked) item->setCheckState(3,Qt::Checked);
         else item->setCheckState(3,Qt::Unchecked);
@@ -164,12 +163,12 @@ void customActionsDialog::readItems()
 
     if(keys.count()==0)
     {
-	QTreeWidgetItem *item1 = new QTreeWidgetItem(treeWidget, QStringList() << "gz,bz2" << tr("Extract here") << "package-x-generic" << "tar xf %f",0);
-	QTreeWidgetItem *item2 = new QTreeWidgetItem(treeWidget, QStringList() << "folder" << tr("Term here") << "terminal" << "urxvt -cd %F",0);
-	QTreeWidgetItem *item3 = new QTreeWidgetItem(treeWidget, QStringList() << "*" << tr("Compress") << "filesave" << "tar czf %n.tar.gz %f",0);
-	item1->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEditable|Qt::ItemIsEnabled|Qt::ItemIsUserCheckable);
-	item2->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEditable|Qt::ItemIsEnabled|Qt::ItemIsUserCheckable);
-	item3->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEditable|Qt::ItemIsEnabled|Qt::ItemIsUserCheckable);
+        QTreeWidgetItem *item1 = new QTreeWidgetItem(treeWidget, QStringList() << "gz,bz2" << tr("Extract here") << "package-x-generic" << "tar xf %f",0);
+        QTreeWidgetItem *item2 = new QTreeWidgetItem(treeWidget, QStringList() << "folder" << tr("Term here") << "terminal" << "urxvt -cd %F",0);
+        QTreeWidgetItem *item3 = new QTreeWidgetItem(treeWidget, QStringList() << "*" << tr("Compress") << "filesave" << "tar czf %n.tar.gz %f",0);
+        item1->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEditable|Qt::ItemIsEnabled|Qt::ItemIsUserCheckable);
+        item2->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEditable|Qt::ItemIsEnabled|Qt::ItemIsUserCheckable);
+        item3->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEditable|Qt::ItemIsEnabled|Qt::ItemIsUserCheckable);
 
         saveItems();
     }
@@ -192,7 +191,7 @@ void customActionsDialog::saveItems()
         
         if(item->checkState(3) == Qt::Checked) cmd.prepend("|");
         
-	temp << item->text(0) << item->text(1) << item->text(2) << cmd;
+        temp << item->text(0) << item->text(1) << item->text(2) << cmd;
         settings.setValue(QString(i),temp);
     }
     settings.endGroup();

@@ -28,7 +28,5 @@
         <file>images/zoom-out.png</file>
         <file>images/preferences.png</file>
         <file>images/properties.png</file>
-        <file>translations/qtfm_ru.qm</file>
-	<file>translations/qtfm_it.qm</file>
     </qresource>
 </RCC>

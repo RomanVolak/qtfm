@@ -1,3 +1,9 @@
+5.2	28-November-2011
+- complete rewrite of FS model, no longer using QFileSystemModel.
+- fixed many small issues that were associated with QFileSystemModel.
+- added translations de/it/ru/sr. Now stored in /usr/share/qtfm.
+- modified properties so you can change permissions for multiple files/folders at once.
+
 5.1	15-October-2011
 - added 'per tab' view selection.
 - added 'per tab' history-back functionality.

@@ -32,7 +32,7 @@ void MainWindow::createActionIcons()
     out >> *actionIcons;
     icons.close();
 
-    if(actionIcons->count() == 0)
+    if(actionIcons->count() < 27)
     {
         actionIcons->append(QIcon::fromTheme("folder-new",QIcon(":/images/folder-new.png")));
         actionIcons->append(QIcon::fromTheme("document-new",QIcon(":/images/document-new.png")));
@@ -59,7 +59,8 @@ void MainWindow::createActionIcons()
         actionIcons->append(QIcon::fromTheme("key_bindings",QIcon(":/images/key_bindings.png")));
         actionIcons->append(QIcon::fromTheme("zoom-in",QIcon(":/images/zoom-in.png")));
         actionIcons->append(QIcon::fromTheme("zoom-out",QIcon(":/images/zoom-out.png")));
-        actionIcons->append(QIcon::fromTheme("window-close",QIcon(":/images/window-close.png")));      //25
+        actionIcons->append(QIcon::fromTheme("window-close",QIcon(":/images/window-close.png")));
+        actionIcons->append(QIcon::fromTheme("tab-new",QIcon(":/images/folder-new.png")));          //26
 
         icons.open(QIODevice::WriteOnly);
         QDataStream out(&icons);
@@ -86,12 +87,16 @@ void MainWindow::createActions()
     newFileAct->setIcon(actionIcons->at(1));
     actionList->append(newFileAct);
 
-    openTabAct = new QAction(tr("Open tab"), this);
+    openTabAct = new QAction(tr("New tab"), this);
+    openTabAct->setStatusTip(tr("Middle-click things to open tab"));
     connect(openTabAct, SIGNAL(triggered()), this, SLOT(openTab()));
+    openTabAct->setIcon(actionIcons->at(26));
     actionList->append(openTabAct);
 
     closeTabAct = new QAction(tr("Close tab"), this);
+    closeTabAct->setStatusTip(tr("Middle-click tabs to close"));
     connect(closeTabAct, SIGNAL(triggered()), tabs, SLOT(closeTab()));
+    closeTabAct->setIcon(actionIcons->at(25));
     actionList->append(closeTabAct);
 
     cutAct = new QAction(tr("Cut"), this);
@@ -318,6 +323,7 @@ void MainWindow::readShortcuts()
         shortcuts.insert(terminalAct->text(),"f4");
         shortcuts.insert(terminalAct->text(),"f4");
         shortcuts.insert(exitAct->text(),"ctrl+q");
+        shortcuts.insert(renameAct->text(),"f2");
         shortcuts.insert(refreshAct->text(),"f5");
         shortcuts.insert(escapeAct->text(),"esc");
         shortcuts.insert(zoomOutAct->text(),"ctrl+-");
@@ -577,5 +583,37 @@ void MainWindow::zoomOutAction()
 void MainWindow::addressAction()
 {
     pathEdit->setFocus(Qt::TabFocusReason);
+    pathEdit->setCompleter(customComplete);
+    QApplication::clipboard()->blockSignals(0);
 }
 
+//---------------------------------------------------------------------------
+void MainWindow::addressChanged(int old, int now)
+{
+    if(!pathEdit->hasFocus()) return;
+    QString temp = pathEdit->currentText();
+
+    if(temp.length() == now || pathEdit->lineEdit()->selectedText().length() > 0) return;
+    int pos = temp.indexOf("/",now);
+
+    if(QApplication::keyboardModifiers() == Qt::ControlModifier)
+    {
+        tree->setCurrentIndex(modelTree->mapFromSource(modelList->index(temp.left(pos))));
+        return;
+    }
+
+    if(QApplication::mouseButtons() == Qt::MiddleButton)
+    {
+        QApplication::clipboard()->blockSignals(1);
+        QApplication::clipboard()->clear(QClipboard::Selection);        //don't paste shit
+
+        pathEdit->setCompleter(0);
+        tree->setCurrentIndex(modelTree->mapFromSource(modelList->index(temp.left(pos))));
+
+        QTimer::singleShot(200,this,SLOT(addressAction()));
+        return;
+    }
+
+    pathEdit->completer()->setCompletionPrefix(temp.left(pos) + "/");
+    pathEdit->completer()->complete();
+}

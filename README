@@ -65,7 +65,6 @@ to the [General] section of '~/.config/qtfm/qtfm.conf' called 'forceTheme'.
 
 eg.
 	forceTheme=Tango
-	forceTheme=Faenza
 
 nb. The name must match the theme folder exactly (ie. case sensitive)
 
@@ -165,10 +164,11 @@ Translations
 
 Many thanks to the following for contributing translations:
 
- - DE German		quax		
- - IT Italian		zereal
- - RU Russian		Alexey
- - SR Serbian		Mladen
+ - Chinese	zh	A. Lee
+ - German	de	quax		
+ - Italian	it	zereal
+ - Russian	ru	Alexey
+ - Serbian	sr	Mladen
 
 If you would like to contribute to the translations you can grab the 'qtfm_XX.ts' template
 in the source, rename it to your country code (qtfm_fr.ts) and then edit it with Qt's 'linguist'
@@ -189,10 +189,13 @@ Tip & Tricks
 
 - Ctrl+drag&drop will copy instead of move.
 
+- Click anywhere in the address bar path to navigate from there. Ctrl+click or middle-click will go
+  immediately to that folder.
+
 - Right-click on the status bar will bring up the 'View' options.  Useful if you have hidden the main menu.
 
-- When you copy things in qtFM it places the paths in the selection buffer so you can then middle-click in
-  a text editor or terminal for example to 'paste as text'.
+- When you copy things in qtFM it places the path(s) in the selection buffer so you can then middle-click in
+  a text editor for example to 'paste as text'.
 
 - You can also use sequential shortcuts like vi or emacs instead of the combination shortcuts (ctrl+x).
   In the shortcuts editor just seperate them with commas. eg. 'a,b,c'

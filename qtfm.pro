@@ -45,7 +45,8 @@ trans.path += /usr/share/qtfm
 trans.files += translations/qtfm_de.qm \
                translations/qtfm_it.qm \
                translations/qtfm_ru.qm \
-               translations/qtfm_sr.qm
+               translations/qtfm_sr.qm \
+               translations/qtfm_zh.qm
 
 INSTALLS += target desktop icon docs trans
 

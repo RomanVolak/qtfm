@@ -32,10 +32,8 @@
 #include <QListView>
 #include <QLabel>
 #include <QStackedWidget>
-//#include <QFileSystemModel>
 #include <QSortFilterProxyModel>
 #include <QComboBox>
-//#include <QFileIconProvider>
 #include <QSignalMapper>
 
 #include "mymodel.h"
@@ -77,7 +75,7 @@ public slots:
     bool pasteFile(QList<QUrl> files,QString newPath, QStringList cutList);
     void newDir();
     void newFile();
-    void pathEditChanged(int);
+    void pathEditChanged(QString);
     void terminalRun();
     void executeFile(QModelIndex, bool);
     void runFile();
@@ -131,6 +129,8 @@ public slots:
 
     void dirLoaded();
     void thumbUpdate(QModelIndex);
+
+    void addressChanged(int,int);
 
 signals:
     void updateCopyProgress(qint64, qint64, QString);

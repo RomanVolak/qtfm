@@ -1,3 +1,12 @@
+5.3	14-December-2011
+- added new address bar navigation and drop-down auto-completion.
+- added 'New tab' to tree context menu.
+- added 'Close' context menu to tabs.
+- added Chinese translation (zh).
+- fixed 'single-click' navigation mode.
+- fixed sorting for size & date columns in detail view.
+- fixed bug in available space detection when pasting to removable drives.
+
 5.2	28-November-2011
 - complete rewrite of FS model, no longer using QFileSystemModel.
 - fixed many small issues that were associated with QFileSystemModel.

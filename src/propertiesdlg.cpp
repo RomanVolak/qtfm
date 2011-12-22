@@ -369,6 +369,8 @@ QString getDriveInfo(QString path)
     struct statfs info;
     statfs(path.toLocal8Bit(), &info);
 
+    if(info.f_blocks == 0) return "";
+
     return QString("%1  /  %2  (%3%)").arg(formatSize((qint64) (info.f_blocks - info.f_bavail)*info.f_bsize))
                        .arg(formatSize((qint64) info.f_blocks*info.f_bsize))
                        .arg((info.f_blocks - info.f_bavail)*100/info.f_blocks);

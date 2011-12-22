@@ -194,7 +194,7 @@ void myModel::notifyChange()
                 parent->dirty = 1;
 
                 QDir dir(parent->absoluteFilePath());
-                QFileInfoList all = dir.entryInfoList(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System,QDir::Name);
+                QFileInfoList all = dir.entryInfoList(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System);
 
                 foreach(myModelItem * child, parent->children())
                 {
@@ -303,7 +303,7 @@ void myModel::populateItem(myModelItem *item)
     item->walked = 1;
 
     QDir dir(item->absoluteFilePath());
-    QFileInfoList all = dir.entryInfoList(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System,QDir::Name);
+    QFileInfoList all = dir.entryInfoList(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System);
 
     addWatcher(item);
 
@@ -329,6 +329,11 @@ int myModel::rowCount(const QModelIndex &parent) const
 void myModel::refresh()
 {
     myModelItem *item = rootItem->matchPath(currentRootPath.split(SEPARATOR));
+
+    //free all inotify watches
+    foreach(int w, watchers.keys())
+        inotify_rm_watch(inotifyFD,w);
+    watchers.clear();
 
     beginResetModel();
     item->clearAll();
@@ -506,7 +511,7 @@ void myModel::loadMimeTypes() const
 void myModel::loadThumbs(QModelIndexList indexes)
 {
     QStringList files,types;
-    types << "jpg" << "png" << "bmp" << "ico" << "svg" << "gif";
+    types << "jpg" << "jpeg" << "png" << "bmp" << "ico" << "svg" << "gif";
 
     foreach(QModelIndex item,indexes)
     {
@@ -786,18 +791,22 @@ bool myModel::remove(const QModelIndex & theIndex)
 //---------------------------------------------------------------------------------
 bool myModel::dropMimeData(const QMimeData * data,Qt::DropAction action,int row,int column,const QModelIndex & parent )
 {
-    QList<QUrl> files = data->urls();
-    QStringList cutList;
+    if(isDir(parent))
+    {
+        QList<QUrl> files = data->urls();
+        QStringList cutList;
 
-    //don't do anything if you drag and drop in same folder
-    if(QFileInfo(files.at(0).path()).canonicalPath() == filePath(parent)) return false;
+        //don't do anything if you drag and drop in same folder
+        if(QFileInfo(files.at(0).path()).canonicalPath() == filePath(parent)) return false;
 
-    Qt::KeyboardModifiers mods = QApplication::keyboardModifiers();
-    if(mods != Qt::ControlModifier)                                     //cut by default, holding ctrl is copy
-        foreach(QUrl item, files)
-            cutList.append(item.path());
 
-    emit dragDropPaste(data, filePath(parent), cutList);
+        Qt::KeyboardModifiers mods = QApplication::keyboardModifiers();
+        if(mods != Qt::ControlModifier)                                     //cut by default, holding ctrl is copy
+            foreach(QUrl item, files)
+                cutList.append(item.path());
+
+        emit dragDropPaste(data, filePath(parent), cutList);
+    }
     return false;
 }
 

@@ -164,7 +164,7 @@ myModelItem* myModelItem::matchPath(const QStringList& path, int startIndex)
     {
         walked = true;
         QDir dir(this->absoluteFilePath());
-        QFileInfoList all = dir.entryInfoList(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System,QDir::Name);
+        QFileInfoList all = dir.entryInfoList(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System);
 
         foreach(QFileInfo one, all)
             new myModelItem(one,this);

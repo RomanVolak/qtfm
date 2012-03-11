@@ -423,14 +423,6 @@
         <source>Middle-click tabs to close</source>
         <translation>中东单击标签关闭</translation>
     </message>
-    <message>
-        <source>Filetype:</source>
-        <translation>文件类型:</translation>
-    </message>
-    <message>
-        <source>Open with:</source>
-        <translation>打开:</translation>
-    </message>
 </context>
 <context>
     <name>customActionsDialog</name>
@@ -531,6 +523,10 @@
         <translation>包含：</translation>
     </message>
     <message>
+        <source>FileType:</source>
+        <translation>文件类型：</translation>
+    </message>
+    <message>
         <source>Modified:</source>
         <translation>修改时间：</translation>
     </message>
@@ -581,10 +577,6 @@
     <message>
         <source>%1 Files, %2 folders</source>
         <translation>%1 文件，%2 文件夹</translation>
-    </message>
-    <message>
-        <source>Filetype:</source>
-        <translation>文件类型:</translation>
     </message>
 </context>
 </TS>

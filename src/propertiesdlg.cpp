@@ -1,6 +1,6 @@
 /****************************************************************************
 * This file is part of qtFM, a simple, fast file manager.
-* Copyright (C) 2010,2011,2012 Wittfella
+* Copyright (C) 2010,2011 Wittfella
 *
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -25,15 +25,13 @@
 #include "mainwindow.h"
 #include <sys/vfs.h>
 #include <sys/stat.h>
-#include <magic.h>
 
 //---------------------------------------------------------------------------
-propertiesDialog::propertiesDialog(QStringList paths, myModel *modelList)
+propertiesDialog::propertiesDialog(QStringList paths, QHash<QString,QIcon> *modelFolderIcons, QHash<QString,QIcon> *modelFileIcons)
 {
     setWindowTitle(tr("Properties"));
     fileList = paths;
     pathName = paths.at(0);
-    model = modelList;
     QFileInfo file(pathName);
 
     folderIcons = 0;
@@ -69,7 +67,7 @@ propertiesDialog::propertiesDialog(QStringList paths, myModel *modelList)
         if(file.isDir())
         {
             type = 1;
-            folderIcons = modelList->folderIcons;
+            folderIcons = modelFolderIcons;
 
             iconButton = new QToolButton;
             if(folderIcons->contains(file.fileName())) iconButton->setIcon(folderIcons->value(file.fileName()));
@@ -85,7 +83,7 @@ propertiesDialog::propertiesDialog(QStringList paths, myModel *modelList)
         else
         {
             type = 2;
-            fileIcons = modelList->mimeIcons;
+            fileIcons = modelFileIcons;
 
             QLabel *iconLabel = new QLabel();
             QIcon theIcon;
@@ -101,8 +99,8 @@ propertiesDialog::propertiesDialog(QStringList paths, myModel *modelList)
             iconLabel->setPixmap(theIcon.pixmap(24,24));
 
             layoutPath->addWidget(iconLabel,0,0);
-            layoutPath->addWidget(new QLabel(tr("Filetype:")),3,0);
-            containsInfo->setText(gGetMimeType(pathName));
+            layoutPath->addWidget(new QLabel(tr("FileType:")),3,0);
+            containsInfo->setText(getMimeType(pathName));
         }
 
         path->setWordWrap(1);
@@ -245,8 +243,6 @@ propertiesDialog::propertiesDialog(QStringList paths, myModel *modelList)
     connect(this,SIGNAL(finishedSignal()),this,SLOT(finished()));
 
     show();
-    setMinimumSize(size());
-
     this->setAttribute(Qt::WA_DeleteOnClose,1);
     thread = QtConcurrent::run(this,&propertiesDialog::folderProperties, paths);
 }
@@ -309,12 +305,7 @@ void propertiesDialog::accept()
     if(permissionsNumeric->text() != permString)
     {
         foreach(QString file, fileList)
-        {
             chmod(file.toLocal8Bit(),permissionsNumeric->text().toInt(0,8));    //convert to octal
-
-            myModelItem *item = static_cast<myModelItem*>(model->index(file).internalPointer());
-            item->mPermissions.clear();
-        }
     }
 
     if(iconChanged) folderIcons->insert(QFileInfo(pathName).fileName(),iconButton->icon());
@@ -385,13 +376,20 @@ QString getDriveInfo(QString path)
                        .arg((info.f_blocks - info.f_bavail)*100/info.f_blocks);
 }
 
-//---------------------------------------------------------------------------------
-QString gGetMimeType(QString path)
+//---------------------------------------------------------------------------
+QString getMimeType(QString path)
 {
-    magic_t cookie = magic_open(MAGIC_MIME);
-    magic_load(cookie,0);
-    QString temp = magic_file(cookie,path.toLocal8Bit());
-    magic_close(cookie);
+    QProcess myProcess;
+    myProcess.start("file --mime-type \"" + path + "\"");
+    myProcess.waitForFinished();
+    QString mimeType = QString(myProcess.readAllStandardOutput()).split(" ").last().trimmed();
+    myProcess.close();
 
-    return temp.left(temp.indexOf(";"));
+//  LIBS += -lmagic
+//    magic_t cookie = magic_open(MAGIC_MIME);
+//    magic_load(cookie,0);
+//    QString mimeType = magic_file(cookie,path.toLocal8Bit());
+//    magic_close(cookie);
+
+    return mimeType;
 }

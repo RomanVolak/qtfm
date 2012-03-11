@@ -1,6 +1,6 @@
 /****************************************************************************
 * This file is part of qtFM, a simple, fast file manager.
-* Copyright (C) 2010,2011,2012 Wittfella
+* Copyright (C) 2010,2011 Wittfella
 *
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -98,12 +98,6 @@ void MainWindow::createActions()
     connect(closeTabAct, SIGNAL(triggered()), tabs, SLOT(closeTab()));
     closeTabAct->setIcon(actionIcons->at(25));
     actionList->append(closeTabAct);
-
-    tabsOnTopAct = new QAction(tr("Tabs on top"), this);
-    tabsOnTopAct->setStatusTip(tr("Tabs on top"));
-    tabsOnTopAct->setCheckable(true);
-    connect(tabsOnTopAct, SIGNAL(triggered()), this, SLOT(tabsOnTop()));
-    actionList->append(tabsOnTopAct);
 
     cutAct = new QAction(tr("Cut"), this);
     cutAct->setStatusTip(tr("Move the current file"));
@@ -293,21 +287,9 @@ void MainWindow::createActions()
     zoomOutAct->setIcon(actionIcons->at(24));
     actionList->append(zoomOutAct);
 
-    focusAddressAct = new QAction(tr("Focus address"), this);
-    connect(focusAddressAct, SIGNAL(triggered()), this, SLOT(focusAction()));
-    actionList->append(focusAddressAct);
-
-    focusTreeAct = new QAction(tr("Focus tree"), this);
-    connect(focusTreeAct, SIGNAL(triggered()), this, SLOT(focusAction()));
-    actionList->append(focusTreeAct);
-
-    focusBookmarksAct = new QAction(tr("Focus bookmarks"), this);
-    connect(focusBookmarksAct, SIGNAL(triggered()), this, SLOT(focusAction()));
-    actionList->append(focusBookmarksAct);
-
-    focusListAct = new QAction(tr("Focus list"), this);
-    connect(focusListAct, SIGNAL(triggered()), this, SLOT(focusAction()));
-    actionList->append(focusListAct);
+    addressAct = new QAction(tr("Focus address"), this);
+    connect(addressAct, SIGNAL(triggered()), this, SLOT(addressAction()));
+    actionList->append(addressAct);
 
     //we don't need the icon list anymore
     delete actionIcons;
@@ -348,20 +330,6 @@ void MainWindow::readShortcuts()
         shortcuts.insert(zoomInAct->text(),"ctrl++");
     }
 
-    //bookmark shortcuts
-    QList<QStandardItem *> theBookmarks = modelBookmarks->findItems("*",Qt::MatchWildcard);
-
-    foreach(QStandardItem *item,theBookmarks)
-    {
-        if(!item->text().isEmpty())
-        {
-            QAction *tempAction = new QAction(item->icon(),item->text(),this);
-            connect(tempAction, SIGNAL(triggered()), this, SLOT(bookmarkShortcutTrigger()));
-            actionList->append(tempAction);
-        }
-    }
-
-
     foreach(QAction* action, *actionList)
     {
         QString text = shortcuts.value(action->text());
@@ -371,16 +339,6 @@ void MainWindow::readShortcuts()
             addAction(action);					    //add to MainWindow so they work when menu is hidden
         }
     }
-}
-
-//---------------------------------------------------------------------------
-void MainWindow::bookmarkShortcutTrigger()
-{
-    QAction* sc = qobject_cast<QAction*>(sender());
-    QModelIndex index = modelBookmarks->findItems(sc->text()).first()->index();
-    bookmarksList->clearSelection();
-    bookmarksList->setCurrentIndex(index);
-    bookmarkClicked(index);
 }
 
 //---------------------------------------------------------------------------
@@ -400,6 +358,7 @@ void MainWindow::editShortcuts()
     header->setText(0,tr("Action"));
     header->setText(1,tr("Shortcut"));
     treeWidget->setColumnWidth(0,160);
+    //treeWidget->setIndentation(10);
 
     QDialogButtonBox *buttons = new QDialogButtonBox;
     buttons->setStandardButtons(QDialogButtonBox::Save|QDialogButtonBox::Cancel);
@@ -422,6 +381,7 @@ void MainWindow::editShortcuts()
         item1->setIcon(0,actionList->at(x)->icon());
         if(item1->icon(0).isNull()) item1->setIcon(0,blank);
     }
+
 
     QStringList shortcuts, duplicates;
 
@@ -496,9 +456,7 @@ void MainWindow::createMenus()
     viewMenu->addAction(detailAct);
     viewMenu->addAction(hiddenAct);
     viewMenu->addSeparator();
-    viewMenu->addAction(tabsOnTopAct);
     viewMenu->addAction(thumbsAct);
-    viewMenu->addSeparator();
     viewMenu->addAction(zoomInAct);
     viewMenu->addAction(zoomOutAct);
     viewMenu->addSeparator();
@@ -622,19 +580,11 @@ void MainWindow::zoomOutAction()
 }
 
 //---------------------------------------------------------------------------
-void MainWindow::focusAction()
+void MainWindow::addressAction()
 {
-    QAction *which = qobject_cast<QAction*>(sender());
-    if(which)
-    {
-        if(which->text().contains("address")) pathEdit->setFocus(Qt::TabFocusReason);
-        else if(which->text().contains("tree")) tree->setFocus(Qt::TabFocusReason);
-        else if(which->text().contains("bookmarks")) bookmarksList->setFocus(Qt::TabFocusReason);
-        else if(currentView == 2) detailTree->setFocus(Qt::TabFocusReason);
-        else list->setFocus(Qt::TabFocusReason);
-    }
-    else
-        pathEdit->setCompleter(customComplete);
+    pathEdit->setFocus(Qt::TabFocusReason);
+    pathEdit->setCompleter(customComplete);
+    QApplication::clipboard()->blockSignals(0);
 }
 
 //---------------------------------------------------------------------------
@@ -643,30 +593,27 @@ void MainWindow::addressChanged(int old, int now)
     if(!pathEdit->hasFocus()) return;
     QString temp = pathEdit->currentText();
 
-    if(temp.length() == now) return;
+    if(temp.length() == now || pathEdit->lineEdit()->selectedText().length() > 0) return;
     int pos = temp.indexOf("/",now);
-
-    pathEdit->lineEdit()->blockSignals(1);
 
     if(QApplication::keyboardModifiers() == Qt::ControlModifier)
     {
         tree->setCurrentIndex(modelTree->mapFromSource(modelList->index(temp.left(pos))));
+        return;
     }
-    else
-    if(QApplication::mouseButtons() == Qt::MidButton)
+
+    if(QApplication::mouseButtons() == Qt::MiddleButton)
     {
+        QApplication::clipboard()->blockSignals(1);
+        QApplication::clipboard()->clear(QClipboard::Selection);        //don't paste shit
+
         pathEdit->setCompleter(0);
         tree->setCurrentIndex(modelTree->mapFromSource(modelList->index(temp.left(pos))));
-        QApplication::clipboard()->clear(QClipboard::Selection);        //don't paste stuff
 
-        QTimer::singleShot(400,this,SLOT(focusAction()));
-    }
-    else
-    if(!pathEdit->lineEdit()->hasSelectedText())
-    {
-        pathEdit->completer()->setCompletionPrefix(temp.left(pos) + "/");
-        pathEdit->completer()->complete();
+        QTimer::singleShot(200,this,SLOT(addressAction()));
+        return;
     }
 
-    pathEdit->lineEdit()->blockSignals(0);
+    pathEdit->completer()->setCompletionPrefix(temp.left(pos) + "/");
+    pathEdit->completer()->complete();
 }

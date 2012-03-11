@@ -1,6 +1,6 @@
 /****************************************************************************
 * This file is part of qtFM, a simple, fast file manager.
-* Copyright (C) 2010,2011,2012 Wittfella
+* Copyright (C) 2010,2011 Wittfella
 *
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -19,22 +19,21 @@
 *
 ****************************************************************************/
 
-#include <mainwindow.h>
+
 #include "mymodel.h"
 #include <sys/inotify.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
 
 //---------------------------------------------------------------------------------
-myModel::myModel(bool realMime)
+myModel::myModel()
 {
     mimeGeneric = new QHash<QString,QString>;
     mimeGlob = new QHash<QString,QString>;
     mimeIcons = new QHash<QString,QIcon>;
     folderIcons = new QHash<QString,QIcon>;
     thumbs = new QHash<QString,QByteArray>;
-    icons = new QCache<QString,QIcon>;
-    icons->setMaxCost(500);
+    icons = new QHash<QString,QIcon>;
 
     QFile fileIcons(QDir::homePath() + "/.config/qtfm/file.cache");
     fileIcons.open(QIODevice::ReadOnly);
@@ -53,7 +52,7 @@ myModel::myModel(bool realMime)
     currentRootPath = "/";
 
     QDir root("/");
-    QFileInfoList drives = root.entryInfoList(QDir::AllEntries | QDir::Files | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System);
+    QFileInfoList drives = root.entryInfoList(QDir::AllEntries | QDir::Files | QDir::NoDotAndDotDot);
 
     foreach(QFileInfo drive, drives)
         new myModelItem(drive,rootItem);
@@ -66,8 +65,6 @@ myModel::myModel(bool realMime)
     inotifyFD = inotify_init();
     notifier = new QSocketNotifier(inotifyFD, QSocketNotifier::Read, this);
     connect(notifier, SIGNAL(activated(int)), this, SLOT(notifyChange()));
-
-    realMimeTypes = realMime;
 }
 
 //---------------------------------------------------------------------------------------
@@ -163,28 +160,9 @@ QString myModel::filePath(const QModelIndex &index)
 {
     myModelItem *item = static_cast<myModelItem*>(index.internalPointer());
 
-    if(item) return item->absoluteFilePath();
+    if(item) return item->fileInfo().filePath();
 
     return false;
-}
-
-//---------------------------------------------------------------------------------------
-QString myModel::getMimeType(const QModelIndex &index)
-{
-    myModelItem *item = static_cast<myModelItem*>(index.internalPointer());
-
-    if(item->mMimeType.isNull())
-    {
-        if(realMimeTypes) item->mMimeType = gGetMimeType(item->absoluteFilePath());
-        else
-        {
-            if(item->fileInfo().isDir()) item->mMimeType = "folder";
-            else item->mMimeType = item->fileInfo().suffix();
-            if(item->mMimeType.isNull()) item->mMimeType = "file";
-        }
-    }
-
-    return item->mMimeType;
 }
 
 //---------------------------------------------------------------------------------------
@@ -234,6 +212,7 @@ void myModel::notifyChange()
                             inotify_rm_watch(inotifyFD,wd);
                             watchers.remove(wd);
                         }
+
                         beginRemoveRows(index(parent->absoluteFilePath()),child->childNumber(),child->childNumber());
                         parent->removeChild(child);
                         endRemoveRows();
@@ -266,7 +245,6 @@ void myModel::addWatcher(myModelItem *item)
     while(item != rootItem)
     {
         watchers.insert(inotify_add_watch(inotifyFD, item->absoluteFilePath().toLocal8Bit(), IN_MOVE | IN_CREATE | IN_DELETE),item->absoluteFilePath()); //IN_ONESHOT | IN_ALL_EVENTS)
-        item->watched = 1;
         item = item->parent();
     }
 }
@@ -277,8 +255,6 @@ bool myModel::setRootPath(const QString& path)
     currentRootPath = path;
 
     myModelItem *item = rootItem->matchPath(path.split(SEPARATOR));
-
-    if(item->watched == 0) addWatcher(item);
 
     if(item->walked == 0)
     {
@@ -329,6 +305,8 @@ void myModel::populateItem(myModelItem *item)
     QDir dir(item->absoluteFilePath());
     QFileInfoList all = dir.entryInfoList(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System);
 
+    addWatcher(item);
+
     foreach(QFileInfo one, all)
         new myModelItem(one,item);
 }
@@ -350,7 +328,7 @@ int myModel::rowCount(const QModelIndex &parent) const
 //---------------------------------------------------------------------------------
 void myModel::refresh()
 {
-    myModelItem *item = rootItem->matchPath(QStringList("/"));
+    myModelItem *item = rootItem->matchPath(currentRootPath.split(SEPARATOR));
 
     //free all inotify watches
     foreach(int w, watchers.keys())
@@ -359,6 +337,7 @@ void myModel::refresh()
 
     beginResetModel();
     item->clearAll();
+    populateItem(item);
     endResetModel();
 }
 
@@ -472,14 +451,10 @@ void myModel::cacheInfo()
     if(thumbs->count() > thumbCount)
     {
         fileIcons.setFileName(QDir::homePath() + "/.config/qtfm/thumbs.cache");
-        if(fileIcons.size() > 5000000) fileIcons.remove();
-        else
-        {
-            fileIcons.open(QIODevice::WriteOnly);
-            out.setDevice(&fileIcons);
-            out << *thumbs;
-            fileIcons.close();
-        }
+        fileIcons.open(QIODevice::WriteOnly);
+        out.setDevice(&fileIcons);
+        out << *thumbs;
+        fileIcons.close();
     }
 }
 
@@ -622,11 +597,11 @@ QVariant myModel::data(const QModelIndex & index, int role) const
     {
         QFileInfo type(item->fileInfo());
 
-        if(cutItems.contains(type.filePath())) return colors.midlight();
-        else if(type.isHidden()) return colors.mid();
-        else if(type.isSymLink()) return colors.link();
-        else if(type.isDir()) return colors.windowText();
-        else if(type.isExecutable()) return QBrush(QColor(Qt::darkGreen));
+        if(cutItems.contains(type.filePath())) return QBrush(QColor(Qt::lightGray));
+        if(type.isHidden()) return QBrush(QColor(Qt::darkGray));
+        if(type.isSymLink()) return QBrush(QColor(Qt::blue));
+        if(type.isDir()) return QBrush(QColor(Qt::black));
+        if(type.isExecutable()) return QBrush(QColor(Qt::darkGreen));
     }
     else
     if(role == Qt::TextAlignmentRole)
@@ -647,41 +622,29 @@ QVariant myModel::data(const QModelIndex & index, int role) const
                 else data = formatSize(item->fileInfo().size());
                 break;
             case 2:
-                if(item->mMimeType.isNull())
-                {
-                    if(realMimeTypes) item->mMimeType = gGetMimeType(item->absoluteFilePath());
-                    else
-                    {
-                        if(item->fileInfo().isDir()) item->mMimeType = "folder";
-                        else item->mMimeType = item->fileInfo().suffix();
-                        if(item->mMimeType.isNull()) item->mMimeType = "file";
-                    }
-                }
-                data = item->mMimeType;
+                if(item->fileInfo().isDir()) data = "folder";
+                else data = item->fileInfo().suffix();
+                if(data == "") data = "file";
                 break;
             case 3:
                 data = item->fileInfo().lastModified().toString(Qt::LocalDate);
                 break;
             case 4:
                 {
-                    if(item->mPermissions.isNull())
-                    {
-                        QString str;
+                    QString str;
 
-                        QFlags<QFile::Permissions> perms = item->fileInfo().permissions();
-                        if(perms.testFlag(QFile::ReadOwner)) str.append("r"); else str.append(("-"));
-                        if(perms.testFlag(QFile::WriteOwner)) str.append("w"); else str.append(("-"));
-                        if(perms.testFlag(QFile::ExeOwner)) str.append("x"); else str.append(("-"));
-                        if(perms.testFlag(QFile::ReadGroup)) str.append("r"); else str.append(("-"));
-                        if(perms.testFlag(QFile::WriteGroup)) str.append("w"); else str.append(("-"));
-                        if(perms.testFlag(QFile::ExeGroup)) str.append("x"); else str.append(("-"));
-                        if(perms.testFlag(QFile::ReadOther)) str.append("r"); else str.append(("-"));
-                        if(perms.testFlag(QFile::WriteOther)) str.append("w"); else str.append(("-"));
-                        if(perms.testFlag(QFile::ExeOther)) str.append("x"); else str.append(("-"));
-                        str.append(" " + item->fileInfo().owner() + " " + item->fileInfo().group());
-                        item->mPermissions = str;
-                    }
-                    return item->mPermissions;
+                    QFlags<QFile::Permissions> perms = item->fileInfo().permissions();
+                    if(perms.testFlag(QFile::ReadOwner)) str.append("r"); else str.append(("-"));
+                    if(perms.testFlag(QFile::WriteOwner)) str.append("w"); else str.append(("-"));
+                    if(perms.testFlag(QFile::ExeOwner)) str.append("x"); else str.append(("-"));
+                    if(perms.testFlag(QFile::ReadGroup)) str.append("r"); else str.append(("-"));
+                    if(perms.testFlag(QFile::WriteGroup)) str.append("w"); else str.append(("-"));
+                    if(perms.testFlag(QFile::ExeGroup)) str.append("x"); else str.append(("-"));
+                    if(perms.testFlag(QFile::ReadOther)) str.append("r"); else str.append(("-"));
+                    if(perms.testFlag(QFile::WriteOther)) str.append("w"); else str.append(("-"));
+                    if(perms.testFlag(QFile::ExeOther)) str.append("x"); else str.append(("-"));
+                    str.append(" " + item->fileInfo().owner() + " " + item->fileInfo().group());
+                    return str;
                 }
             default:
                 data = "";
@@ -705,14 +668,14 @@ QVariant myModel::data(const QModelIndex & index, int role) const
         {
             if(showThumbs)
             {
-                if(icons->contains(item->absoluteFilePath())) return *icons->object(item->absoluteFilePath());
+                if(icons->contains(item->absoluteFilePath())) return icons->value(item->absoluteFilePath());
                 else
-                    if(thumbs->contains(item->absoluteFilePath()))
+                    if(thumbs->contains(type.filePath()))
                     {
                         QPixmap pic;
                         pic.loadFromData(thumbs->value(item->absoluteFilePath()));
-                        icons->insert(item->absoluteFilePath(),new QIcon(pic),1);
-                        return *icons->object(item->absoluteFilePath());
+                        icons->insert(item->absoluteFilePath(),QIcon(pic));
+                        return icons->value(item->absoluteFilePath());
                     }
             }
 
@@ -728,8 +691,8 @@ QVariant myModel::data(const QModelIndex & index, int role) const
 
                 if(mimeIcons->contains(suffix)) return mimeIcons->value(suffix);
 
-                theIcon = QIcon(qApp->style()->standardIcon(QStyle::SP_FileIcon));
-                if(suffix == "exec") theIcon = QIcon::fromTheme("application-x-executable",theIcon);
+                if(suffix == "exec") theIcon = QIcon::fromTheme("application-x-executable");
+                else theIcon = QIcon(qApp->style()->standardIcon(QStyle::SP_FileIcon));
              }
             else
             {
@@ -760,10 +723,10 @@ QVariant myModel::data(const QModelIndex & index, int role) const
     {
         return item->fileName();
     }
-    if(role == Qt::StatusTipRole)
-    {
-        return item->fileName();
-    }
+//    if(role == Qt::StatusTipRole)
+//    {
+//        return item->fileName();
+//    }
 
     return QVariant();
 }
@@ -780,7 +743,6 @@ bool myModel::setData(const QModelIndex & index, const QVariant & value, int rol
     //change the details in the modelItem
     if(ok)
     {
-        item->mMimeType.clear();                //clear the suffix/mimetype in case the user changes type
         item->changeName(value.toString());
         emit dataChanged(index,index);
     }

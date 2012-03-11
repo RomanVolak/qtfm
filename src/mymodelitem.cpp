@@ -1,6 +1,6 @@
 /****************************************************************************
 * This file is part of qtFM, a simple, fast file manager.
-* Copyright (C) 2010,2011,2012 Wittfella
+* Copyright (C) 2010,2011 Wittfella
 *
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -19,8 +19,8 @@
 *
 ****************************************************************************/
 
-#include <QtGui>
 #include "mymodelitem.h"
+#include <QtGui>
 
 
 //---------------------------------------------------------------------------------------
@@ -30,7 +30,6 @@ myModelItem::myModelItem(const QFileInfo& fileInfo, myModelItem* parent)
     mFileInfo = fileInfo;
     walked = false;
     dirty = false;
-    watched = false;
 
     if(parent)
     {
@@ -119,14 +118,15 @@ QFileInfo myModelItem::fileInfo() const
 void myModelItem::refreshFileInfo()
 {
     mFileInfo.refresh();
-    mPermissions.clear();
 }
 
 //---------------------------------------------------------------------------------------
 void myModelItem::addChild(myModelItem *child)
 {
     if(!mChildren.contains(child))
-        mChildren.append(child);
+    {
+      mChildren.append(child);
+    }
 }
 
 //---------------------------------------------------------------------------------------

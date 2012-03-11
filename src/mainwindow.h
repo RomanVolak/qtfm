@@ -1,6 +1,6 @@
 /****************************************************************************
 * This file is part of qtFM, a simple, fast file manager.
-* Copyright (C) 2010,2011,2012 Wittfella
+* Copyright (C) 2010,2011 Wittfella
 *
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -101,28 +101,27 @@ public slots:
     void folderPropertiesLauncher();
     void bookmarkClicked(QModelIndex);
     void bookmarkPressed(QModelIndex);
-    void bookmarkShortcutTrigger();
     void contextMenuEvent(QContextMenuEvent *);
     void toggleLockLayout();
     void pasteLauncher(const QMimeData * data, QString newPath, QStringList cutList);
     void pasteClipboard();
     void progressFinished(int,QStringList);
-    void mountWatcherTriggered();
+    void fileWatcherTriggered(QString);
     void listItemClicked(QModelIndex);
 
     void listItemPressed(QModelIndex);
     void tabChanged(int index);
     void openTab();
-    void tabsOnTop();
     int addTab(QString path);
 
+    void itemHover(QModelIndex);
     void refresh();
     void clearCutItems();
     void customActionFinished(int ret);
     void customActionError(QProcess::ProcessError error);
     void zoomInAction();
     void zoomOutAction();
-    void focusAction();
+    void addressAction();
     void openFolderAction();
     void newConnection();
     void startDaemon();
@@ -164,7 +163,6 @@ private:
     QSettings *settings;
     QDockWidget *dockTree;
     QDockWidget *dockBookmarks;
-    QVBoxLayout *mainLayout;
     QStackedWidget *stackWidget;
     QTreeView *tree;
     QTreeView *detailTree;
@@ -182,8 +180,7 @@ private:
     bookmarkmodel *modelBookmarks;
     QItemSelectionModel *treeSelectionModel;
     QItemSelectionModel *listSelectionModel;
-    QSocketNotifier *notify;
-
+    QFileSystemWatcher *watcher;
     QStringList mounts;
 
     QList<QAction*> *actionList;
@@ -236,14 +233,10 @@ private:
     QAction *escapeAct;
     QAction *zoomInAct;
     QAction *zoomOutAct;
-    QAction *focusAddressAct;
-    QAction *focusTreeAct;
-    QAction *focusBookmarksAct;
-    QAction *focusListAct;
+    QAction *addressAct;
     QAction *openFolderAct;
     QAction *openTabAct;
     QAction *closeTabAct;
-    QAction *tabsOnTopAct;
 };
 
 //---------------------------------------------------------------------------------
@@ -283,5 +276,6 @@ public:
 //---------------------------------------------------------------------------------
 QString formatSize(qint64);
 QString getDriveInfo(QString);
-QString gGetMimeType(QString);
+QString getMimeType(QString);
+
 #endif

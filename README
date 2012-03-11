@@ -70,6 +70,7 @@ nb. The name must match the theme folder exactly (ie. case sensitive)
 
 
 
+
 #####################
 Single-Click Navigation
 #####################
@@ -82,21 +83,6 @@ There are two modes you can enable:
  singleClick=1		single click activation of directories only
  singleClick=2		everything is single click
 
-
-
-#####################
-Real Mime Types
-#####################
-
-In 'Detail' view the 'Type' column shows the file extension by default.  Alternatively you can show the actual
-mime type for the files, like 'image/png', by adding the following key to the qtfm.conf configuration file.
-
- realMimeTypes=1
-
-Note this can potentially slow down browsing slightly in detail mode.
-
-This also affects 'Custom actions', ie. with this enabled you use the mimetype instead of the suffix in the
-'Filetype' column when creating custom actions.
 
 
 #####################
@@ -179,15 +165,10 @@ Translations
 Many thanks to the following for contributing translations:
 
  - Chinese	zh	A. Lee
- - Chinese	zh_TW	Cheng-Hong Wu
- - Danish	da	Peter J
- - French	fr	Diablo150
  - German	de	quax		
  - Italian	it	zereal
- - Polish	pl	Michał
  - Russian	ru	Alexey
  - Serbian	sr	Mladen
- - Spanish	es	AntumDeluge
 
 If you would like to contribute to the translations you can grab the 'qtfm_XX.ts' template
 in the source, rename it to your country code (qtfm_fr.ts) and then edit it with Qt's 'linguist'
@@ -209,7 +190,7 @@ Tip & Tricks
 - Ctrl+drag&drop will copy instead of move.
 
 - Click anywhere in the address bar path to navigate from there. Ctrl+click or middle-click will go
-  immediately to that folder (ala breadcrumbs).
+  immediately to that folder.
 
 - Right-click on the status bar will bring up the 'View' options.  Useful if you have hidden the main menu.
 
@@ -218,8 +199,5 @@ Tip & Tricks
 
 - You can also use sequential shortcuts like vi or emacs instead of the combination shortcuts (ctrl+x).
   In the shortcuts editor just seperate them with commas. eg. 'a,b,c'
-
-- If you want the fastest possible startup time, don't have any image files (png,jpg etc) in the start folder,
-  because it will have to load the thumb cache immediately. Or use daemon mode!
 
 

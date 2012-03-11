@@ -1,3 +1,16 @@
+5.4	7-March-2012
+- added 'tabsOnTop' option.
+- added new detection for automounts.
+- added ability to set shortcuts for bookmarks.
+- added option to use mimetype instead of suffix in detail mode and custom actions.
+- modified thumbs to show in all views.
+- modified text colours to follow system theme.
+- modified status/hover info updating.
+- fixed bug in filesystem model not updating in some cases.
+- fixed bug not showing hidden items in '/' root.
+- fixed bug trying to open a tab on a file.
+- fixed bug opening folder from command line (Qt4.8).
+
 5.3	14-December-2011
 - added new address bar navigation and drop-down auto-completion.
 - added 'New tab' to tree context menu.

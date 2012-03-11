@@ -1,187 +1,187 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.0" language="it" sourcelanguage="en">
+<TS version="2.0" language="fr" sourcelanguage="en">
 <context>
     <name>MainWindow</name>
     <message>
         <source>New folder</source>
-        <translation>Nuova cartella</translation>
+        <translation>Nouveau dossier</translation>
     </message>
     <message>
         <source>Create a new folder</source>
-        <translation>Crea cartella</translation>
+        <translation>Créer un nouveau dossier</translation>
     </message>
     <message>
         <source>New file</source>
-        <translation>Nuovo file</translation>
+        <translation>Nouveau fichier</translation>
     </message>
     <message>
         <source>Create a new file</source>
-        <translation>Crea nuovo file</translation>
+        <translation>Créer un nouveau fichier</translation>
     </message>
     <message>
         <source>New tab</source>
-        <translation>Nuova sheda</translation>
-    </message>
-    <message>
-        <source>Middle-click things to open tab</source>
-        <translation>Centrale del mouse le cose per aprire scheda</translation>
+        <translation>Nouvel onglet</translation>
     </message>
     <message>
         <source>Close tab</source>
-        <translation>Chiudi scheda</translation>
-    </message>
-    <message>
-        <source>Middle-click tabs to close</source>
-        <translation>Centrale del mouse per chiudere le schede</translation>
+        <translation>Fermer l&apos;onglet</translation>
     </message>
     <message>
         <source>Cut</source>
-        <translation>Taglia</translation>
+        <translation>Couper</translation>
     </message>
     <message>
         <source>Move the current file</source>
-        <translation>Sposto file corrente</translation>
+        <translation>Déplacer le fichier actuel</translation>
     </message>
     <message>
         <source>Copy</source>
-        <translation>Copia</translation>
+        <translation>Copier</translation>
     </message>
     <message>
         <source>Copy the current file</source>
-        <translation>Copia file corrente</translation>
+        <translation>Couper le fichier actuel</translation>
     </message>
     <message>
         <source>Paste</source>
-        <translation>Incolla</translation>
+        <translation>Coller</translation>
     </message>
     <message>
         <source>Paste the file here</source>
-        <translation>Incolla file qui</translation>
+        <translation>Coller le fichier</translation>
     </message>
     <message>
         <source>Up</source>
-        <translation>Alto</translation>
+        <translation>Haut</translation>
     </message>
     <message>
         <source>Go up one directory</source>
-        <translation>Sali una cartella</translation>
+        <translation>Remonter d&apos;un dossier</translation>
     </message>
     <message>
         <source>Back</source>
-        <translation>Indietro</translation>
+        <translation>Arrière</translation>
     </message>
     <message>
         <source>Go back one directory</source>
-        <translation>Vai indietro di una cartella</translation>
+        <translation>Revenir en arrière</translation>
     </message>
     <message>
         <source>Home</source>
-        <translation>Home</translation>
+        <translation>Dossier utilisateur</translation>
     </message>
     <message>
         <source>Go to home directory</source>
-        <translation>Vai alla home cartella</translation>
+        <translation>Aller dans le dossier utilisateur</translation>
     </message>
     <message>
         <source>Detail view</source>
-        <translation>Dettagli</translation>
+        <translation>Affichage détaillée</translation>
     </message>
     <message>
         <source>Toggle detailed list</source>
-        <translation>Interrutto elenco dettagliato</translation>
+        <translation>Passer en affichage détaillée</translation>
     </message>
     <message>
         <source>Icon view</source>
-        <translation>Icone</translation>
+        <translation>Affichage en icônes</translation>
     </message>
     <message>
         <source>Toggle icon view</source>
-        <translation>Interrutto elenco icone</translation>
+        <translation>Afficher les fichiers en icônes</translation>
     </message>
     <message>
         <source>Hidden files</source>
-        <translation>File nascoti</translation>
+        <translation>Fichiers cachés</translation>
     </message>
     <message>
         <source>Toggle hidden files</source>
-        <translation>Interrutto file nascoti</translation>
+        <translation>Afficher/masquer les fichiers cachés</translation>
     </message>
     <message>
         <source>Add bookmark</source>
-        <translation>Aggiungi un segnalibro</translation>
+        <translation>Ajouter un signet</translation>
     </message>
     <message>
         <source>Add this folder to bookmarks</source>
-        <translation>Aggiungi questa cartella ai segnalibri</translation>
+        <translation>Ajouter ce dossier au signets</translation>
     </message>
     <message>
         <source>Add separator</source>
-        <translation>Aggiungi separatore</translation>
+        <translation>Ajouter un séparateur</translation>
     </message>
     <message>
         <source>Add separator to bookmarks list</source>
-        <translation>Aggiungi separatore alla lista dei segnalibri</translation>
+        <translation>Ajouter un séparateur aux signets</translation>
     </message>
     <message>
         <source>Remove bookmark</source>
-        <translation>Rimuovi segnalibro</translation>
+        <translation>Supprimer le signet</translation>
     </message>
     <message>
         <source>Remove this bookmark</source>
-        <translation>Rimuovi questo segnalibro</translation>
+        <translation>Supprimer ce signet de la liste</translation>
     </message>
     <message>
         <source>Edit icon</source>
-        <translation>Scengli un&apos;icona</translation>
+        <translation>Changer l&apos;icône</translation>
     </message>
     <message>
         <source>Change bookmark icon</source>
-        <translation>Cambi icona segnalibro</translation>
+        <translation>Changer l&apos;icône du signet</translation>
     </message>
     <message>
         <source>Wrap bookmarks</source>
-        <translation></translation>
+        <translation>Grouper les signets</translation>
     </message>
     <message>
         <source>Delete</source>
-        <translation>Elimina nel sposto</translation>
+        <translation>Supprimer</translation>
     </message>
     <message>
         <source>Delete selected file</source>
-        <translation>Elimina file qui</translation>
+        <translation>Supprimer le fichier sélectionné</translation>
     </message>
     <message>
         <source>Custom actions</source>
-        <translation>Azioni personalizzate</translation>
+        <translation>Actions personnalisées</translation>
     </message>
     <message>
         <source>Edit custom actions</source>
-        <translation>Modifica le azioni personalizzate</translation>
+        <translation>Editer les actions personnalisées</translation>
     </message>
     <message>
         <source>Configure shortcuts</source>
-        <translation>Configura le scorciatoie</translation>
+        <translation>Configurer les raccourcis</translation>
+    </message>
+    <message>
+        <source>Filetype:</source>
+        <translation>Type de fichier:</translation>
     </message>
     <message>
         <source>Edit keybindings</source>
-        <translation>Modifica scorciatoie da tastiera</translation>
+        <translation>Ajouter/modifier des raccourcis clavier</translation>
     </message>
     <message>
         <source>Edit filetype</source>
-        <translation>Modifica tipo di file</translation>
+        <translation>Editer les types de fichier</translation>
+    </message>
+    <message>
+        <source>Open with:</source>
+        <translation>Ouvrir avec:</translation>
     </message>
     <message>
         <source>Set default program for opening selected filetype</source>
-        <translation>Imposta programma predefinito per l&apos;apertura selezionati tipo de file</translation>
+        <translation>Définir le programme pour ouvrir les fichiers sélectionnés suivant le type</translation>
     </message>
     <message>
         <source>Rename</source>
-        <translation>Rinomina</translation>
+        <translation>Renommer</translation>
     </message>
     <message>
         <source>Rename file</source>
-        <translation>Rinomina file</translation>
+        <translation>Renommer le fichier</translation>
     </message>
     <message>
         <source>Terminal</source>
@@ -189,115 +189,115 @@
     </message>
     <message>
         <source>Open virtual terminal</source>
-        <translation>Apri terminale virtuale</translation>
+        <translation>Ouvrir un terminal</translation>
     </message>
     <message>
         <source>Open</source>
-        <translation>Apri</translation>
+        <translation>Ouvrir</translation>
     </message>
     <message>
         <source>Open the file</source>
-        <translation>Apri file</translation>
+        <translation>Ouvre le fichier</translation>
     </message>
     <message>
         <source>Enter folder</source>
-        <translation>Inserisci cartella</translation>
+        <translation>Ouvrir le dossier</translation>
     </message>
     <message>
         <source>Run</source>
-        <translation>Scaglia</translation>
+        <translation>Lancer</translation>
     </message>
     <message>
         <source>Run this program</source>
-        <translation>Scaglia questo programma</translation>
+        <translation>Lancer le programme</translation>
     </message>
     <message>
         <source>Quit</source>
-        <translation>Esci</translation>
+        <translation>Quitter</translation>
     </message>
     <message>
         <source>Quit qtFM and stop the daemon</source>
-        <translation>Esci qtFM e ferma il demone</translation>
+        <translation>Quitter QtFM et arrêter le démon</translation>
     </message>
     <message>
         <source>Close</source>
-        <translation>Chuide</translation>
+        <translation>Fermer</translation>
     </message>
     <message>
         <source>Close qtFM</source>
-        <translation>Chuide qtFM</translation>
+        <translation>Fermer QtFM</translation>
     </message>
     <message>
         <source>Show thumbs</source>
-        <translation>Mostra pollici</translation>
+        <translation>Afficher les aperçus</translation>
     </message>
     <message>
         <source>View thumbnails in icon view</source>
-        <translation>Visualizza miniature nella vista a icone</translation>
+        <translation>Afficher les apperçus dans la barre d&apos;icones</translation>
     </message>
     <message>
         <source>Properties</source>
-        <translation>Proprietà</translation>
+        <translation>Propriétés</translation>
     </message>
     <message>
         <source>View properties of selected items</source>
-        <translation>Visualizzare le proprietà della cartella selezionata</translation>
+        <translation>Afficher les propriétés du fichier sélectionné</translation>
     </message>
     <message>
         <source>Lock layout</source>
-        <translation>Blocco del disposizione</translation>
+        <translation>Verrouiller le panneau</translation>
     </message>
     <message>
         <source>Refresh</source>
-        <translation>Ricarica</translation>
+        <translation>Rafraîchir</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation>Annulla</translation>
+        <translation>Annuler</translation>
     </message>
     <message>
         <source>Zoom in</source>
-        <translation>Incrementa</translation>
+        <translation>Zoomer</translation>
     </message>
     <message>
         <source>Zoom out</source>
-        <translation>Diminui</translation>
+        <translation>Dézommer</translation>
     </message>
     <message>
         <source>Focus address</source>
-        <translation>Messa a fuoco indirizzo</translation>
+        <translation>Activer barre d&apos;adresse</translation>
     </message>
     <message>
         <source>Action</source>
-        <translation>Azione</translation>
+        <translation>Action</translation>
     </message>
     <message>
         <source>Shortcut</source>
-        <translation>Scorciatoia</translation>
-    </message>
-    <message>
-        <source>Duplicate shortcuts detected:&lt;p&gt;%1</source>
-        <translation>Duplicare i collegamenti rilevati:&lt;p&gt;%1</translation>
+        <translation>Raccourci</translation>
     </message>
     <message>
         <source>Warning</source>
-        <translation>Avvertimento</translation>
+        <translation>Attention</translation>
+    </message>
+    <message>
+        <source>Duplicate shortcuts detected:&lt;p&gt;%1</source>
+        <translation>Raccourci double:&lt;p&gt;%1</translation>
     </message>
     <message>
         <source>File</source>
-        <translation>File</translation>
+        <translation>Fichier</translation>
     </message>
     <message>
         <source>Edit</source>
-        <translation>Modifica</translation>
+        <translation>Edition</translation>
     </message>
     <message>
         <source>View</source>
-        <translation>Vista</translation>
+        <translation>Affichage</translation>
     </message>
     <message>
         <source>Layout</source>
-        <translation>Disposizione</translation>
+        <translation>Panneaux</translation>
     </message>
     <message>
         <source>Menu</source>
@@ -305,11 +305,11 @@
     </message>
     <message>
         <source>Navigate</source>
-        <translation>Naviga</translation>
+        <translation>Navigation</translation>
     </message>
     <message>
         <source>Address</source>
-        <translation>Addresso</translation>
+        <translation>Adresse</translation>
     </message>
     <message>
         <source>Zoom: %1</source>
@@ -317,274 +317,274 @@
     </message>
     <message>
         <source>Tree</source>
-        <translation>Albero</translation>
+        <translation>Arborescence</translation>
     </message>
     <message>
         <source>Bookmarks</source>
-        <translation>Segnalibro</translation>
+        <translation>Signets</translation>
     </message>
     <message>
         <source>Setting</source>
-        <translation>Ambiente</translation>
+        <translation>Configuration</translation>
     </message>
     <message>
         <source>Default terminal:</source>
-        <translation>Predefinito del terminale:</translation>
+        <translation>Terminal par défaut:</translation>
     </message>
     <message>
         <source>Read only...cannot create folder</source>
-        <translation>Di sola lettura ... non è possibile creare cartelle</translation>
+        <translation>Lecture seule...impossible de créer un dossier</translation>
     </message>
     <message>
         <source>Read only...cannot create file</source>
-        <translation>Di sola lettura ... non è possibile creare file di</translation>
+        <translation>Lecture seule...impossible de créer un fichier</translation>
     </message>
     <message>
         <source>Delete confirmation</source>
-        <translation>Elimina la conferma</translation>
+        <translation>Confirmation</translation>
     </message>
     <message>
         <source>Do you want to confirm all delete operations?</source>
-        <translation>Vuoi verificare tutte le operazioni di eliminazione?</translation>
+        <translation>Voulez vous avoir une demande de confirmation à chaque fois que vous supprimez des fichiers ?</translation>
     </message>
     <message>
         <source>Careful</source>
-        <translation>Attento</translation>
+        <translation>Attention</translation>
     </message>
     <message>
         <source>Are you sure you want to delete &lt;p&gt;&lt;b&gt;&quot;</source>
-        <translation>Sei sicuro di voler eliminare &lt;p&gt;&lt;b&gt;</translation>
+        <translation>Etes vous sûr de vouloir supprimer &lt;p&gt;&lt;b&gt;&quot;</translation>
     </message>
     <message>
         <source>Failed</source>
-        <translation>Mancato</translation>
+        <translation>Erreur</translation>
     </message>
     <message>
         <source>Could not delete some items...do you have the right permissions?</source>
-        <translation>Impossibile eliminare alcune voci ... avete i permessi giusti?</translation>
+        <translation>Impossible de supprimer...avez vous les droits nécessaires ?</translation>
     </message>
     <message>
         <source>No paste for you!</source>
-        <translation>Nessun pasta!</translation>
+        <translation>Rien à copier!</translation>
     </message>
     <message>
         <source>File no longer exists!</source>
-        <translation>File non esiste più!</translation>
+        <translation>Le fichier n&apos;existe plus !</translation>
     </message>
     <message>
         <source>Existing folder</source>
-        <translation>Cartella esistente</translation>
+        <translation>Dossier existant</translation>
     </message>
     <message>
         <source>Merge</source>
-        <translation>Fonde</translation>
+        <translation>Fusionner</translation>
     </message>
     <message>
         <source>Replace</source>
-        <translation>Sostitui</translation>
+        <translation>Remplacer</translation>
     </message>
     <message>
         <source>Copying...</source>
-        <translation>Copia...</translation>
+        <translation>Copie...</translation>
     </message>
     <message>
         <source>Moving...</source>
-        <translation>In movimento...</translation>
+        <translation>Déplace...</translation>
     </message>
     <message>
         <source>Paste failed...do you have write permissions?</source>
-        <translation>Incollare mancato...avete i permessi giusti?</translation>
+        <translation>Copie impossible...avez vous les droits nécessaires?</translation>
     </message>
     <message>
         <source>Too big!</source>
-        <translation>Troppo grande!</translation>
+        <translation>Trop gros!</translation>
     </message>
     <message>
         <source>There is not enough space on the destination drive!</source>
-        <translation>Non c&apos;è abbastanza spazio sul disco destinazione!</translation>
+        <translation>Il n&apos;y a pas assez de place sur le disque cible!</translation>
     </message>
     <message>
         <source>Unlock layout</source>
-        <translation>Sbloccare il layout</translation>
+        <translation>Déverrouiller les panneaux</translation>
     </message>
     <message>
         <source>Configure filetype</source>
-        <translation>Configura tipo di file</translation>
+        <translation>Configurer les types de fichier</translation>
     </message>
     <message>
         <source>Input</source>
-        <translation>Ingresso</translation>
+        <translation>Entrée</translation>
     </message>
     <message>
         <source>Error - Custom action</source>
-        <translation>Errore - Azione personalizzata</translation>
+        <translation>Erreur - Actions personnalisées</translation>
     </message>
     <message>
         <source>Output - Custom action</source>
-        <translation>Uscita - Azione personalizzata</translation>
+        <translation>Sortie - Actions personnalisées</translation>
     </message>
     <message>
-        <source>Filetype:</source>
-        <translation>Tipo di file:</translation>
+        <source>Middle-click things to open tab</source>
+        <translation>Ouvre un nouvel onglet</translation>
     </message>
     <message>
-        <source>Open with:</source>
-        <translation>Apri con:</translation>
+        <source>Middle-click tabs to close</source>
+        <translation>Fermer l&apos;onglet</translation>
     </message>
 </context>
 <context>
     <name>customActionsDialog</name>
     <message>
         <source>Filetype</source>
-        <translation>Tipo de file</translation>
+        <translation>Type de fichier</translation>
     </message>
     <message>
         <source>Text</source>
-        <translation>Text</translation>
+        <translation>Texte</translation>
     </message>
     <message>
         <source>Icon</source>
-        <translation>Icone</translation>
+        <translation>Icône</translation>
     </message>
     <message>
         <source>Command</source>
-        <translation>Comando</translation>
+        <translation>Commande</translation>
     </message>
     <message>
         <source>Custom Actions</source>
-        <translation>Azioni personalizzate</translation>
+        <translation>Actions personnalisées</translation>
     </message>
     <message>
         <source>Usage</source>
-        <translation>Uso</translation>
+        <translation>Aide</translation>
     </message>
     <message>
         <source>Use &apos;folder&apos; to match all folders.&lt;br&gt;Use a folder name to match a specific folder.&lt;br&gt;Set text to &apos;Open&apos; to override xdg default.&lt;p&gt;%f - selected files&lt;br&gt;%F - selected files with full path&lt;br&gt;%n - current filename&lt;/p&gt;&lt;p&gt;[] - tick checkbox to monitor output and errors.&lt;/p&gt;&lt;p&gt;See &lt;a href=&apos;http://www.qtfm.org/home/readme&apos;&gt;readme&lt;/a&gt; for more help.&lt;/p&gt;</source>
-        <translation>Usare &apos;cartella&apos; per indicare tutte le cartelle &lt;br&gt; Utilizzare un nome cartella per abbinare una specifica cartella di testo.&lt;br&gt; a &apos;Apri&apos; per sovrascrivere xdg predefinita &lt;p&gt;% f  - File selezionati &lt;br&gt;%F - i file selezionati con il percorso completo &lt;br&gt;%n - nome del file corrente &lt;/p&gt; [] - casella di spunta uscita monitor e gli errori &lt;/p&gt;&lt;p&gt; Vedere &lt;a href = &apos;http://www.. qtfm.org / home / readme &apos;&gt; readme &lt;/a&gt; per ulteriori informazioni. &lt;/p&gt;</translation>
+        <translation>Entrez &apos;folder&apos; dans le type de fichier pour choisir tous les dossiers.&lt;br&gt;Entrez un nom de dossier pour choisir un dossier en particulier.&lt;br&gt;Dans le texte de l&apos;action, entrez &apos;Open&apos; pour remplacer l&apos;action par défaut.&lt;p&gt;%f - Fichier sélectionné&lt;br&gt;%F - Fichier sélectionné d&apos;après son chemin absolu&lt;br&gt;%n - Le nom du fichier actuel&lt;/p&gt;&lt;p&gt;[] - tick checkbox to monitor output and errors.&lt;/p&gt;&lt;p&gt;Voir le fichier &lt;a href=&apos;http://www.qtfm.org/home/readme&apos;&gt;Lisez-moi&lt;/a&gt; (en anglais) pour plus d&apos;informations.&lt;/p&gt;</translation>
     </message>
     <message>
         <source>Extract here</source>
-        <translation>Estrai qui</translation>
+        <translation>Extraire ici</translation>
     </message>
     <message>
         <source>Term here</source>
-        <translation>Termine qui</translation>
+        <translation>Terminal</translation>
     </message>
     <message>
         <source>Compress</source>
-        <translation>Comprime</translation>
+        <translation>Compresser</translation>
     </message>
 </context>
 <context>
     <name>icondlg</name>
     <message>
         <source>Select icon</source>
-        <translation>Seleziona l&apos;icona</translation>
+        <translation>Sélectionner icône</translation>
     </message>
 </context>
 <context>
     <name>myModel</name>
     <message>
         <source>Name</source>
-        <translation>Nome</translation>
+        <translation>Nom</translation>
     </message>
     <message>
         <source>Size</source>
-        <translation>Dimensione</translation>
+        <translation>Taille</translation>
     </message>
     <message>
         <source>Type</source>
-        <translation>Tipo</translation>
+        <translation>Type</translation>
     </message>
     <message>
         <source>Owner</source>
-        <translation>Proprietario</translation>
+        <translation>Propriétaire</translation>
     </message>
     <message>
         <source>Date Modified</source>
-        <translation>La data di cambiamento</translation>
+        <translation>Date de modification</translation>
     </message>
 </context>
 <context>
     <name>myProgressDialog</name>
     <message>
         <source>Initializing...</source>
-        <translation>Inizializzazione...</translation>
+        <translation>Initialisation...</translation>
     </message>
     <message>
         <source>&lt;p&gt;Transfer rate: %2 MB/s&lt;br&gt;Time remaining: %3&lt;/p&gt;</source>
-        <translation>&lt;p&gt;Velocità di trasferimento: %2 MB/s&lt;br&gt;Tempo rimanente: %3&lt;/p&gt;</translation>
+        <translation>&lt;p&gt;Vitesser de transfert: %2 Mo/s&lt;br&gt;Temps restant: %3&lt;/p&gt;</translation>
     </message>
 </context>
 <context>
     <name>propertiesDialog</name>
     <message>
         <source>Properties</source>
-        <translation>Proprietà</translation>
+        <translation>Propriétés</translation>
     </message>
     <message>
         <source>Size:</source>
-        <translation>Dimensione:</translation>
+        <translation>Taille:</translation>
     </message>
     <message>
         <source>Contains:</source>
-        <translation>Contiene:</translation>
-    </message>
-    <message>
-        <source>Modified:</source>
-        <translation>Modificato:</translation>
-    </message>
-    <message>
-        <source>Read</source>
-        <translation>Legge</translation>
-    </message>
-    <message>
-        <source>Write</source>
-        <translation>Scrive</translation>
-    </message>
-    <message>
-        <source>Execute</source>
-        <translation>Esegui</translation>
-    </message>
-    <message>
-        <source>Owner</source>
-        <translation>Proprietario</translation>
-    </message>
-    <message>
-        <source>Group</source>
-        <translation>Gruppo</translation>
-    </message>
-    <message>
-        <source>Other</source>
-        <translation>Altro</translation>
-    </message>
-    <message>
-        <source>Numeric</source>
-        <translation>Numerico </translation>
-    </message>
-    <message>
-        <source>&lt;b&gt;%1 files, %2 folders</source>
-        <translation>&lt;b&gt;%1 files, %2 cartelle</translation>
-    </message>
-    <message>
-        <source>&lt;b&gt;%1 folders</source>
-        <translation>&lt;b&gt;%1 cartelle</translation>
-    </message>
-    <message>
-        <source>&lt;b&gt;%1 files</source>
-        <translation>&lt;b&gt;%1 files</translation>
-    </message>
-    <message>
-        <source>Total:</source>
-        <translation>Totale:</translation>
-    </message>
-    <message>
-        <source>%1 Files, %2 folders</source>
-        <translation>%1 Files, %2 cartelle</translation>
+        <translation>Contient:</translation>
     </message>
     <message>
         <source>Filetype:</source>
-        <translation>Tipo di file:</translation>
+        <translation>Type de fichier:</translation>
+    </message>
+    <message>
+        <source>Modified:</source>
+        <translation>Modifié:</translation>
+    </message>
+    <message>
+        <source>Read</source>
+        <translation>Lecture</translation>
+    </message>
+    <message>
+        <source>Write</source>
+        <translation>Ecriture</translation>
+    </message>
+    <message>
+        <source>Execute</source>
+        <translation>Exécution</translation>
+    </message>
+    <message>
+        <source>Owner</source>
+        <translation>Propriétaire</translation>
+    </message>
+    <message>
+        <source>Group</source>
+        <translation>Groupe</translation>
+    </message>
+    <message>
+        <source>Other</source>
+        <translation>Autre</translation>
+    </message>
+    <message>
+        <source>Numeric</source>
+        <translation>Numérique</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;%1 files, %2 folders</source>
+        <translation>&lt;b&gt;%1 fichiers, %2 dossiers</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;%1 folders</source>
+        <translation>&lt;b&gt;%1 dossiers</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;%1 files</source>
+        <translation>&lt;b&gt;%1 fichiers</translation>
+    </message>
+    <message>
+        <source>Total:</source>
+        <translation>Total:</translation>
+    </message>
+    <message>
+        <source>%1 Files, %2 folders</source>
+        <translation>%1 Fichiers, %2 dossiers</translation>
     </message>
 </context>
 </TS>

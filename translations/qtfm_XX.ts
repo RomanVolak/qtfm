@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.0" language="en">
+<TS version="2.0" language="en" sourcelanguage="en">
 <context>
     <name>MainWindow</name>
     <message>
@@ -24,7 +24,15 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Middle-click things to open tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Close tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Middle-click tabs to close</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -404,6 +412,14 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Filetype:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open with:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Input</source>
         <translation type="unfinished"></translation>
     </message>
@@ -413,14 +429,6 @@
     </message>
     <message>
         <source>Output - Custom action</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Middle-click things to open tab</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Middle-click tabs to close</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -523,11 +531,27 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>FileType:</source>
+        <source>Filetype:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Modified:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;%1 files, %2 folders</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;%1 folders</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;%1 files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Total:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -556,22 +580,6 @@
     </message>
     <message>
         <source>Numeric</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>&lt;b&gt;%1 files, %2 folders</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>&lt;b&gt;%1 folders</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>&lt;b&gt;%1 files</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Total:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

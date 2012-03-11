@@ -27,9 +27,11 @@ SOURCES += src/main.cpp \
     src/tabbar.cpp \
     src/actions.cpp \
     src/mymodelitem.cpp
+
 CONFIG += release warn_off thread
 RESOURCES += resources.qrc
 QT+= network
+LIBS += -lmagic
 
 TARGET = qtfm
 target.path = /usr/bin
@@ -42,11 +44,16 @@ docs.path += /usr/share/doc/qtfm
 docs.files += README CHANGELOG COPYING
 
 trans.path += /usr/share/qtfm
-trans.files += translations/qtfm_de.qm \
+trans.files += translations/qtfm_da.qm \
+	       translations/qtfm_de.qm \
+	       translations/qtfm_es.qm \
+	       translations/qtfm_fr.qm \
                translations/qtfm_it.qm \
+	       translations/qtfm_pl.qm \
                translations/qtfm_ru.qm \
                translations/qtfm_sr.qm \
-               translations/qtfm_zh.qm
+               translations/qtfm_zh.qm \
+               translations/qtfm_zh_TW.qm
 
 INSTALLS += target desktop icon docs trans
 

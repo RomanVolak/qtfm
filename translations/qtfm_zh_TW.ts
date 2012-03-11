@@ -1,590 +1,590 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.0" language="it" sourcelanguage="en">
+<TS version="2.0" language="zh_TW" sourcelanguage="en">
 <context>
     <name>MainWindow</name>
     <message>
         <source>New folder</source>
-        <translation>Nuova cartella</translation>
+        <translation>新資料夾</translation>
     </message>
     <message>
         <source>Create a new folder</source>
-        <translation>Crea cartella</translation>
+        <translation>新增資料夾</translation>
     </message>
     <message>
         <source>New file</source>
-        <translation>Nuovo file</translation>
+        <translation>新檔案</translation>
     </message>
     <message>
         <source>Create a new file</source>
-        <translation>Crea nuovo file</translation>
+        <translation>新增檔案</translation>
     </message>
     <message>
         <source>New tab</source>
-        <translation>Nuova sheda</translation>
+        <translation>新增分頁</translation>
     </message>
     <message>
         <source>Middle-click things to open tab</source>
-        <translation>Centrale del mouse le cose per aprire scheda</translation>
+        <translation>用滑鼠中鍵點擊物件以在新分頁中開啟</translation>
     </message>
     <message>
         <source>Close tab</source>
-        <translation>Chiudi scheda</translation>
+        <translation>關閉分頁</translation>
     </message>
     <message>
         <source>Middle-click tabs to close</source>
-        <translation>Centrale del mouse per chiudere le schede</translation>
+        <translation>用滑鼠中鍵點擊分頁以關閉</translation>
     </message>
     <message>
         <source>Cut</source>
-        <translation>Taglia</translation>
+        <translation>剪下</translation>
     </message>
     <message>
         <source>Move the current file</source>
-        <translation>Sposto file corrente</translation>
+        <translation>移動此檔案</translation>
     </message>
     <message>
         <source>Copy</source>
-        <translation>Copia</translation>
+        <translation>複製</translation>
     </message>
     <message>
         <source>Copy the current file</source>
-        <translation>Copia file corrente</translation>
+        <translation>複製此檔案</translation>
     </message>
     <message>
         <source>Paste</source>
-        <translation>Incolla</translation>
+        <translation>貼上</translation>
     </message>
     <message>
         <source>Paste the file here</source>
-        <translation>Incolla file qui</translation>
+        <translation>將檔案貼上至此</translation>
     </message>
     <message>
         <source>Up</source>
-        <translation>Alto</translation>
+        <translation>向上</translation>
     </message>
     <message>
         <source>Go up one directory</source>
-        <translation>Sali una cartella</translation>
+        <translation>上一個目錄</translation>
     </message>
     <message>
         <source>Back</source>
-        <translation>Indietro</translation>
+        <translation>上一頁</translation>
     </message>
     <message>
         <source>Go back one directory</source>
-        <translation>Vai indietro di una cartella</translation>
+        <translation>返回上一個目錄</translation>
     </message>
     <message>
         <source>Home</source>
-        <translation>Home</translation>
+        <translation>家目錄</translation>
     </message>
     <message>
         <source>Go to home directory</source>
-        <translation>Vai alla home cartella</translation>
+        <translation>返回家目錄</translation>
     </message>
     <message>
         <source>Detail view</source>
-        <translation>Dettagli</translation>
+        <translation>詳細清單</translation>
     </message>
     <message>
         <source>Toggle detailed list</source>
-        <translation>Interrutto elenco dettagliato</translation>
+        <translation>切換至詳細清單</translation>
     </message>
     <message>
         <source>Icon view</source>
-        <translation>Icone</translation>
+        <translation>圖示檢視</translation>
     </message>
     <message>
         <source>Toggle icon view</source>
-        <translation>Interrutto elenco icone</translation>
+        <translation>切換至圖示檢視</translation>
     </message>
     <message>
         <source>Hidden files</source>
-        <translation>File nascoti</translation>
+        <translation>隱藏檔案</translation>
     </message>
     <message>
         <source>Toggle hidden files</source>
-        <translation>Interrutto file nascoti</translation>
+        <translation>顯示隱藏檔案</translation>
     </message>
     <message>
         <source>Add bookmark</source>
-        <translation>Aggiungi un segnalibro</translation>
+        <translation>新增書籤</translation>
     </message>
     <message>
         <source>Add this folder to bookmarks</source>
-        <translation>Aggiungi questa cartella ai segnalibri</translation>
+        <translation>將此資料夾新增至書籤</translation>
     </message>
     <message>
         <source>Add separator</source>
-        <translation>Aggiungi separatore</translation>
+        <translation>新增分隔線</translation>
     </message>
     <message>
         <source>Add separator to bookmarks list</source>
-        <translation>Aggiungi separatore alla lista dei segnalibri</translation>
+        <translation>新增分隔線至書籤清單</translation>
     </message>
     <message>
         <source>Remove bookmark</source>
-        <translation>Rimuovi segnalibro</translation>
+        <translation>移除書籤</translation>
     </message>
     <message>
         <source>Remove this bookmark</source>
-        <translation>Rimuovi questo segnalibro</translation>
+        <translation>移除此書籤</translation>
     </message>
     <message>
         <source>Edit icon</source>
-        <translation>Scengli un&apos;icona</translation>
+        <translation>編輯圖示</translation>
     </message>
     <message>
         <source>Change bookmark icon</source>
-        <translation>Cambi icona segnalibro</translation>
+        <translation>更換書籤圖示</translation>
     </message>
     <message>
         <source>Wrap bookmarks</source>
-        <translation></translation>
+        <translation>隱藏書籤</translation>
     </message>
     <message>
         <source>Delete</source>
-        <translation>Elimina nel sposto</translation>
+        <translation>刪除</translation>
     </message>
     <message>
         <source>Delete selected file</source>
-        <translation>Elimina file qui</translation>
+        <translation>刪除選取檔案</translation>
     </message>
     <message>
         <source>Custom actions</source>
-        <translation>Azioni personalizzate</translation>
+        <translation>自訂動作</translation>
     </message>
     <message>
         <source>Edit custom actions</source>
-        <translation>Modifica le azioni personalizzate</translation>
+        <translation>編輯自訂動作</translation>
     </message>
     <message>
         <source>Configure shortcuts</source>
-        <translation>Configura le scorciatoie</translation>
+        <translation>設定捷徑</translation>
     </message>
     <message>
         <source>Edit keybindings</source>
-        <translation>Modifica scorciatoie da tastiera</translation>
+        <translation>編輯按鍵組合</translation>
     </message>
     <message>
         <source>Edit filetype</source>
-        <translation>Modifica tipo di file</translation>
+        <translation>編輯檔案類型</translation>
     </message>
     <message>
         <source>Set default program for opening selected filetype</source>
-        <translation>Imposta programma predefinito per l&apos;apertura selezionati tipo de file</translation>
+        <translation>設定此類型檔案的預設開啟方式</translation>
     </message>
     <message>
         <source>Rename</source>
-        <translation>Rinomina</translation>
+        <translation>重新命名</translation>
     </message>
     <message>
         <source>Rename file</source>
-        <translation>Rinomina file</translation>
+        <translation>重新命名此檔案</translation>
     </message>
     <message>
         <source>Terminal</source>
-        <translation>Terminal</translation>
+        <translation>終端機</translation>
     </message>
     <message>
         <source>Open virtual terminal</source>
-        <translation>Apri terminale virtuale</translation>
+        <translation>開啟模擬終端機</translation>
     </message>
     <message>
         <source>Open</source>
-        <translation>Apri</translation>
+        <translation>開啟</translation>
     </message>
     <message>
         <source>Open the file</source>
-        <translation>Apri file</translation>
+        <translation>開啟檔案</translation>
     </message>
     <message>
         <source>Enter folder</source>
-        <translation>Inserisci cartella</translation>
+        <translation>進入資料夾</translation>
     </message>
     <message>
         <source>Run</source>
-        <translation>Scaglia</translation>
+        <translation>執行</translation>
     </message>
     <message>
         <source>Run this program</source>
-        <translation>Scaglia questo programma</translation>
+        <translation>執行此程式</translation>
     </message>
     <message>
         <source>Quit</source>
-        <translation>Esci</translation>
+        <translation>離開</translation>
     </message>
     <message>
         <source>Quit qtFM and stop the daemon</source>
-        <translation>Esci qtFM e ferma il demone</translation>
+        <translation>離開qtFM並終止守護程序</translation>
     </message>
     <message>
         <source>Close</source>
-        <translation>Chuide</translation>
+        <translation>關閉</translation>
     </message>
     <message>
         <source>Close qtFM</source>
-        <translation>Chuide qtFM</translation>
+        <translation>關閉qtFM</translation>
     </message>
     <message>
         <source>Show thumbs</source>
-        <translation>Mostra pollici</translation>
+        <translation>顯示預覽</translation>
     </message>
     <message>
         <source>View thumbnails in icon view</source>
-        <translation>Visualizza miniature nella vista a icone</translation>
+        <translation>圖示檢視時顯示預覽圖</translation>
     </message>
     <message>
         <source>Properties</source>
-        <translation>Proprietà</translation>
+        <translation>屬性</translation>
     </message>
     <message>
         <source>View properties of selected items</source>
-        <translation>Visualizzare le proprietà della cartella selezionata</translation>
+        <translation>顯示選取物件的屬性</translation>
     </message>
     <message>
         <source>Lock layout</source>
-        <translation>Blocco del disposizione</translation>
+        <translation>鎖定排版</translation>
     </message>
     <message>
         <source>Refresh</source>
-        <translation>Ricarica</translation>
+        <translation>重新整理</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation>Annulla</translation>
+        <translation>取消</translation>
     </message>
     <message>
         <source>Zoom in</source>
-        <translation>Incrementa</translation>
+        <translation>放大</translation>
     </message>
     <message>
         <source>Zoom out</source>
-        <translation>Diminui</translation>
+        <translation>縮小</translation>
     </message>
     <message>
         <source>Focus address</source>
-        <translation>Messa a fuoco indirizzo</translation>
+        <translation>聚焦到位址</translation>
     </message>
     <message>
         <source>Action</source>
-        <translation>Azione</translation>
+        <translation>動作</translation>
     </message>
     <message>
         <source>Shortcut</source>
-        <translation>Scorciatoia</translation>
-    </message>
-    <message>
-        <source>Duplicate shortcuts detected:&lt;p&gt;%1</source>
-        <translation>Duplicare i collegamenti rilevati:&lt;p&gt;%1</translation>
+        <translation>捷徑</translation>
     </message>
     <message>
         <source>Warning</source>
-        <translation>Avvertimento</translation>
+        <translation>警告</translation>
+    </message>
+    <message>
+        <source>Duplicate shortcuts detected:&lt;p&gt;%1</source>
+        <translation>發現重複的捷徑:&lt;p&gt;%1</translation>
     </message>
     <message>
         <source>File</source>
-        <translation>File</translation>
+        <translation>檔案</translation>
     </message>
     <message>
         <source>Edit</source>
-        <translation>Modifica</translation>
+        <translation>編輯</translation>
     </message>
     <message>
         <source>View</source>
-        <translation>Vista</translation>
+        <translation>檢視</translation>
     </message>
     <message>
         <source>Layout</source>
-        <translation>Disposizione</translation>
+        <translation>排版</translation>
     </message>
     <message>
         <source>Menu</source>
-        <translation>Menu</translation>
+        <translation>選單</translation>
     </message>
     <message>
         <source>Navigate</source>
-        <translation>Naviga</translation>
+        <translation>導覽</translation>
     </message>
     <message>
         <source>Address</source>
-        <translation>Addresso</translation>
+        <translation>位址</translation>
     </message>
     <message>
         <source>Zoom: %1</source>
-        <translation>Zoom: %1</translation>
+        <translation>縮放:%1</translation>
     </message>
     <message>
         <source>Tree</source>
-        <translation>Albero</translation>
+        <translation>樹狀圖</translation>
     </message>
     <message>
         <source>Bookmarks</source>
-        <translation>Segnalibro</translation>
+        <translation>書籤</translation>
     </message>
     <message>
         <source>Setting</source>
-        <translation>Ambiente</translation>
+        <translation>設定</translation>
     </message>
     <message>
         <source>Default terminal:</source>
-        <translation>Predefinito del terminale:</translation>
+        <translation>預設終端機:</translation>
     </message>
     <message>
         <source>Read only...cannot create folder</source>
-        <translation>Di sola lettura ... non è possibile creare cartelle</translation>
+        <translation>唯讀...無法新增資料夾</translation>
     </message>
     <message>
         <source>Read only...cannot create file</source>
-        <translation>Di sola lettura ... non è possibile creare file di</translation>
+        <translation>唯讀...無法新增檔案</translation>
     </message>
     <message>
         <source>Delete confirmation</source>
-        <translation>Elimina la conferma</translation>
+        <translation>確認刪除</translation>
     </message>
     <message>
         <source>Do you want to confirm all delete operations?</source>
-        <translation>Vuoi verificare tutte le operazioni di eliminazione?</translation>
+        <translation>你確定要刪除所有操作?</translation>
     </message>
     <message>
         <source>Careful</source>
-        <translation>Attento</translation>
+        <translation>小心</translation>
     </message>
     <message>
         <source>Are you sure you want to delete &lt;p&gt;&lt;b&gt;&quot;</source>
-        <translation>Sei sicuro di voler eliminare &lt;p&gt;&lt;b&gt;</translation>
+        <translation>你確定要刪除 &lt;p&gt;&lt;b&gt;&quot;</translation>
     </message>
     <message>
         <source>Failed</source>
-        <translation>Mancato</translation>
+        <translation>失敗</translation>
     </message>
     <message>
         <source>Could not delete some items...do you have the right permissions?</source>
-        <translation>Impossibile eliminare alcune voci ... avete i permessi giusti?</translation>
+        <translation>無法刪除某些東西...您確定擁有正確的權限?</translation>
     </message>
     <message>
         <source>No paste for you!</source>
-        <translation>Nessun pasta!</translation>
+        <translation>無法貼上!</translation>
     </message>
     <message>
         <source>File no longer exists!</source>
-        <translation>File non esiste più!</translation>
+        <translation>檔案不存在!</translation>
     </message>
     <message>
         <source>Existing folder</source>
-        <translation>Cartella esistente</translation>
+        <translation>以存在資料夾</translation>
     </message>
     <message>
         <source>Merge</source>
-        <translation>Fonde</translation>
+        <translation>合併</translation>
     </message>
     <message>
         <source>Replace</source>
-        <translation>Sostitui</translation>
+        <translation>取代</translation>
     </message>
     <message>
         <source>Copying...</source>
-        <translation>Copia...</translation>
+        <translation>複製中...</translation>
     </message>
     <message>
         <source>Moving...</source>
-        <translation>In movimento...</translation>
+        <translation>移動中...</translation>
     </message>
     <message>
         <source>Paste failed...do you have write permissions?</source>
-        <translation>Incollare mancato...avete i permessi giusti?</translation>
+        <translation>貼上失敗...您確定擁有寫入權限?</translation>
     </message>
     <message>
         <source>Too big!</source>
-        <translation>Troppo grande!</translation>
+        <translation>太大了!</translation>
     </message>
     <message>
         <source>There is not enough space on the destination drive!</source>
-        <translation>Non c&apos;è abbastanza spazio sul disco destinazione!</translation>
+        <translation>目的裝置並沒有足夠的空間!</translation>
     </message>
     <message>
         <source>Unlock layout</source>
-        <translation>Sbloccare il layout</translation>
+        <translation>解除排版鎖定</translation>
     </message>
     <message>
         <source>Configure filetype</source>
-        <translation>Configura tipo di file</translation>
-    </message>
-    <message>
-        <source>Input</source>
-        <translation>Ingresso</translation>
-    </message>
-    <message>
-        <source>Error - Custom action</source>
-        <translation>Errore - Azione personalizzata</translation>
-    </message>
-    <message>
-        <source>Output - Custom action</source>
-        <translation>Uscita - Azione personalizzata</translation>
+        <translation>設定檔案類型</translation>
     </message>
     <message>
         <source>Filetype:</source>
-        <translation>Tipo di file:</translation>
+        <translation>檔案類型:</translation>
     </message>
     <message>
         <source>Open with:</source>
-        <translation>Apri con:</translation>
+        <translation>開啟檔案:</translation>
+    </message>
+    <message>
+        <source>Input</source>
+        <translation>輸入</translation>
+    </message>
+    <message>
+        <source>Error - Custom action</source>
+        <translation>錯誤 - 自訂動作</translation>
+    </message>
+    <message>
+        <source>Output - Custom action</source>
+        <translation>輸出 - 自訂動作</translation>
     </message>
 </context>
 <context>
     <name>customActionsDialog</name>
     <message>
         <source>Filetype</source>
-        <translation>Tipo de file</translation>
+        <translation>檔案類型</translation>
     </message>
     <message>
         <source>Text</source>
-        <translation>Text</translation>
+        <translation>文字</translation>
     </message>
     <message>
         <source>Icon</source>
-        <translation>Icone</translation>
+        <translation>圖示</translation>
     </message>
     <message>
         <source>Command</source>
-        <translation>Comando</translation>
+        <translation>命令</translation>
     </message>
     <message>
         <source>Custom Actions</source>
-        <translation>Azioni personalizzate</translation>
+        <translation>自訂動作</translation>
     </message>
     <message>
         <source>Usage</source>
-        <translation>Uso</translation>
+        <translation>使用方法</translation>
     </message>
     <message>
         <source>Use &apos;folder&apos; to match all folders.&lt;br&gt;Use a folder name to match a specific folder.&lt;br&gt;Set text to &apos;Open&apos; to override xdg default.&lt;p&gt;%f - selected files&lt;br&gt;%F - selected files with full path&lt;br&gt;%n - current filename&lt;/p&gt;&lt;p&gt;[] - tick checkbox to monitor output and errors.&lt;/p&gt;&lt;p&gt;See &lt;a href=&apos;http://www.qtfm.org/home/readme&apos;&gt;readme&lt;/a&gt; for more help.&lt;/p&gt;</source>
-        <translation>Usare &apos;cartella&apos; per indicare tutte le cartelle &lt;br&gt; Utilizzare un nome cartella per abbinare una specifica cartella di testo.&lt;br&gt; a &apos;Apri&apos; per sovrascrivere xdg predefinita &lt;p&gt;% f  - File selezionati &lt;br&gt;%F - i file selezionati con il percorso completo &lt;br&gt;%n - nome del file corrente &lt;/p&gt; [] - casella di spunta uscita monitor e gli errori &lt;/p&gt;&lt;p&gt; Vedere &lt;a href = &apos;http://www.. qtfm.org / home / readme &apos;&gt; readme &lt;/a&gt; per ulteriori informazioni. &lt;/p&gt;</translation>
+        <translation>使用&quot;資料夾&quot;匹配所有資料夾&lt;br&gt;使用資料夾名稱來匹配特定的資料夾&lt;br&gt;將文字設置為&quot;開啟&quot;來取代Xdg的預設參數。&lt;p&gt;%f - 選擇的檔案&lt;br&gt;%F - 帶有完整路徑的選擇的檔案&lt;br&gt;%n - 此檔案名稱&lt;/p&gt;&lt;p&gt;[] - 勾選選複選框來監控輸出及錯誤。&lt;/p&gt;&lt;p&gt;想要獲取更多幫助，請詳閱 &lt;a href=&apos;http://www.qtfm.org/home/readme&apos;&gt;readme&lt;/a&gt;。&lt;/p&gt;</translation>
     </message>
     <message>
         <source>Extract here</source>
-        <translation>Estrai qui</translation>
+        <translation>在此解壓縮</translation>
     </message>
     <message>
         <source>Term here</source>
-        <translation>Termine qui</translation>
+        <translation>在此開啟終端機</translation>
     </message>
     <message>
         <source>Compress</source>
-        <translation>Comprime</translation>
+        <translation>壓縮</translation>
     </message>
 </context>
 <context>
     <name>icondlg</name>
     <message>
         <source>Select icon</source>
-        <translation>Seleziona l&apos;icona</translation>
+        <translation>選擇圖示</translation>
     </message>
 </context>
 <context>
     <name>myModel</name>
     <message>
         <source>Name</source>
-        <translation>Nome</translation>
+        <translation>名稱</translation>
     </message>
     <message>
         <source>Size</source>
-        <translation>Dimensione</translation>
+        <translation>大小</translation>
     </message>
     <message>
         <source>Type</source>
-        <translation>Tipo</translation>
+        <translation>類型</translation>
     </message>
     <message>
         <source>Owner</source>
-        <translation>Proprietario</translation>
+        <translation>擁有者</translation>
     </message>
     <message>
         <source>Date Modified</source>
-        <translation>La data di cambiamento</translation>
+        <translation>修改時間</translation>
     </message>
 </context>
 <context>
     <name>myProgressDialog</name>
     <message>
         <source>Initializing...</source>
-        <translation>Inizializzazione...</translation>
+        <translation>初始化中...</translation>
     </message>
     <message>
         <source>&lt;p&gt;Transfer rate: %2 MB/s&lt;br&gt;Time remaining: %3&lt;/p&gt;</source>
-        <translation>&lt;p&gt;Velocità di trasferimento: %2 MB/s&lt;br&gt;Tempo rimanente: %3&lt;/p&gt;</translation>
+        <translation>&lt;p&gt;傳輸速率: %2 MB/s&lt;br&gt;剩餘時間: %3&lt;/p&gt;</translation>
     </message>
 </context>
 <context>
     <name>propertiesDialog</name>
     <message>
         <source>Properties</source>
-        <translation>Proprietà</translation>
+        <translation>屬性</translation>
     </message>
     <message>
         <source>Size:</source>
-        <translation>Dimensione:</translation>
+        <translation>大小:</translation>
     </message>
     <message>
         <source>Contains:</source>
-        <translation>Contiene:</translation>
-    </message>
-    <message>
-        <source>Modified:</source>
-        <translation>Modificato:</translation>
-    </message>
-    <message>
-        <source>Read</source>
-        <translation>Legge</translation>
-    </message>
-    <message>
-        <source>Write</source>
-        <translation>Scrive</translation>
-    </message>
-    <message>
-        <source>Execute</source>
-        <translation>Esegui</translation>
-    </message>
-    <message>
-        <source>Owner</source>
-        <translation>Proprietario</translation>
-    </message>
-    <message>
-        <source>Group</source>
-        <translation>Gruppo</translation>
-    </message>
-    <message>
-        <source>Other</source>
-        <translation>Altro</translation>
-    </message>
-    <message>
-        <source>Numeric</source>
-        <translation>Numerico </translation>
-    </message>
-    <message>
-        <source>&lt;b&gt;%1 files, %2 folders</source>
-        <translation>&lt;b&gt;%1 files, %2 cartelle</translation>
-    </message>
-    <message>
-        <source>&lt;b&gt;%1 folders</source>
-        <translation>&lt;b&gt;%1 cartelle</translation>
-    </message>
-    <message>
-        <source>&lt;b&gt;%1 files</source>
-        <translation>&lt;b&gt;%1 files</translation>
-    </message>
-    <message>
-        <source>Total:</source>
-        <translation>Totale:</translation>
-    </message>
-    <message>
-        <source>%1 Files, %2 folders</source>
-        <translation>%1 Files, %2 cartelle</translation>
+        <translation>內容:</translation>
     </message>
     <message>
         <source>Filetype:</source>
-        <translation>Tipo di file:</translation>
+        <translation>檔案類型:</translation>
+    </message>
+    <message>
+        <source>Modified:</source>
+        <translation>修改時間:</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;%1 files, %2 folders</source>
+        <translation>&lt;b&gt;%1 檔案， %2 資料夾</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;%1 folders</source>
+        <translation>&lt;b&gt;%1 資料夾</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;%1 files</source>
+        <translation>&lt;b&gt;%1 檔案</translation>
+    </message>
+    <message>
+        <source>Total:</source>
+        <translation>總計:</translation>
+    </message>
+    <message>
+        <source>Read</source>
+        <translation>讀取</translation>
+    </message>
+    <message>
+        <source>Write</source>
+        <translation>寫入</translation>
+    </message>
+    <message>
+        <source>Execute</source>
+        <translation>執行</translation>
+    </message>
+    <message>
+        <source>Owner</source>
+        <translation>擁有者</translation>
+    </message>
+    <message>
+        <source>Group</source>
+        <translation>組織</translation>
+    </message>
+    <message>
+        <source>Other</source>
+        <translation>其他</translation>
+    </message>
+    <message>
+        <source>Numeric</source>
+        <translation>數字表示</translation>
+    </message>
+    <message>
+        <source>%1 Files, %2 folders</source>
+        <translation>%1 檔案，%2 資料夾</translation>
     </message>
 </context>
 </TS>

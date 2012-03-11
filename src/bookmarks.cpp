@@ -1,6 +1,6 @@
 /****************************************************************************
 * This file is part of qtFM, a simple, fast file manager.
-* Copyright (C) 2010,2011 Wittfella
+* Copyright (C) 2010,2011,2012Wittfella
 *
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -74,15 +74,9 @@ void bookmarkmodel::addBookmark(QString name, QString path, QString isAuto, QStr
 }
 
 //---------------------------------------------------------------------------
-void MainWindow::fileWatcherTriggered(QString dir)
+void MainWindow::mountWatcherTriggered()
 {
-    QTimer::singleShot(2000,this,SLOT(autoBookmarkMounts()));
-
-    //I don't know why this is needed. Bug maybe?
-    //The QFileSystemWatcher seems to stop monitoring the mtab file periodically,
-    //so add it again.
-    if(watcher->files().isEmpty())
-	watcher->addPath("/etc/mtab");
+    QTimer::singleShot(1000,this,SLOT(autoBookmarkMounts()));
 }
 
 //---------------------------------------------------------------------------
@@ -130,7 +124,6 @@ void MainWindow::autoBookmarkMounts()
         if(autoBookmarks.contains(item->data(32).toString()))
             if(!mounts.contains(item->data(32).toString()))
                 modelBookmarks->removeRow(item->row());
-
 }
 
 //---------------------------------------------------------------------------

@@ -20,12 +20,12 @@
         <translation>Eine neue Datei erstellen</translation>
     </message>
     <message>
-        <source>Open tab</source>
-        <translation>Reiter Ã¶ffnen</translation>
+        <source>New tab</source>
+        <translation>Reiter öffnen</translation>
     </message>
     <message>
         <source>Close tab</source>
-        <translation>Reiter schlieÃŸen</translation>
+        <translation>Reiter schließen</translation>
     </message>
     <message>
         <source>Cut</source>
@@ -38,18 +38,18 @@
     <message>
         <source>Copy</source>
         <translation>Kopieren</translation>
-   </message>
+    </message>
     <message>
         <source>Copy the current file</source>
         <translation>Aktuelle Datei kopieren</translation>
     </message>
     <message>
         <source>Paste</source>
-        <translation>EinfÃ¼gen</translation>
+        <translation>Einfügen</translation>
     </message>
     <message>
         <source>Paste the file here</source>
-        <translation>Datei hier einfÃ¼gen</translation>
+        <translation>Datei hier Einfügen</translation>
     </message>
     <message>
         <source>Up</source>
@@ -61,7 +61,7 @@
     </message>
     <message>
         <source>Back</source>
-        <translation>ZurÃ¼ck</translation>
+        <translation>Zurück</translation>
     </message>
     <message>
         <source>Go back one directory</source>
@@ -101,19 +101,19 @@
     </message>
     <message>
         <source>Add bookmark</source>
-        <translation>Favorit hinzufÃ¼gen</translation>
+        <translation>Favorit hinzufügen</translation>
     </message>
     <message>
         <source>Add this folder to bookmarks</source>
-        <translation>Diesen Ordner als Favorit hinzufÃ¼gen</translation>
+        <translation>Diesen Ordner als Favorit hinzufügen</translation>
     </message>
     <message>
         <source>Add separator</source>
-        <translation>Trenner hinzufÃ¼gen</translation>
+        <translation>Trenner hinzufügen</translation>
     </message>
     <message>
         <source>Add separator to bookmarks list</source>
-        <translation>Trenner zur Favoriten-Liste hinzufÃ¼gen</translation>
+        <translation>Trenner zur Favoriten-Liste hinzufügen</translation>
     </message>
     <message>
         <source>Remove bookmark</source>
@@ -129,19 +129,19 @@
     </message>
     <message>
         <source>Change bookmark icon</source>
-        <translation>Favoriten-Symbol Ã¤ndern</translation>
+        <translation>Favoriten-Symbol ändern</translation>
     </message>
     <message>
         <source>Wrap bookmarks</source>
-        <translation>Favoriten einrÃ¼cken</translation>
+        <translation>Favoriten einrücken</translation>
     </message>
     <message>
         <source>Delete</source>
-        <translation>LÃ¶schen</translation>
+        <translation>Löschen</translation>
     </message>
     <message>
         <source>Delete selected file</source>
-        <translation>GewÃ¤hlte Datei lÃ¶schen</translation>
+        <translation>Gewählte Datei löschen</translation>
     </message>
     <message>
         <source>Custom actions</source>
@@ -149,15 +149,15 @@
     </message>
     <message>
         <source>Edit custom actions</source>
-        <translation>Benutzer-definierte Aktionen hinzufÃ¼gen</translation>
+        <translation>Benutzer-definierte Aktionen hinzufügen</translation>
     </message>
     <message>
         <source>Configure shortcuts</source>
-        <translation>KÃ¼rzel konfigurieren</translation>
+        <translation>Kürzel konfigurieren</translation>
     </message>
     <message>
         <source>Edit keybindings</source>
-        <translation>Tastatur-KÃ¼rzel bearbeiten</translation>
+        <translation>Tastatur-Kürzel bearbeiten</translation>
     </message>
     <message>
         <source>Edit filetype</source>
@@ -165,7 +165,7 @@
     </message>
     <message>
         <source>Set default program for opening selected filetype</source>
-        <translation>Standard-Programm zum Ã–ffnen des Dateityps einstellen</translation>
+        <translation>Standard-Programm zum öffnen des Dateityps einstellen</translation>
     </message>
     <message>
         <source>Rename</source>
@@ -181,27 +181,27 @@
     </message>
     <message>
         <source>Open virtual terminal</source>
-        <translation>Terminal hier Ã¶ffnen</translation>
+        <translation>Terminal hier öffnen</translation>
     </message>
     <message>
         <source>Open</source>
-        <translation>Ã–ffnen</translation>
+        <translation>Öffnen</translation>
     </message>
     <message>
         <source>Open the file</source>
-        <translation>Datei Ã¶ffnen</translation>
+        <translation>Datei Öffnen</translation>
     </message>
     <message>
         <source>Enter folder</source>
-        <translation>Ordner Ã¶ffnen</translation>
+        <translation>Ordner Öffnen</translation>
     </message>
     <message>
         <source>Run</source>
-        <translation>AusfÃ¼hren</translation>
+        <translation>Ausführen</translation>
     </message>
     <message>
         <source>Run this program</source>
-        <translation>Programm ausfÃ¼hren</translation>
+        <translation>Programm ausführen</translation>
     </message>
     <message>
         <source>Quit</source>
@@ -213,11 +213,11 @@
     </message>
     <message>
         <source>Close</source>
-        <translation>SchlieÃŸen</translation>
+        <translation>Schließen</translation>
     </message>
     <message>
         <source>Close qtFM</source>
-        <translation>Dateimanager schlieÃŸen</translation>
+        <translation>Dateimanager Schließen</translation>
     </message>
     <message>
         <source>Show thumbs</source>
@@ -233,7 +233,7 @@
     </message>
     <message>
         <source>View properties of selected items</source>
-        <translation>Eigenschaften gewÃ¤hlter Objekte anzeigen</translation>
+        <translation>Eigenschaften gewählter Objekte anzeigen</translation>
     </message>
     <message>
         <source>Lock layout</source>
@@ -249,7 +249,7 @@
     </message>
     <message>
         <source>Zoom in</source>
-        <translation>VergrÃ¶ÃŸern</translation>
+        <translation>Vergrößern</translation>
     </message>
     <message>
         <source>Zoom out</source>
@@ -265,7 +265,7 @@
     </message>
     <message>
         <source>Shortcut</source>
-        <translation>KÃ¼rzel</translation>
+        <translation>Kürzel</translation>
     </message>
     <message>
         <source>Warning</source>
@@ -273,7 +273,7 @@
     </message>
     <message>
         <source>Duplicate shortcuts detected:&lt;p&gt;%1</source>
-        <translation>Doppelte KÃ¼rzel erkannt:&lt;p&gt;%1</translation>
+        <translation>Doppelte Kürzel erkannt:&lt;p&gt;%1</translation>
     </message>
     <message>
         <source>File</source>
@@ -293,7 +293,7 @@
     </message>
     <message>
         <source>Menu</source>
-        <translation>MenÃ¼</translation>
+        <translation>Menü</translation>
     </message>
     <message>
         <source>Navigate</source>
@@ -305,7 +305,7 @@
     </message>
     <message>
         <source>Zoom: %1</source>
-        <translation>MaÃŸstab: %1</translation>
+        <translation>Maßstab: %1</translation>
     </message>
     <message>
         <source>Tree</source>
@@ -333,11 +333,11 @@
     </message>
     <message>
         <source>Delete confirmation</source>
-        <translation>LÃ¶schen bestÃ¤tigen</translation>
+        <translation>Löschen bestätigen</translation>
     </message>
     <message>
         <source>Do you want to confirm all delete operations?</source>
-        <translation>Alle LÃ¶schvorgÃ¤nge bestÃ¤tigen?</translation>
+        <translation>Alle Löschvorgänge bestätigen?</translation>
     </message>
     <message>
         <source>Careful</source>
@@ -345,7 +345,7 @@
     </message>
     <message>
         <source>Are you sure you want to delete &lt;p&gt;&lt;b&gt;&quot;</source>
-        <translation>Wirklich lÃ¶schen &lt;p&gt;&lt;b&gt;&quot;</translation>
+        <translation>Wirklich löschen &lt;p&gt;&lt;b&gt;&quot;</translation>
     </message>
     <message>
         <source>Failed</source>
@@ -353,11 +353,11 @@
     </message>
     <message>
         <source>Could not delete some items...do you have the right permissions?</source>
-        <translation>LÃ¶schen einiger Elemente fehlgeschlagen - Besitzen Sie ausreichende Rechte?</translation>
+        <translation>Löschen einiger Elemente fehlgeschlagen - Besitzen Sie ausreichende Rechte?</translation>
     </message>
     <message>
         <source>No paste for you!</source>
-        <translation>EinfÃ¼gen nicht mÃ¶glich!</translation>
+        <translation>Einfügen nicht möglich!</translation>
     </message>
     <message>
         <source>File no longer exists!</source>
@@ -369,7 +369,7 @@
     </message>
     <message>
         <source>Merge</source>
-        <translation>ZusammenfÃ¼hren</translation>
+        <translation>Zusammenführen</translation>
     </message>
     <message>
         <source>Replace</source>
@@ -385,15 +385,15 @@
     </message>
     <message>
         <source>Paste failed...do you have write permissions?</source>
-        <translation>EinfÃ¼gen fehlgeschlagen - Besitzen Sie ausreichende Rechte?</translation>
+        <translation>Einfügen fehlgeschlagen - Besitzen Sie ausreichende Rechte?</translation>
     </message>
     <message>
         <source>Too big!</source>
-        <translation>Zu groÃŸ!</translation>
+        <translation>Zu groß!</translation>
     </message>
     <message>
         <source>There is not enough space on the destination drive!</source>
-        <translation>Nicht genÃ¼gend Platz auf dem Ziellaufwerk!</translation>
+        <translation>Nicht genügend Platz auf dem Ziellaufwerk!</translation>
     </message>
     <message>
         <source>Unlock layout</source>
@@ -414,6 +414,22 @@
     <message>
         <source>Output - Custom action</source>
         <translation>Ausgabe Benutzer-definierter Aktion</translation>
+    </message>
+    <message>
+        <source>Middle-click things to open tab</source>
+        <translation>Mittlere Maustaste Dinge zu Tab zu öffnen</translation>
+    </message>
+    <message>
+        <source>Middle-click tabs to close</source>
+        <translation>Mittlere Maustaste Tabs zu schließen</translation>
+    </message>
+    <message>
+        <source>Filetype:</source>
+        <translation>Dateityp:</translation>
+    </message>
+    <message>
+        <source>Open with:</source>
+        <translation>Öffnen Sie mit:</translation>
     </message>
 </context>
 <context>
@@ -444,7 +460,7 @@
     </message>
     <message>
         <source>Use &apos;folder&apos; to match all folders.&lt;br&gt;Use a folder name to match a specific folder.&lt;br&gt;Set text to &apos;Open&apos; to override xdg default.&lt;p&gt;%f - selected files&lt;br&gt;%F - selected files with full path&lt;br&gt;%n - current filename&lt;/p&gt;&lt;p&gt;[] - tick checkbox to monitor output and errors.&lt;/p&gt;&lt;p&gt;See &lt;a href=&apos;http://www.qtfm.org/home/readme&apos;&gt;readme&lt;/a&gt; for more help.&lt;/p&gt;</source>
-        <translation>&apos;Ordner&apos; fÃ¼r alle Ordner benutzen.&lt;br&gt;Ordner-Name fÃ¼r einzelnen Ordner benutzen.&lt;br&gt;&apos;Ã–ffnen&apos; angeben, um xdg-Stanards zu Ã¼beschreiben.&lt;p&gt;%f - gewÃ¤hlte Dateien&lt;br&gt;%F - gewÃ¤hlte Dateien mit vollem Pfad&lt;br&gt;%n - aktuelle Datei-Name&lt;/p&gt;&lt;p&gt;[] - aktivieren, um Meldungen und Fehler anzuzeigen.&lt;/p&gt;&lt;p&gt;Unter &lt;a href=&apos;http://www.qtfm.org/home/readme&apos;&gt;readme&lt;/a&gt; finden Sie weitere Hilfe.&lt;/p&gt;</translation>
+        <translation>&apos;Ordner&apos; für alle Ordner benutzen.&lt;br&gt;Ordner-Name für einzelnen Ordner benutzen.&lt;br&gt;&apos;Öffnen&apos; angeben, um xdg-Stanards zu übeschreiben.&lt;p&gt;%f - gewählte Dateien&lt;br&gt;%F - gewählte Dateien mit vollem Pfad&lt;br&gt;%n - aktuelle Datei-Name&lt;/p&gt;&lt;p&gt;[] - aktivieren, um Meldungen und Fehler anzuzeigen.&lt;/p&gt;&lt;p&gt;Unter &lt;a href=&apos;http://www.qtfm.org/home/readme&apos;&gt;readme&lt;/a&gt; finden Sie weitere Hilfe.&lt;/p&gt;</translation>
     </message>
     <message>
         <source>Extract here</source>
@@ -452,7 +468,7 @@
     </message>
     <message>
         <source>Term here</source>
-        <translation>Terminal hier Ã¶ffnen</translation>
+        <translation>Terminal hier öffnen</translation>
     </message>
     <message>
         <source>Compress</source>
@@ -463,7 +479,7 @@
     <name>icondlg</name>
     <message>
         <source>Select icon</source>
-        <translation>Symbol wÃ¤hlen</translation>
+        <translation>Symbol wählen</translation>
     </message>
 </context>
 <context>
@@ -474,7 +490,7 @@
     </message>
     <message>
         <source>Size</source>
-        <translation>GrÃ¶ÃŸe</translation>
+        <translation>Größe</translation>
     </message>
     <message>
         <source>Type</source>
@@ -486,7 +502,7 @@
     </message>
     <message>
         <source>Date Modified</source>
-        <translation>GeÃ¤ndert</translation>
+        <translation>Geändert</translation>
     </message>
 </context>
 <context>
@@ -497,7 +513,7 @@
     </message>
     <message>
         <source>&lt;p&gt;Transfer rate: %2 MB/s&lt;br&gt;Time remaining: %3&lt;/p&gt;</source>
-        <translation>&lt;p&gt;Ãœbertragungsrate: %2 MB/S&lt;br&gt;Verbleibende Zeit: %3&lt;/p&gt;</translation>
+        <translation>&lt;p&gt;Übertragungsrate: %2 MB/S&lt;br&gt;Verbleibende Zeit: %3&lt;/p&gt;</translation>
     </message>
 </context>
 <context>
@@ -508,19 +524,15 @@
     </message>
     <message>
         <source>Size:</source>
-        <translation>GrÃ¶ÃŸe:</translation>
+        <translation>Größe:</translation>
     </message>
     <message>
         <source>Contains:</source>
         <translation>Inhalt:</translation>
     </message>
     <message>
-        <source>FileType:</source>
-        <translation>Dateityp:</translation>
-    </message>
-    <message>
         <source>Modified:</source>
-        <translation>GeÃ¤ndert:</translation>
+        <translation>Geändert:</translation>
     </message>
     <message>
         <source>Read</source>
@@ -532,7 +544,7 @@
     </message>
     <message>
         <source>Execute</source>
-        <translation>AusfÃ¼hren</translation>
+        <translation>Ausführen</translation>
     </message>
     <message>
         <source>Owner</source>
@@ -569,6 +581,10 @@
     <message>
         <source>%1 Files, %2 folders</source>
         <translation>%1 Dateien, %2 Ordner</translation>
+    </message>
+    <message>
+        <source>Filetype:</source>
+        <translation>Dateityp:</translation>
     </message>
 </context>
 </TS>

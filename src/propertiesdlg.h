@@ -1,6 +1,6 @@
 /****************************************************************************
 * This file is part of qtFM, a simple, fast file manager.
-* Copyright (C) 2010,2011 Wittfella
+* Copyright (C) 2010,2011,2012 Wittfella
 *
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -25,13 +25,14 @@
 
 #include <QtGui>
 #include <QDialog>
+#include "mymodel.h"
 
 class propertiesDialog: public QDialog
 {
     Q_OBJECT
 
 public:
-    propertiesDialog(QStringList, QHash<QString,QIcon> *, QHash<QString,QIcon> *);
+    propertiesDialog(QStringList, myModel *);
 
 public slots:
     void accept();
@@ -80,6 +81,7 @@ private:
     QString pathName;
     QString permString;
     bool iconChanged;
+    myModel * model;
     QHash<QString,QIcon> *folderIcons;
     QHash<QString,QIcon> *fileIcons;
 

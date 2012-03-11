@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.0" language="sr" sourcelanguage="en">
+<TS version="2.0" language="sr_RS" sourcelanguage="en">
 <context>
     <name>MainWindow</name>
     <message>
@@ -20,8 +20,8 @@
         <translation>Направи нови фајл</translation>
     </message>
     <message>
-        <source>Open tab</source>
-        <translation>Отвори језичак</translation>
+        <source>New tab</source>
+        <translation>Нови језичак</translation>
     </message>
     <message>
         <source>Close tab</source>
@@ -101,27 +101,27 @@
     </message>
     <message>
         <source>Add bookmark</source>
-        <translation>Додај белешку</translation>
+        <translation>Додај обележивач</translation>
     </message>
     <message>
         <source>Add this folder to bookmarks</source>
-        <translation>Додај ову фасциклу у белешке</translation>
+        <translation>Додај ову фасциклу у обележиваче</translation>
     </message>
     <message>
         <source>Add separator</source>
-        <translation>Додај размак</translation>
+        <translation>Додај раздвајач</translation>
     </message>
     <message>
         <source>Add separator to bookmarks list</source>
-        <translation>Додај размак на списак белешки</translation>
+        <translation>Додај раздвајач на списак обележивача</translation>
     </message>
     <message>
         <source>Remove bookmark</source>
-        <translation>Уклони белешку</translation>
+        <translation>Уклони обележивач</translation>
     </message>
     <message>
         <source>Remove this bookmark</source>
-        <translation>Уклони ову белешку</translation>
+        <translation>Уклони овај обележивач</translation>
     </message>
     <message>
         <source>Edit icon</source>
@@ -129,7 +129,7 @@
     </message>
     <message>
         <source>Change bookmark icon</source>
-        <translation>Промени икону белешке</translation>
+        <translation>Промени икону обележивача</translation>
     </message>
     <message>
         <source>Wrap bookmarks</source>
@@ -173,7 +173,7 @@
     </message>
     <message>
         <source>Rename file</source>
-        <translation>Преименуј фајл</translation>
+        <translation>Преименуј изабрано</translation>
     </message>
     <message>
         <source>Terminal</source>
@@ -189,11 +189,11 @@
     </message>
     <message>
         <source>Open the file</source>
-        <translation>Отвори фајл</translation>
+        <translation>Отвори изабрано</translation>
     </message>
     <message>
         <source>Enter folder</source>
-        <translation>Унесите фасциклу</translation>
+        <translation>Уђи у фасциклу</translation>
     </message>
     <message>
         <source>Run</source>
@@ -245,7 +245,7 @@
     </message>
     <message>
         <source>Cancel</source>
-        <translation>Поништи</translation>
+        <translation>Одустани</translation>
     </message>
     <message>
         <source>Zoom in</source>
@@ -313,7 +313,7 @@
     </message>
     <message>
         <source>Bookmarks</source>
-        <translation>Белешке</translation>
+        <translation>Обележивачи</translation>
     </message>
     <message>
         <source>Setting</source>
@@ -337,7 +337,7 @@
     </message>
     <message>
         <source>Do you want to confirm all delete operations?</source>
-        <translation>Да ли желите да потврђујете све операције брисања?</translation>
+        <translation>Желите ли да потврђујете све операције брисања?</translation>
     </message>
     <message>
         <source>Careful</source>
@@ -345,7 +345,7 @@
     </message>
     <message>
         <source>Are you sure you want to delete &lt;p&gt;&lt;b&gt;&quot;</source>
-        <translation>Да ли заиста желите да обришете &lt;p&gt;&lt;b&gt;&quot;</translation>
+        <translation>Желите ли заиста да обришете &lt;p&gt;&lt;b&gt;&quot;</translation>
     </message>
     <message>
         <source>Failed</source>
@@ -357,7 +357,7 @@
     </message>
     <message>
         <source>No paste for you!</source>
-        <translation>Без лепљења!</translation>
+        <translation>Нема налепљивања за вас!</translation>
     </message>
     <message>
         <source>File no longer exists!</source>
@@ -415,6 +415,22 @@
         <source>Output - Custom action</source>
         <translation>Излаз - посебна радња</translation>
     </message>
+    <message>
+        <source>Middle-click things to open tab</source>
+        <translation>Кликните средњим тастером на ставку да је отворите у новом језичку</translation>
+    </message>
+    <message>
+        <source>Middle-click tabs to close</source>
+        <translation>Кликните средњим тастером да затворите језичак</translation>
+    </message>
+    <message>
+        <source>Filetype:</source>
+        <translation>филе типе:</translation>
+    </message>
+    <message>
+        <source>Open with:</source>
+        <translation>Отворите са:</translation>
+    </message>
 </context>
 <context>
     <name>customActionsDialog</name>
@@ -463,7 +479,7 @@
     <name>icondlg</name>
     <message>
         <source>Select icon</source>
-        <translation>Изаберите икону</translation>
+        <translation>Изабери икону</translation>
     </message>
 </context>
 <context>
@@ -513,10 +529,6 @@
     <message>
         <source>Contains:</source>
         <translation>Садржи:</translation>
-    </message>
-    <message>
-        <source>FileType:</source>
-        <translation>Тип фајла:</translation>
     </message>
     <message>
         <source>Modified:</source>
@@ -569,6 +581,10 @@
     <message>
         <source>%1 Files, %2 folders</source>
         <translation>%1 фајлова, %2 фасцикли</translation>
+    </message>
+    <message>
+        <source>Filetype:</source>
+        <translation>филе типе:</translation>
     </message>
 </context>
 </TS>

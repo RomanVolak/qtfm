@@ -1,6 +1,6 @@
 /****************************************************************************
 * This file is part of qtFM, a simple, fast file manager.
-* Copyright (C) 2010,2011 Wittfella
+* Copyright (C) 2010,2011,2012 Wittfella
 *
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@ class myModel : public QAbstractItemModel
     Q_OBJECT
 
 public:
-        myModel();
+        myModel(bool realMime);
         ~myModel();
 
         void loadMimeTypes() const;
@@ -65,6 +65,7 @@ public:
 
         QString fileName(const QModelIndex &index);
         QString filePath(const QModelIndex &index);
+        QString getMimeType(const QModelIndex &index);
 
         QStringList mimeTypes() const;
 
@@ -77,7 +78,9 @@ public:
 
         QHash<QString,QIcon> *mimeIcons;
         QHash<QString,QIcon> *folderIcons;
-        QHash<QString,QIcon> *icons;
+        //QHash<QString,QIcon> *icons;
+        QCache<QString,QIcon> *icons;
+        bool realMimeTypes;
 
 public slots:
         void notifyChange();
@@ -99,6 +102,8 @@ private:
 
         bool showThumbs;
         int thumbCount;
+
+        QPalette colors;
         QStringList cutItems;
         QHash<QString,QString> *mimeGlob;
         QHash<QString,QString> *mimeGeneric;

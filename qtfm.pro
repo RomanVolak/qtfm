@@ -52,6 +52,7 @@ trans.files += translations/qtfm_da.qm \
 	       translations/qtfm_pl.qm \
                translations/qtfm_ru.qm \
                translations/qtfm_sr.qm \
+               translations/qtfm_sv.qm \
                translations/qtfm_zh.qm \
                translations/qtfm_zh_TW.qm
 

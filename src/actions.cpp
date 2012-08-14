@@ -257,7 +257,7 @@ void MainWindow::createActions()
     actionList->append(closeAct);
 
     thumbsAct = new QAction(tr("Show thumbs"), this);
-    thumbsAct->setStatusTip(tr("View thumbnails in icon view"));
+    thumbsAct->setStatusTip(tr("View thumbnails for image files"));
     thumbsAct->setCheckable(true);
     connect(thumbsAct, SIGNAL(triggered()), this, SLOT(toggleThumbs()));
     actionList->append(thumbsAct);
@@ -338,7 +338,6 @@ void MainWindow::readShortcuts()
         shortcuts.insert(homeAct->text(),"f3");
         shortcuts.insert(hiddenAct->text(),"ctrl+h");
         shortcuts.insert(deleteAct->text(),"del");
-        shortcuts.insert(terminalAct->text(),"f4");
         shortcuts.insert(terminalAct->text(),"f4");
         shortcuts.insert(exitAct->text(),"ctrl+q");
         shortcuts.insert(renameAct->text(),"f2");
@@ -634,7 +633,10 @@ void MainWindow::focusAction()
         else list->setFocus(Qt::TabFocusReason);
     }
     else
+    {
+        QApplication::clipboard()->blockSignals(0);
         pathEdit->setCompleter(customComplete);
+    }
 }
 
 //---------------------------------------------------------------------------
@@ -642,6 +644,19 @@ void MainWindow::addressChanged(int old, int now)
 {
     if(!pathEdit->hasFocus()) return;
     QString temp = pathEdit->currentText();
+
+    if(temp.contains("/."))
+        if(!hiddenAct->isChecked())
+        {
+            hiddenAct->setChecked(1);
+            toggleHidden();
+        }
+
+    if(temp.right(1) == "/")
+    {
+        modelList->index(temp);     //make sure model has walked this folder
+        modelTree->invalidate();
+    }
 
     if(temp.length() == now) return;
     int pos = temp.indexOf("/",now);
@@ -655,11 +670,13 @@ void MainWindow::addressChanged(int old, int now)
     else
     if(QApplication::mouseButtons() == Qt::MidButton)
     {
-        pathEdit->setCompleter(0);
-        tree->setCurrentIndex(modelTree->mapFromSource(modelList->index(temp.left(pos))));
+        QApplication::clipboard()->blockSignals(1);
         QApplication::clipboard()->clear(QClipboard::Selection);        //don't paste stuff
 
-        QTimer::singleShot(400,this,SLOT(focusAction()));
+        pathEdit->setCompleter(0);
+        tree->setCurrentIndex(modelTree->mapFromSource(modelList->index(temp.left(pos))));
+
+        QTimer::singleShot(500,this,SLOT(focusAction()));
     }
     else
     if(!pathEdit->lineEdit()->hasSelectedText())

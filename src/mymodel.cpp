@@ -66,6 +66,7 @@ myModel::myModel(bool realMime)
     inotifyFD = inotify_init();
     notifier = new QSocketNotifier(inotifyFD, QSocketNotifier::Read, this);
     connect(notifier, SIGNAL(activated(int)), this, SLOT(notifyChange()));
+    connect(&eventTimer,SIGNAL(timeout()),this,SLOT(eventTimeout()));
 
     realMimeTypes = realMime;
 }
@@ -207,57 +208,86 @@ void myModel::notifyChange()
 
         int w = event->wd;
 
-        if(watchers.contains(w))
+        if(eventTimer.isActive())
         {
-            myModelItem *parent = rootItem->matchPath(watchers.value(w).split(SEPARATOR));
-
-            if(parent)
-            {
-                parent->dirty = 1;
-
-                QDir dir(parent->absoluteFilePath());
-                QFileInfoList all = dir.entryInfoList(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System);
-
-                foreach(myModelItem * child, parent->children())
-                {
-                    if(all.contains(child->fileInfo()))
-                    {
-                        //just remove known items
-                        all.removeOne(child->fileInfo());
-                    }
-                    else
-                    {
-                        //must of been deleted, remove from model
-                        if(child->fileInfo().isDir())
-                        {
-                            int wd = watchers.key(child->absoluteFilePath());
-                            inotify_rm_watch(inotifyFD,wd);
-                            watchers.remove(wd);
-                        }
-                        beginRemoveRows(index(parent->absoluteFilePath()),child->childNumber(),child->childNumber());
-                        parent->removeChild(child);
-                        endRemoveRows();
-                    }
-                }
-
-                foreach(QFileInfo one, all)                 //only new items left in list
-                {
-                    beginInsertRows(index(parent->absoluteFilePath()),parent->childCount(),parent->childCount());
-                    new myModelItem(one,parent);
-                    endInsertRows();
-                }
-            }
+            if(w == lastEventID)
+                eventTimer.start(40);
             else
             {
-                inotify_rm_watch(inotifyFD,w);
-                watchers.remove(w);
+                eventTimer.stop();
+                notifyProcess(lastEventID);
+                lastEventID = w;
+                eventTimer.start(40);
             }
+        }
+        else
+        {
+            lastEventID = w;
+            eventTimer.start(40);
         }
 
         at += sizeof(inotify_event) + event->len;
     }
 
     notifier->setEnabled(1);
+}
+
+//---------------------------------------------------------------------------------------
+void myModel::eventTimeout()
+{
+    notifyProcess(lastEventID);
+    eventTimer.stop();
+}
+
+//---------------------------------------------------------------------------------------
+void myModel::notifyProcess(int eventID)
+{
+    if(watchers.contains(eventID))
+    {
+        myModelItem *parent = rootItem->matchPath(watchers.value(eventID).split(SEPARATOR));
+
+        if(parent)
+        {
+            parent->dirty = 1;
+
+            QDir dir(parent->absoluteFilePath());
+            QFileInfoList all = dir.entryInfoList(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System);
+
+            foreach(myModelItem * child, parent->children())
+            {
+                if(all.contains(child->fileInfo()))
+                {
+                    //just remove known items
+                    all.removeOne(child->fileInfo());
+                }
+                else
+                {
+                    //must of been deleted, remove from model
+                    if(child->fileInfo().isDir())
+                    {
+                        int wd = watchers.key(child->absoluteFilePath());
+                        inotify_rm_watch(inotifyFD,wd);
+                        watchers.remove(wd);
+                    }
+                    beginRemoveRows(index(parent->absoluteFilePath()),child->childNumber(),child->childNumber());
+                    parent->removeChild(child);
+                    endRemoveRows();
+                }
+            }
+
+            foreach(QFileInfo one, all)                 //only new items left in list
+            {
+                beginInsertRows(index(parent->absoluteFilePath()),parent->childCount(),parent->childCount());
+                new myModelItem(one,parent);
+                endInsertRows();
+            }
+        }
+    }
+    else
+    {
+        inotify_rm_watch(inotifyFD,eventID);
+        watchers.remove(eventID);
+    }
 }
 
 //---------------------------------------------------------------------------------
@@ -372,6 +402,15 @@ void myModel::update()
 }
 
 //---------------------------------------------------------------------------------
+void myModel::refreshItems()
+{
+    myModelItem *item = rootItem->matchPath(currentRootPath.split(SEPARATOR));
+
+    item->clearAll();
+    populateItem(item);
+}
+
+//---------------------------------------------------------------------------------
 QModelIndex myModel::insertFolder(QModelIndex parent)
 {
     myModelItem *item = static_cast<myModelItem*>(parent.internalPointer());
@@ -472,7 +511,7 @@ void myModel::cacheInfo()
     if(thumbs->count() > thumbCount)
     {
         fileIcons.setFileName(QDir::homePath() + "/.config/qtfm/thumbs.cache");
-        if(fileIcons.size() > 5000000) fileIcons.remove();
+        if(fileIcons.size() > 10000000) fileIcons.remove();
         else
         {
             fileIcons.open(QIODevice::WriteOnly);
@@ -570,40 +609,30 @@ QByteArray myModel::getThumb(QString item)
 {
     QImage theThumb, background;
     QImageReader pic(item);
-    int w,h,target;
-    w = pic.size().width();
-    h = pic.size().height();
+    int w = pic.size().width();
+    int h = pic.size().height();
+
+    background = QImage(128,128,QImage::Format_RGB32);
+    background.fill(QApplication::palette().color(QPalette::Base).rgb());
 
     if( w > 128 || h > 128)
     {
-        target = 114;
-        background.load(":/images/background.jpg");
+        pic.setScaledSize(QSize(123,93));
+        QImage temp = pic.read();
+
+        theThumb.load(":/images/background.png");           //shadow template
+
+        QPainter painter(&theThumb);
+        painter.drawImage(QPoint(0,0),temp);
     }
     else
     {
-        target = 64;
-        background = QImage(128,128,QImage::Format_ARGB32);
-        background.fill(QApplication::palette().color(QPalette::Base).rgb());
+        pic.setScaledSize(QSize(64,64));
+        theThumb = pic.read();
     }
-
-    if(w > h)
-    {
-        int newHeight = h * target / w;
-        pic.setScaledSize(QSize(target,newHeight));
-    }
-    else
-    {
-        int newWidth = w * target / h;
-        pic.setScaledSize(QSize(newWidth,target));
-    }
-
-    theThumb = pic.read();
-
-    int thumbWidth = theThumb.width();
-    int thumbHeight = theThumb.height();
 
     QPainter painter(&background);
-    painter.drawImage(QPoint((128-thumbWidth)/2,(128 - thumbHeight)/2),theThumb);
+    painter.drawImage(QPoint((123 - theThumb.width())/2,(115 - theThumb.height())/2),theThumb);
 
     QBuffer buffer;
     QImageWriter writer(&buffer,"jpg");
@@ -622,8 +651,8 @@ QVariant myModel::data(const QModelIndex & index, int role) const
     {
         QFileInfo type(item->fileInfo());
 
-        if(cutItems.contains(type.filePath())) return colors.midlight();
-        else if(type.isHidden()) return colors.mid();
+        if(cutItems.contains(type.filePath())) return colors.mid();
+        else if(type.isHidden()) return colors.dark();
         else if(type.isSymLink()) return colors.link();
         else if(type.isDir()) return colors.windowText();
         else if(type.isExecutable()) return QBrush(QColor(Qt::darkGreen));

@@ -45,6 +45,9 @@ void tabBar::mousePressEvent(QMouseEvent * event)
             this->removeTab(tab);
         }
     }
+    else
+    if(event->button() == Qt::RightButton)
+        this->setCurrentIndex(tabAt(event->pos()));
 
     return QTabBar::mousePressEvent(event);
 }

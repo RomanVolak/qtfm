@@ -90,7 +90,7 @@ public slots:
     void delBookmark();
     void editBookmark();
     void toggleWrapBookmarks();
-    void xdgConfig();
+    bool xdgConfig();
     void readCustomActions();
     void editCustomActions();
     bool copyFolder(QString, QString, qint64, bool);

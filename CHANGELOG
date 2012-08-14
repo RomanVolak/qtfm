@@ -1,8 +1,20 @@
+5.5	15-June-2012
+- modified file xdg associations to use mimeapps.list.
+- modified tab right-click to activate selected tab.
+- modified thumbs, uniform size/aspect
+- modified 'Refresh' to update mimetype if changed.
+- modified xdg configuration to ensure '~/.local/share/applications/defaults.list' exists.
+- fixed bug not allowing a cut/move on same device with limited space.
+- fixed bug not using custom action override on double-click.
+- fixed bug with moving across filesystems.
+- fixed bug with multiple custom actions of same type not appearing.
+
 5.4	7-March-2012
 - added 'tabsOnTop' option.
 - added new detection for automounts.
 - added ability to set shortcuts for bookmarks.
 - added option to use mimetype instead of suffix in detail mode and custom actions.
+- modified filetype for file specific custom actions, now treated like a wildcard.
 - modified thumbs to show in all views.
 - modified text colours to follow system theme.
 - modified status/hover info updating.

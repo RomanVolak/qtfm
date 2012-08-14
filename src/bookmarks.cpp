@@ -100,11 +100,12 @@ void MainWindow::autoBookmarkMounts()
     while (!stream.atEnd());
     mtab.close();
 
+    QStringList sysMounts = QStringList() << "/dev" << "/sys" << "/pro" << "/tmp" << "/run";
     QStringList dontShowList = settings->value("hideBookmarks",0).toStringList();
     mounts.clear();
 
     foreach(QString item, mtabMounts)
-        if(item[0] == '/')
+	if(!sysMounts.contains(item.split(" ").at(1).left(4)))
         {
             QString path = item.split(" ").at(1);
             path.replace("\\040"," ");
@@ -113,6 +114,7 @@ void MainWindow::autoBookmarkMounts()
             if(!dontShowList.contains(path))
                 if(!autoBookmarks.contains(path))	    //add a new auto bookmark if it doesn't exist
                 {
+			autoBookmarks.append(path);
                     if(item.split(" ").at(2) == "iso9660") modelBookmarks->addBookmark(path,path,"1","drive-optical");
                     else if(item.split(" ").at(2).contains("fat")) modelBookmarks->addBookmark(path,path,"1","drive-removable-media");
                     else modelBookmarks->addBookmark(path,path,"1","drive-harddisk");

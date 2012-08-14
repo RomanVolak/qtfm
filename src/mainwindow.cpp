@@ -340,10 +340,13 @@ void MainWindow::closeEvent(QCloseEvent *event)
     {
         this->setVisible(0);
         startDaemon();
+        customComplete->setModel(0);
         modelList->refresh();           //clear model, reduce memory
         tabs->setCurrentIndex(0);
+
         tree->setCurrentIndex(modelTree->mapFromSource(modelList->index(startPath)));
         tree->scrollTo(tree->currentIndex());
+        customComplete->setModel(modelTree);
 
         event->ignore();
     }
@@ -368,7 +371,7 @@ void MainWindow::treeSelectionChanged(QModelIndex current,QModelIndex previous)
     if(!name.exists()) return;
 
     curIndex = name;
-    setWindowTitle(curIndex.fileName() + " - qtFM v5.4");
+    setWindowTitle(curIndex.fileName() + " - qtFM v5.5");
 
     if(tree->hasFocus() && QApplication::mouseButtons() == Qt::MidButton)
     {
@@ -415,7 +418,7 @@ void MainWindow::treeSelectionChanged(QModelIndex current,QModelIndex previous)
     }
 
     listSelectionModel->blockSignals(0);
-    QTimer::singleShot(20,this,SLOT(dirLoaded()));
+    QTimer::singleShot(30,this,SLOT(dirLoaded()));
 }
 
 //---------------------------------------------------------------------------
@@ -643,14 +646,27 @@ void MainWindow::executeFile(QModelIndex index, bool run)
         myProcess->startDetached(modelList->filePath(modelView->mapToSource(index)));             //is executable?
     else
     {
-        foreach(QAction *action, customActions->values(QFileInfo(modelList->filePath(modelView->mapToSource(index))).completeSuffix()))
-            if(action->text() == "Open")
-            {
-                action->trigger();
-                return;
-            }
+        QString type = modelList->getMimeType(modelView->mapToSource(index));
 
-        myProcess->startDetached("xdg-open",QStringList() << modelList->filePath(modelView->mapToSource(index)));
+        QHashIterator<QString, QAction*> i(*customActions);
+        while (i.hasNext())
+        {
+            i.next();
+            if(type.contains(i.key()))
+                if(i.value()->text() == "Open")
+                {
+                    i.value()->trigger();
+                    return;
+                }
+        }
+
+        myProcess->start("xdg-open",QStringList() << modelList->filePath(modelView->mapToSource(index)));
+        myProcess->waitForFinished(1000);
+        myProcess->terminate();
+        if(myProcess->exitCode() != 0)
+        {
+            if(xdgConfig()) executeFile(index,run);
+        }
     }
 }
 
@@ -675,7 +691,7 @@ void MainWindow::openFile()
     else items = listSelectionModel->selectedIndexes();
 
     foreach(QModelIndex index, items)
-	executeFile(index,0);
+        executeFile(index,0);
 }
 
 //---------------------------------------------------------------------------
@@ -714,18 +730,12 @@ void MainWindow::goHomeDir()
 void MainWindow::pathEditChanged(QString path)
 {
     QString info = path;
-    if(!QFileInfo(path).exists()) return;
 
+    if(!QFileInfo(path).exists()) return;
     info.replace("~",QDir::homePath());
 
-    if(info.contains("/."))
-    {
-        hiddenAct->setChecked(1);
-        toggleHidden();
-    }
-
     QModelIndex temp = modelList->index(info);
-    modelTree->invalidate();
+    //modelTree->invalidate();
 
     tree->setCurrentIndex(modelTree->mapFromSource(temp));
 }
@@ -849,7 +859,7 @@ void MainWindow::toggleIcons()
     {
         currentView = 1;
         list->setViewMode(QListView::IconMode);
-        list->setGridSize(QSize(zoom+38,zoom+38));
+        list->setGridSize(QSize(zoom+32,zoom+32));
         list->setIconSize(QSize(zoom,zoom));
         list->setFlow(QListView::LeftToRight);
 
@@ -1056,7 +1066,17 @@ void MainWindow::pasteLauncher(const QMimeData * data, QString newPath, QStringL
                 int merge = message.exec();
                 if(merge == QMessageBox::Cancel) return;
                 if(merge == QMessageBox::Yes) recurseFolder(temp.filePath(),temp.fileName(),&completeList);
-                else modelList->remove(modelList->index(newPath + "/" + temp.fileName()));
+                else
+                {
+                    //physically remove files from disk
+                    QStringList children;
+                    QDirIterator it(newPath + "/" + temp.fileName(),QDir::AllEntries | QDir::System | QDir::NoDotAndDotDot | QDir::Hidden, QDirIterator::Subdirectories);
+                    while (it.hasNext())
+                        children.prepend(it.next());
+                    children.append(newPath + "/" + temp.fileName());
+                    foreach(QString child,children)
+                        QFile(child).remove();
+                }
             }
             else completeList.append(temp.fileName());
         }
@@ -1074,7 +1094,7 @@ void MainWindow::pasteLauncher(const QMimeData * data, QString newPath, QStringL
 
                 if(replace == QMessageBox::Cancel) return;
                 if(replace == QMessageBox::Yes || replace == QMessageBox::YesToAll)
-                modelList->remove(modelList->index(temp.filePath()));
+                    QFile(temp.filePath()).remove();
             }
 
         }
@@ -1176,8 +1196,22 @@ bool MainWindow::pasteFile(QList<QUrl> files,QString newPath, QStringList cutLis
 
     if((qint64) info.f_bavail*info.f_bsize < total)
     {
-        emit copyProgressFinished(2,newFiles);
-        return 0;
+        //if it is a cut/move on the same device it doesn't matter
+        if(cutList.count())
+        {
+            qint64 driveSize = (qint64) info.f_bavail*info.f_bsize;
+            statfs(files.at(0).path().toLocal8Bit(),&info);
+            if((qint64) info.f_bavail*info.f_bsize != driveSize)        //same device
+            {
+                emit copyProgressFinished(2,newFiles);
+                return 0;
+            }
+        }
+        else
+        {
+            emit copyProgressFinished(2,newFiles);
+            return 0;
+        }
     }
 
 
@@ -1286,7 +1320,7 @@ bool MainWindow::cutCopyFile(QString source, QString dest, qint64 totalSize, boo
     in.close();
 
     if(out.size() != total) return 0;
-    if(cut) modelList->remove(modelList->index(source));  //if file is cut remove the source
+    if(cut) in.remove();  //if file is cut remove the source
     return 1;
 }
 
@@ -1402,9 +1436,9 @@ void MainWindow::toggleLockLayout()
 }
 
 //---------------------------------------------------------------------------
-void MainWindow::xdgConfig()
+bool MainWindow::xdgConfig()
 {
-    if(!listSelectionModel->currentIndex().isValid()) return;
+    if(!listSelectionModel->currentIndex().isValid()) return 0;
 
     QDialog *xdgConfig = new QDialog(this);
     xdgConfig->setWindowTitle(tr("Configure filetype"));
@@ -1457,18 +1491,28 @@ void MainWindow::xdgConfig()
         }
     }
 
+    QString xdgDefaults;
 
-    QProcess *myProcess = new QProcess(this);
-    myProcess->start("xdg-mime",QStringList() << "query" << "default" << mimeType);
-    myProcess->waitForFinished();
+    //xdg changes -> now uses mimeapps.list instead of defaults.list
+    if(QFileInfo(QDir::homePath() + "/.local/share/applications/mimeapps.list").exists())
+        xdgDefaults = QDir::homePath() + "/.local/share/applications/mimeapps.list";
+    else
+        xdgDefaults = QDir::homePath() + "/.local/share/applications/defaults.list";
 
-    QString temp = myProcess->readAllStandardOutput().trimmed();
+    QSettings defaults(xdgDefaults,QSettings::IniFormat,this);
+
+    QString temp = defaults.value("Default Applications/" + mimeType).toString();
     appList->setCurrentIndex(appList->findText(temp.remove(".desktop"),Qt::MatchFixedString));
 
-    if(xdgConfig->exec())
+    bool ok = xdgConfig->exec();
+    if(ok)
+    {
+        QProcess *myProcess = new QProcess(this);
         myProcess->start("xdg-mime",QStringList() << "default" << appList->currentText() + ".desktop" << mimeType);
+    }
 
     delete xdgConfig;
+    return ok;
 }
 
 //---------------------------------------------------------------------------
@@ -1614,11 +1658,18 @@ void MainWindow::contextMenuEvent(QContextMenuEvent * event)
 
         if(listSelectionModel->hasSelection())	    //could be file or folder
         {
+            curIndex = modelList->filePath(modelView->mapToSource(listSelectionModel->currentIndex()));
+
             if(!curIndex.isDir())		    //file
             {
                 QString type = modelList->getMimeType(modelList->index(curIndex.filePath()));
 
-                actions = customActions->values(type);
+                QHashIterator<QString, QAction*> i(*customActions);
+                while (i.hasNext())
+                {
+                    i.next();
+                    if(type.contains(i.key())) actions.append(i.value());
+                }
 
                 foreach(QAction*action, actions)
                     if(action->text() == "Open")
@@ -1630,10 +1681,15 @@ void MainWindow::contextMenuEvent(QContextMenuEvent * event)
                 if(popup->actions().count() == 0) popup->addAction(openAct);
 
                 if(curIndex.isExecutable()) popup->addAction(runAct);
+
                 popup->addActions(actions);
 
-                foreach(QMenu* parent, customMenus->values(type))
-                    popup->addMenu(parent);
+                QHashIterator<QString, QMenu*> m(*customMenus);
+                while (m.hasNext())
+                {
+                    m.next();
+                    if(type.contains(m.key())) popup->addMenu(m.value());
+                }
 
                 popup->addSeparator();
                 popup->addAction(cutAct);
@@ -1873,7 +1929,7 @@ void MainWindow::customActionFinished(int ret)
         if(!output.isEmpty()) QMessageBox::information(this,tr("Output - Custom action"),output);
     }
 
-    clearCutItems();                //updates file sizes
+    QTimer::singleShot(100,this,SLOT(clearCutItems()));                //updates file sizes
     process->deleteLater();
 }
 
@@ -1883,10 +1939,11 @@ void MainWindow::refresh()
     QApplication::clipboard()->clear();
     listSelectionModel->clear();
 
-    modelList->update();
+    modelList->refreshItems();
     modelTree->invalidate();
     modelTree->sort(0,Qt::AscendingOrder);
     modelView->invalidate();
+    dirLoaded();
 
     return;
 }
@@ -1915,7 +1972,7 @@ void MainWindow::clearCutItems()
 
     if(currentView == 2) detailTree->setRootIndex(baseIndex);
     else list->setRootIndex(baseIndex);
-    dirLoaded();
+    QTimer::singleShot(50,this,SLOT(dirLoaded()));
     return;
 }
 

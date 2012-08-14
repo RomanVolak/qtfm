@@ -96,7 +96,8 @@ mime type for the files, like 'image/png', by adding the following key to the qt
 Note this can potentially slow down browsing slightly in detail mode.
 
 This also affects 'Custom actions', ie. with this enabled you use the mimetype instead of the suffix in the
-'Filetype' column when creating custom actions.
+'Filetype' column when creating custom actions.  
+
 
 
 #####################
@@ -112,6 +113,11 @@ Filetype:
  $parent 	-	$parent is the full path to a folder. Matches everything below this, files and folders. eg. '/media'	
  folder		-	matches all folders.
  *		-	matches everything, all files and folders.
+
+ Note: File specific custom actions are always treated like wildcards.
+
+ ie. 	video	- will match video/mpeg, video/mp4, video/avi in realMimeType mode.
+ 	jp	- will match *.jpg, *.jpeg etc.
 
 
 Text:
@@ -188,6 +194,7 @@ Many thanks to the following for contributing translations:
  - Russian	ru	Alexey
  - Serbian	sr	Mladen
  - Spanish	es	AntumDeluge
+ - Swedish	sv	Swanson
 
 If you would like to contribute to the translations you can grab the 'qtfm_XX.ts' template
 in the source, rename it to your country code (qtfm_fr.ts) and then edit it with Qt's 'linguist'

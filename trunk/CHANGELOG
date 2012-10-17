@@ -1,3 +1,11 @@
+5.6 17-October 2012
+- added GUI for drag & drop: qtfm asks user about what he want to do (copy, move or create link)
+- added sorting (name, size and date in ascending or descending order)
+- added FileUtils in order to provide file management routines that can be reused 
+- added main menu section "Go"  
+- modified drag & drop; when holding ctrl/shift files are copied/moved 
+- modified strings "/" was also replaced with QDir::separator() 
+
 5.5	15-June-2012
 - modified file xdg associations to use mimeapps.list.
 - modified tab right-click to activate selected tab.

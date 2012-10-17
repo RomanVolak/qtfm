@@ -14,6 +14,7 @@ HEADERS += src/mainwindow.h \
     src/progressdlg.h \
     src/icondlg.h \
     src/propertiesdlg.h \
+    src/fileutils.h \
     src/tabbar.h \
     src/mymodelitem.h
 SOURCES += src/main.cpp \
@@ -22,6 +23,7 @@ SOURCES += src/main.cpp \
     src/mymodel.cpp \
     src/bookmarks.cpp \
     src/progressdlg.cpp \
+    src/fileutils.cpp \
     src/icondlg.cpp \
     src/propertiesdlg.cpp \
     src/tabbar.cpp \

@@ -856,28 +856,59 @@ bool myModel::remove(const QModelIndex & theIndex)
 }
 
 //---------------------------------------------------------------------------------
-bool myModel::dropMimeData(const QMimeData * data,Qt::DropAction action,int row,int column,const QModelIndex & parent )
-{
-    if(isDir(parent))
-    {
-        QList<QUrl> files = data->urls();
-        QStringList cutList;
 
-        //don't do anything if you drag and drop in same folder
-        if(QFileInfo(files.at(0).path()).canonicalPath() == filePath(parent)) return false;
+/**
+ * @brief Drag drop to current datamodel
+ * @param data
+ * @param action
+ * @param row
+ * @param column
+ * @param parent
+ * @return true if successfull
+ */
+bool myModel::dropMimeData(const QMimeData *data, Qt::DropAction action,
+                           int row, int column, const QModelIndex &parent) {
 
+  // Unused
+  Q_UNUSED(action);
+  Q_UNUSED(row);
+  Q_UNUSED(column);
 
-        Qt::KeyboardModifiers mods = QApplication::keyboardModifiers();
-        if(mods != Qt::ControlModifier)                                     //cut by default, holding ctrl is copy
-            foreach(QUrl item, files)
-                cutList.append(item.path());
-
-        emit dragDropPaste(data, filePath(parent), cutList);
-    }
+  // If parent is not a directory, exit
+  if (!isDir(parent)) {
     return false;
-}
+  }
 
-//---------------------------------------------------------------------------------
+  // Get urls of files
+  QList<QUrl> files = data->urls();
+  //QStringList cutList;
+
+  // Don't do anything if drag and drop in same folder
+  if (QFileInfo(files.at(0).path()).canonicalPath() == filePath(parent)) {
+    return false;
+  }
+
+  // Holding ctrl is copy, holding shift is move
+  Qt::KeyboardModifiers mods = QApplication::keyboardModifiers();
+  DragMode mode = DM_UNKNOWN;
+  if (mods == Qt::ControlModifier) {
+    mode = DM_COPY;
+  } else if (mods == Qt::ShiftModifier) {
+    mode = DM_MOVE;
+  }
+
+
+    /*foreach (QUrl item, files) {
+      cutList.append(item.path());
+    }*/
+
+
+  // Emit drag drop paste
+  emit dragDropPaste(data, filePath(parent), mode);
+  return true;
+}
+//------------------------------------------------------------------------------
+
 QVariant myModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
     if(role == Qt::DisplayRole)

@@ -42,6 +42,7 @@
 #include "propertiesdlg.h"
 #include "icondlg.h"
 #include "tabbar.h"
+#include "fileutils.h"
 
 QT_BEGIN_NAMESPACE
 class QAction;
@@ -49,6 +50,12 @@ class QMenu;
 QT_END_NAMESPACE
 
 //---------------------------------------------------------------------------------
+
+/**
+ * @class MainWindow
+ * @brief The main window class
+ * @author Wittefella
+ */
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -71,8 +78,9 @@ public slots:
     void deleteFile();
     void cutFile();
     void copyFile();
-    bool cutCopyFile(QString source, QString dest, qint64 totalSize, bool cut);
-    bool pasteFile(QList<QUrl> files,QString newPath, QStringList cutList);
+    bool cutCopyFile(const QString &source, QString dest, qint64 totalSize, bool cut);
+    bool pasteFiles(const QList<QUrl> &files, const QString &newPath, const QStringList &cutList);
+    bool linkFiles(const QList<QUrl> &files, const QString &newPath);
     void newDir();
     void newFile();
     void pathEditChanged(QString);
@@ -84,6 +92,9 @@ public slots:
     void toggleDetails();
     void toggleHidden();
     void toggleIcons();
+    void toggleSortBy(QAction* action);
+    void switchSortOrder();
+    void setSortOrder(Qt::SortOrder order);
     void toggleThumbs();
     void addBookmarkAction();
     void addSeparatorAction();
@@ -93,7 +104,7 @@ public slots:
     bool xdgConfig();
     void readCustomActions();
     void editCustomActions();
-    bool copyFolder(QString, QString, qint64, bool);
+    bool copyFolder(const QString &srcFolder, const QString &dstFolder, qint64, bool);
     void autoBookmarkMounts();
     void renameFile();
     void actionMapper(QString);
@@ -104,7 +115,9 @@ public slots:
     void bookmarkShortcutTrigger();
     void contextMenuEvent(QContextMenuEvent *);
     void toggleLockLayout();
-    void pasteLauncher(const QMimeData * data, QString newPath, QStringList cutList);
+    void dragLauncher(const QMimeData *data, const QString &newPath, myModel::DragMode dragMode);
+    void pasteLauncher(const QMimeData *data, const QString &newPath, const QStringList &cutList);
+    void pasteLauncher(const QList<QUrl> &files, const QString &newPath, const QStringList &cutList, bool link = false);
     void pasteClipboard();
     void progressFinished(int,QStringList);
     void mountWatcherTriggered();
@@ -145,12 +158,15 @@ private:
     void readShortcuts();
     void writeSettings();
     void recurseFolder(QString path, QString parent, QStringList *);
+    int showReplaceMsgBox(const QFileInfo &f1, const QFileInfo &f2);
 
     int zoom;
     int zoomTree;
     int zoomList;
     int zoomDetail;
-    int currentView;        //0=list, 1=icons, 2=details
+    int currentView;        // 0=list, 1=icons, 2=details
+    int currentSortColumn;  // 0=name, 1=size, 3=date
+    Qt::SortOrder currentSortOrder;
 
     QCompleter *customComplete;
 
@@ -217,6 +233,11 @@ private:
     QAction *wrapBookmarksAct;
     QAction *deleteAct;
     QAction *iconAct;
+    QActionGroup *sortByActGrp;
+    QAction *sortNameAct;
+    QAction *sortDateAct;
+    QAction *sortSizeAct;
+    QAction *sortAscAct;
     QAction *newDirAct;
     QAction *newFileAct;
     QAction *cutAct;

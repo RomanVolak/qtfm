@@ -19,7 +19,6 @@
 *
 ****************************************************************************/
 
-
 #ifndef MYMODEL_H
 #define MYMODEL_H
 
@@ -28,99 +27,100 @@
 
 QString formatSize(qint64);
 
-
-class myModel : public QAbstractItemModel
-{
-    Q_OBJECT
-
+/**
+ * @class myModel
+ * @brief holding information about files in FS
+ * @author Wittfella
+ */
+class myModel : public QAbstractItemModel {
+  Q_OBJECT
 public:
-        myModel(bool realMime);
-        ~myModel();
 
-        void loadMimeTypes() const;
-        void cacheInfo();
-        void setMode(bool);
-        void loadThumbs(QModelIndexList);
-        void addCutItems(QStringList);
-        void clearCutItems();
-        void populateItem(myModelItem *item);
-        void fetchMore(const QModelIndex & parent);
-        void refresh();
-        void refreshItems();
-        void update();
+  /**
+   * @enum DragMode
+   * @brief Represents drag mode
+   */
+  enum DragMode {
+    DM_UNKNOWN = 0,
+    DM_COPY,
+    DM_MOVE,
+    DM_LINK
+  };
 
-        bool remove(const QModelIndex & index );
-        bool dropMimeData(const QMimeData * data,Qt::DropAction action,int row,int column,const QModelIndex & parent);
-        bool isDir(const QModelIndex &index);
-        bool canFetchMore (const QModelIndex & parent) const;
-        bool setRootPath(const QString& path);
-
-        QModelIndex index(int row, int column, const QModelIndex &parent) const;
-        QModelIndex index(const QString& path) const;
-        QModelIndex parent(const QModelIndex &index) const;
-        QModelIndex insertFolder(QModelIndex parent);
-        QModelIndex insertFile(QModelIndex parent);
-
-        int rowCount(const QModelIndex &parent) const;
-        qint64 size(const QModelIndex &index);
-
-        QString fileName(const QModelIndex &index);
-        QString filePath(const QModelIndex &index);
-        QString getMimeType(const QModelIndex &index);
-
-        QStringList mimeTypes() const;
-
-        QByteArray getThumb(QString item);
-
-        QFileInfo fileInfo(const QModelIndex &index);
-
-        Qt::DropActions supportedDropActions () const;
-        QMimeData * mimeData(const QModelIndexList & indexes) const;
-
-        QHash<QString,QIcon> *mimeIcons;
-        QHash<QString,QIcon> *folderIcons;
-        //QHash<QString,QIcon> *icons;
-        QCache<QString,QIcon> *icons;
-        bool realMimeTypes;
-
+  myModel(bool realMime);
+  ~myModel();
+  void loadMimeTypes() const;
+  void cacheInfo();
+  void setMode(bool);
+  void loadThumbs(QModelIndexList);
+  void addCutItems(QStringList);
+  void populateItem(myModelItem *item);
+  void fetchMore(const QModelIndex & parent);
+  void refresh();
+  void refreshItems();
+  void update();
+  bool remove(const QModelIndex & index );
+  bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row,
+                    int column, const QModelIndex &parent);
+  bool isDir(const QModelIndex &index);
+  bool canFetchMore (const QModelIndex & parent) const;
+  bool setRootPath(const QString& path);
+  QModelIndex index(int row, int column, const QModelIndex &parent) const;
+  QModelIndex index(const QString& path) const;
+  QModelIndex parent(const QModelIndex &index) const;
+  QModelIndex insertFolder(QModelIndex parent);
+  QModelIndex insertFile(QModelIndex parent);
+  int rowCount(const QModelIndex &parent) const;
+  qint64 size(const QModelIndex &index);
+  QString fileName(const QModelIndex &index);
+  QString filePath(const QModelIndex &index);
+  QString getMimeType(const QModelIndex &index);
+  QStringList mimeTypes() const;
+  QByteArray getThumb(QString item);
+  QFileInfo fileInfo(const QModelIndex &index);
+  Qt::DropActions supportedDropActions () const;
+  QMimeData * mimeData(const QModelIndexList & indexes) const;
+  QHash<QString,QIcon> *mimeIcons;
+  QHash<QString,QIcon> *folderIcons;
+  //QHash<QString,QIcon> *icons;
+  QCache<QString,QIcon> *icons;
+  bool realMimeTypes;
 public slots:
-        void notifyChange();
-        void notifyProcess(int eventID);
-        void eventTimeout();
-        void addWatcher(myModelItem* path);
-
+  void notifyChange();
+  void notifyProcess(int eventID);
+  void eventTimeout();
+  void addWatcher(myModelItem* path);
+  void clearCutItems();
 signals:
-        void dragDropPaste(const QMimeData * data, QString newPath, QStringList cutList);
-        void thumbUpdate(const QModelIndex index);
-
+  void dragDropPaste(const QMimeData *data, QString newPath,
+                     myModel::DragMode mode = DM_UNKNOWN);
+  void thumbUpdate(const QModelIndex index);
 protected:
-        QVariant data(const QModelIndex & index, int role) const;
-        QVariant headerData(int section, Qt::Orientation orientation, int role) const;
-        bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole);
-        int columnCount(const QModelIndex &parent) const;
-
-        Qt::ItemFlags flags(const QModelIndex &index) const;
-
+  QVariant data(const QModelIndex & index, int role) const;
+  QVariant headerData(int section, Qt::Orientation orientation, int role) const;
+  bool setData(const QModelIndex & index, const QVariant & value,
+               int role = Qt::EditRole);
+  int columnCount(const QModelIndex &parent) const;
+  Qt::ItemFlags flags(const QModelIndex &index) const;
 private:
+  bool showThumbs;
+  int thumbCount;
 
-        bool showThumbs;
-        int thumbCount;
+  QPalette colors;
+  QStringList cutItems;
+  QHash<QString,QString> *mimeGlob;
+  QHash<QString,QString> *mimeGeneric;
+  QHash<QString,QByteArray> *thumbs;
 
-        QPalette colors;
-        QStringList cutItems;
-        QHash<QString,QString> *mimeGlob;
-        QHash<QString,QString> *mimeGeneric;
-        QHash<QString,QByteArray> *thumbs;
+  myModelItem* rootItem;
+  QString currentRootPath;
+  QFileIconProvider* iconFactory;
 
-        myModelItem* rootItem;
-        QString currentRootPath;
-        QFileIconProvider* iconFactory;
-
-        int inotifyFD;
-        QSocketNotifier *notifier;
-        QHash<int, QString> watchers;
-        QTimer eventTimer;
-        int lastEventID;
+  int inotifyFD;
+  QSocketNotifier *notifier;
+  QHash<int, QString> watchers;
+  QTimer eventTimer;
+  int lastEventID;
 };
 
 #endif // MYMODEL_H

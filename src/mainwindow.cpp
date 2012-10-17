@@ -191,10 +191,9 @@ MainWindow::MainWindow()
     modelBookmarks = new bookmarkmodel(modelList->folderIcons);
 
     settings->beginGroup("bookmarks");
-    foreach(QString key,settings->childKeys())
-    {
-        QStringList temp(settings->value(key).toStringList());
-        modelBookmarks->addBookmark(temp.at(0),temp.at(1),temp.at(2),temp.last());
+    foreach (QString key,settings->childKeys()) {
+      QStringList temp(settings->value(key).toStringList());
+      modelBookmarks->addBookmark(temp.at(0),temp.at(1),temp.at(2),temp.last());
     }
     settings->endGroup();
 
@@ -230,13 +229,28 @@ MainWindow::MainWindow()
     detailTree->header()->restoreState(settings->value("header").toByteArray());
     detailTree->setSortingEnabled(1);
 
+    // Michal Rost
+    //-----------------------------------------------------------------------
+    currentSortColumn = settings->value("sortBy", 0).toInt();
+    currentSortOrder = (Qt::SortOrder) settings->value("sortOrder", 0).toInt();
+
+
+    switch (currentSortColumn) {
+      case 0 : toggleSortBy(sortNameAct); break;
+      case 1 : toggleSortBy(sortSizeAct); break;
+      case 3 : toggleSortBy(sortDateAct); break;
+    }
+    setSortOrder(currentSortOrder);
+    //-----------------------------------------------------------------------
+
     if(isDaemon) startDaemon();
     else show();
 
-    QTimer::singleShot(0,this,SLOT(lateStart()));
+    QTimer::singleShot(0, this, SLOT(lateStart()));
 }
 
 //---------------------------------------------------------------------------
+
 void MainWindow::lateStart()
 {
     status->showMessage(getDriveInfo(curIndex.filePath()));
@@ -314,8 +328,8 @@ void MainWindow::lateStart()
 
     connect(this,SIGNAL(copyProgressFinished(int,QStringList)),this,SLOT(progressFinished(int,QStringList)));
 
-    connect(modelBookmarks,SIGNAL(bookmarkPaste(const QMimeData *, QString, QStringList)),this,SLOT(pasteLauncher(const QMimeData *, QString, QStringList)));
-    connect(modelList,SIGNAL(dragDropPaste(const QMimeData *, QString, QStringList)),this,SLOT(pasteLauncher(const QMimeData *, QString, QStringList)));
+    connect(modelBookmarks, SIGNAL(bookmarkPaste(const QMimeData *, QString, QStringList)),this,SLOT(pasteLauncher(const QMimeData *, QString, QStringList)));
+    connect(modelList,SIGNAL(dragDropPaste(const QMimeData *, QString, myModel::DragMode)),this,SLOT(dragLauncher(const QMimeData *, QString, myModel::DragMode)));
 
     connect(tabs,SIGNAL(currentChanged(int)),this,SLOT(tabChanged(int)));
     connect(tabs,SIGNAL(dragDropTab(const QMimeData *, QString, QStringList)),this,SLOT(pasteLauncher(const QMimeData *, QString, QStringList)));
@@ -848,8 +862,8 @@ void MainWindow::deleteFile()
 
     return;
 }
-
 //---------------------------------------------------------------------------
+
 void MainWindow::toggleIcons()
 {
     if(list->rootIndex() != modelList->index(pathEdit->currentText()))
@@ -890,8 +904,47 @@ void MainWindow::toggleIcons()
     list->setDragDropMode(QAbstractItemView::DragDrop);
     list->setDefaultDropAction(Qt::MoveAction);
 }
-
 //---------------------------------------------------------------------------
+
+// Michal Rost: toggle sort by
+void MainWindow::toggleSortBy(QAction *action) {
+
+  if (list->rootIndex() != modelList->index(pathEdit->currentText())) {
+    list->setRootIndex(modelView->mapFromSource(modelList->index(pathEdit->currentText())));
+  }
+
+  action->setChecked(true);
+
+  if (action == sortNameAct) {
+    currentSortColumn =  0;
+  } else if (action == sortDateAct) {
+    currentSortColumn =  3;
+  } else if (action == sortSizeAct) {
+    currentSortColumn = 1;
+  }
+  modelView->sort(currentSortColumn, currentSortOrder);
+}
+//---------------------------------------------------------------------------
+
+// Michal Rost: toggle sort order
+void MainWindow::setSortOrder(Qt::SortOrder order) {
+
+  if (list->rootIndex() != modelList->index(pathEdit->currentText())) {
+    list->setRootIndex(modelView->mapFromSource(modelList->index(pathEdit->currentText())));
+  }
+
+  currentSortOrder = order;
+  sortAscAct->setChecked(!((bool) currentSortOrder));
+  modelView->sort(currentSortColumn, currentSortOrder);
+}
+//---------------------------------------------------------------------------
+
+// Michal Rost: toggle sort order
+void MainWindow::switchSortOrder() {
+  setSortOrder(currentSortOrder == Qt::AscendingOrder ? Qt::DescendingOrder : Qt::AscendingOrder);
+}
+//---------------------------------------------------------------------------
+
 void MainWindow::toggleThumbs()
 {
     if(currentView != 2) toggleIcons();
@@ -918,7 +971,7 @@ void MainWindow::toggleDetails()
 
         stackWidget->setCurrentIndex(1);
         modelList->setMode(thumbsAct->isChecked());
-    	iconAct->setChecked(0);
+        iconAct->setChecked(0);
 
         if(tabs->count()) tabs->setType(2);
     }
@@ -965,8 +1018,8 @@ void MainWindow::cutFile()
 
     if(focusWidget() == tree) selList << modelView->mapFromSource(modelList->index(pathEdit->itemText(0)));
     else
-	if(listSelectionModel->selectedRows(0).count()) selList = listSelectionModel->selectedRows(0);
-	else selList = listSelectionModel->selectedIndexes();
+    if(listSelectionModel->selectedRows(0).count()) selList = listSelectionModel->selectedRows(0);
+    else selList = listSelectionModel->selectedIndexes();
 
 
     foreach(QModelIndex item, selList)
@@ -997,7 +1050,7 @@ void MainWindow::copyFile()
 
     if(selList.count() == 0)
     if(focusWidget() == tree) selList << modelView->mapFromSource(modelList->index(pathEdit->itemText(0)));
-	else return;
+    else return;
 
     clearCutItems();
 
@@ -1012,6 +1065,10 @@ void MainWindow::copyFile()
 }
 
 //---------------------------------------------------------------------------
+
+/**
+ * @brief Pastes from clipboard
+ */
 void MainWindow::pasteClipboard()
 {
     QString newPath;
@@ -1034,97 +1091,174 @@ void MainWindow::pasteClipboard()
     pasteLauncher(QApplication::clipboard()->mimeData(), newPath, cutList);
 }
 //---------------------------------------------------------------------------
-void MainWindow::pasteLauncher(const QMimeData * data, QString newPath, QStringList cutList)
-{
-    QList<QUrl> files = data->urls();
 
-    if(!QFile(files.at(0).path()).exists())
-    {
-        QMessageBox::information(this,tr("No paste for you!"),tr("File no longer exists!"));
-        pasteAct->setEnabled(false);
-        return;
+/**
+ * @brief Drags data to the new location
+ * @param data data to be pasted
+ * @param newPath path of new location
+ * @param dragMode mode of dragging
+ */
+void MainWindow::dragLauncher(const QMimeData *data, const QString &newPath,
+                              myModel::DragMode dragMode) {
+
+  // Retrieve urls (paths) of data
+  QList<QUrl> files = data->urls();
+
+  // If drag mode is unknown then ask what to do
+  if (dragMode == myModel::DM_UNKNOWN) {
+    QMessageBox box;
+    box.setWindowTitle(tr("What do you want to do?"));
+    QPushButton *move = box.addButton(tr("Move here"), QMessageBox::ActionRole);
+    QPushButton *copy = box.addButton(tr("Copy here"), QMessageBox::ActionRole);
+    QPushButton *link = box.addButton(tr("Link here"), QMessageBox::ActionRole);
+    QPushButton *canc = box.addButton(QMessageBox::Cancel);
+    box.exec();
+    if (box.clickedButton() == move) {
+      dragMode = myModel::DM_MOVE;
+    } else if (box.clickedButton() == copy) {
+      dragMode = myModel::DM_COPY;
+    } else if (box.clickedButton() == link) {
+      dragMode = myModel::DM_LINK;
+    } else if (box.clickedButton() == canc) {
+      return;
     }
+  }
 
-    int replace = 0;
-    QStringList completeList;
-    QString baseName = QFileInfo(files.at(0).toLocalFile()).path();
-
-    if(newPath != baseName)			    //only if not in same directory, otherwise we will do 'Copy(x) of'
-    {
-    	foreach(QUrl file, files)
-        {
-            QFileInfo temp(file.toLocalFile());
-
-            if(temp.isDir() && QFileInfo(newPath + "/" + temp.fileName()).exists())     //merge or replace?
-            {
-                QMessageBox message(QMessageBox::Question,tr("Existing folder"),QString("<b>%1</b><p>Already exists!<p>What do you want to do?")
-                    .arg(newPath + "/" + temp.fileName()),QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
-
-                message.button(QMessageBox::Yes)->setText(tr("Merge"));
-                message.button(QMessageBox::No)->setText(tr("Replace"));
-
-                int merge = message.exec();
-                if(merge == QMessageBox::Cancel) return;
-                if(merge == QMessageBox::Yes) recurseFolder(temp.filePath(),temp.fileName(),&completeList);
-                else
-                {
-                    //physically remove files from disk
-                    QStringList children;
-                    QDirIterator it(newPath + "/" + temp.fileName(),QDir::AllEntries | QDir::System | QDir::NoDotAndDotDot | QDir::Hidden, QDirIterator::Subdirectories);
-                    while (it.hasNext())
-                        children.prepend(it.next());
-                    children.append(newPath + "/" + temp.fileName());
-                    foreach(QString child,children)
-                        QFile(child).remove();
-                }
-            }
-            else completeList.append(temp.fileName());
-        }
-
-        foreach(QString file, completeList)
-        {
-            QFileInfo temp(newPath + "/" + file);
-            if(temp.exists())
-            {
-                QFileInfo orig(baseName + "/" + file);
-                if(replace != QMessageBox::YesToAll && replace != QMessageBox::NoToAll)
-                        replace = QMessageBox::question(0,tr("Replace"),QString("Do you want to replace:<p><b>%1</p><p>Modified: %2<br>Size: %3 bytes</p><p>with:<p><b>%4</p><p>Modified: %5<br>Size: %6 bytes</p>")
-                                .arg(temp.filePath()).arg(temp.lastModified().toString()).arg(temp.size())
-                                .arg(orig.filePath()).arg(orig.lastModified().toString()).arg(orig.size()),QMessageBox::Yes | QMessageBox::YesToAll | QMessageBox::No | QMessageBox::NoToAll | QMessageBox::Cancel);
-
-                if(replace == QMessageBox::Cancel) return;
-                if(replace == QMessageBox::Yes || replace == QMessageBox::YesToAll)
-                    QFile(temp.filePath()).remove();
-            }
-
-        }
+  // If moving is enabled, cut files from the original location
+  QStringList cutList;
+  if (dragMode == myModel::DM_MOVE) {
+    foreach (QUrl item, files) {
+      cutList.append(item.path());
     }
+  }
 
-    QString title;
-    if(cutList.count() == 0) title = tr("Copying...");
-    else title = tr("Moving...");
-
-    progress = new myProgressDialog(title);
-    connect(this,SIGNAL(updateCopyProgress(qint64, qint64, QString)),progress,SLOT(update(qint64, qint64, QString)));
-
-    listSelectionModel->clear();
-    QtConcurrent::run(this,&MainWindow::pasteFile, files, newPath, cutList);
+  // Paste launcher (this method has to be called instead of that with 'data'
+  // parameter, because that 'data' can timeout)
+  pasteLauncher(files, newPath, cutList, dragMode == myModel::DM_LINK);
 }
-
 //---------------------------------------------------------------------------
-void MainWindow::recurseFolder(QString path, QString parent, QStringList *list)
-{
-    QDir dir(path);
-    QStringList files = dir.entryList(QDir::AllEntries | QDir::Files | QDir::NoDotAndDotDot | QDir::Hidden);
 
-    for(int i = 0; i < files.count(); i++)
-    {
-        if(QFileInfo(files.at(i)).isDir()) recurseFolder(files.at(i),parent + "/" + files.at(i),list);
-        else list->append(parent + "/" + files.at(i));
-    }
+/**
+ * @brief Pastes data to the new location
+ * @param data data to be pasted
+ * @param newPath path of new location
+ * @param cutList list of items to remove
+ */
+void MainWindow::pasteLauncher(const QMimeData *data, const QString &newPath,
+                               const QStringList &cutList) {
+  QList<QUrl> files = data->urls();
+  pasteLauncher(files, newPath, cutList);
 }
-
 //---------------------------------------------------------------------------
+
+/**
+ * @brief Pastes files to the new path
+ * @param files list of files
+ * @param newPath new path
+ * @param cutList files to remove from original path
+ * @param link true if link should be created (default value = false)
+ */
+void MainWindow::pasteLauncher(const QList<QUrl> &files, const QString &newPath,
+                               const QStringList &cutList, bool link) {
+
+  // File no longer exists?
+  if (!QFile(files.at(0).path()).exists()) {
+    QString msg = tr("File '%1' no longer exists!").arg(files.at(0).path());
+    QMessageBox::information(this, tr("No paste for you!"), msg);
+    pasteAct->setEnabled(false);
+    return;
+  }
+
+  // Temporary variables
+  int replace = 0;
+  QStringList completeList;
+  QString baseName = QFileInfo(files.at(0).toLocalFile()).path();
+
+  // Only if not in same directory, otherwise we will do 'Copy(x) of'
+  if (newPath != baseName) {
+
+    foreach (QUrl file, files) {
+
+      // Merge or replace?
+      QFileInfo temp(file.toLocalFile());
+
+      if (temp.isDir() && QFileInfo(newPath + QDir::separator() + temp.fileName()).exists()) {
+        QString msg = QString("<b>%1</b><p>Already exists!<p>What do you want to do?").arg(newPath + QDir::separator() + temp.fileName());
+        QMessageBox message(QMessageBox::Question, tr("Existing folder"), msg, QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+        message.button(QMessageBox::Yes)->setText(tr("Merge"));
+        message.button(QMessageBox::No)->setText(tr("Replace"));
+
+        int merge = message.exec();
+        if (merge == QMessageBox::Cancel) return;
+        if (merge == QMessageBox::Yes) {
+          FileUtils::recurseFolder(temp.filePath(), temp.fileName(), &completeList);
+        }
+        else {
+          FileUtils::removeRecurse(newPath, temp.fileName());
+        }
+      }
+      else completeList.append(temp.fileName());
+    }
+
+    // Ask whether replace files if files with same name already exist in
+    // destination directory
+    foreach (QString file, completeList) {
+      QFileInfo temp(newPath + QDir::separator() + file);
+      if (temp.exists()) {
+        QFileInfo orig(baseName + QDir::separator() + file);
+        if (replace != QMessageBox::YesToAll && replace != QMessageBox::NoToAll) {
+          // TODO: error dispalys only at once
+          replace = showReplaceMsgBox(temp, orig);
+        }
+        if (replace == QMessageBox::Cancel) {
+          return;
+        }
+        if (replace == QMessageBox::Yes || replace == QMessageBox::YesToAll) {
+          QFile(temp.filePath()).remove();
+        }
+      }
+    }
+  }
+
+  // If only links should be created, create them and exit
+  if (link) {
+    linkFiles(files, newPath);
+    return;
+  }
+
+  // Copy/move files
+  QString title = cutList.count() == 0 ? tr("Copying...") : tr("Moving...");
+  progress = new myProgressDialog(title);
+  connect(this, SIGNAL(updateCopyProgress(qint64, qint64, QString)), progress, SLOT(update(qint64, qint64, QString)));
+  listSelectionModel->clear();
+  QtConcurrent::run(this, &MainWindow::pasteFiles, files, newPath, cutList);
+}
+//---------------------------------------------------------------------------
+
+/**
+ * @brief Asks user whether replace file 'f1' with another file 'f2'
+ * @param f1 file to be replaced with f2
+ * @param f2 file to replace f1
+ * @return result
+ */
+int MainWindow::showReplaceMsgBox(const QFileInfo &f1, const QFileInfo &f2) {
+
+  // Create message
+  QString t = tr("Do you want to replace:<p><b>%1</p><p>Modified: %2<br>"
+                 "Size: %3 bytes</p><p>with:<p><b>%4</p><p>Modified: %5"
+                 "<br>Size: %6 bytes</p>");
+
+  // Populate message with data
+  t = t.arg(f1.filePath()).arg(f1.lastModified().toString()).arg(f1.size())
+       .arg(f2.filePath()).arg(f2.lastModified().toString()).arg(f2.size());
+
+  // Show message
+  return QMessageBox::question(0, tr("Replace"), t, QMessageBox::Yes
+                               | QMessageBox::YesToAll | QMessageBox::No
+                               | QMessageBox::NoToAll | QMessageBox::Cancel);
+}
+//---------------------------------------------------------------------------
+
 void MainWindow::progressFinished(int ret,QStringList newFiles)
 {
     if(progress != 0)
@@ -1162,209 +1296,282 @@ void MainWindow::progressFinished(int ret,QStringList newFiles)
 }
 
 //---------------------------------------------------------------------------
-bool MainWindow::pasteFile(QList<QUrl> files,QString newPath, QStringList cutList)
-{
-    bool ok = true;
-    QStringList newFiles;
 
-    if(!QFileInfo(newPath).isWritable() || newPath == QDir(files.at(0).toLocalFile()).path())        //quit if folder not writable
-    {
-        emit copyProgressFinished(1,newFiles);
+/**
+ * @brief Pastes list of files/dirs into new path
+ * @param files list of files
+ * @param newPath new (destination) path
+ * @param cutList list of files that are going to be removed from source path
+ * @return true if operation was successfull
+ */
+bool MainWindow::pasteFiles(const QList<QUrl> &files, const QString &newPath,
+                            const QStringList &cutList) {
+
+  // Temporary variables
+  bool ok = true;
+  QStringList newFiles;
+
+  // Quit if folder not writable
+  if (!QFileInfo(newPath).isWritable()
+      || newPath == QDir(files.at(0).toLocalFile()).path()) {
+    emit copyProgressFinished(1, newFiles);
+    return 0;
+  }
+
+  // Get total size in bytes
+  qint64 total = FileUtils::totalSize(files);
+
+  // Check available space on destination before we start
+  struct statfs info;
+  statfs(newPath.toLocal8Bit(), &info);
+  if ((qint64) info.f_bavail * info.f_bsize < total) {
+
+    // If it is a cut/move on the same device it doesn't matter
+    if (cutList.count()) {
+      qint64 driveSize = (qint64) info.f_bavail*info.f_bsize;
+      statfs(files.at(0).path().toLocal8Bit(),&info);
+
+      // Same device?
+      if ((qint64) info.f_bavail*info.f_bsize != driveSize) {
+        emit copyProgressFinished(2, newFiles);
         return 0;
+      }
+    } else {
+      emit copyProgressFinished(2, newFiles);
+      return 0;
+    }
+  }
+
+  // Main loop
+  for (int i = 0; i < files.count(); ++i) {
+
+    // Canceled ?
+    if (progress->result() == 1) {
+      emit copyProgressFinished(0, newFiles);
+      return 1;
     }
 
-    //get total size in bytes
-    qint64 total = 1;
-    foreach(QUrl url, files)
-    {
-        QFileInfo file = url.path();
-        if(file.isFile()) total += file.size();
-        else
-        {
-            QDirIterator it(url.path(),QDir::AllEntries | QDir::System | QDir::NoDotAndDotDot | QDir::NoSymLinks | QDir::Hidden, QDirIterator::Subdirectories);
-            while (it.hasNext())
-            {
-                it.next();
-            total += it.fileInfo().size();
-            }
-        }
+    // Destination file name and url
+    QFileInfo temp(files.at(i).toLocalFile());
+    QString destName = temp.fileName();
+    QString destUrl = newPath + QDir::separator() + destName;
+
+    // Only do 'Copy(x) of' if same folder
+    if (temp.path() == newPath) {
+      int num = 1;
+      while (QFile(destUrl).exists()) {
+        destName = QString("Copy (%1) of %2").arg(num).arg(temp.fileName());
+        destUrl = newPath + QDir::separator() + destName;
+        num++;
+      }
     }
 
-    //check available space on destination before we start
-    struct statfs info;
-    statfs(newPath.toLocal8Bit(), &info);
+    // If destination file does not exist and is directory
+    QFileInfo dName(destUrl);
+    if (!dName.exists() || dName.isDir()) {
 
-    if((qint64) info.f_bavail*info.f_bsize < total)
-    {
-        //if it is a cut/move on the same device it doesn't matter
-        if(cutList.count())
-        {
-            qint64 driveSize = (qint64) info.f_bavail*info.f_bsize;
-            statfs(files.at(0).path().toLocal8Bit(),&info);
-            if((qint64) info.f_bavail*info.f_bsize != driveSize)        //same device
-            {
-                emit copyProgressFinished(2,newFiles);
-                return 0;
+      // Keep a list of new files so we can select them later
+      newFiles.append(destUrl);
+
+      // Cut action
+      if (cutList.contains(temp.filePath())) {
+
+        // Files or directories
+        if (temp.isFile()) {
+
+          // NOTE: Rename will fail if across different filesystem
+          QFSFileEngine file(temp.filePath());
+          if (!file.rename(destUrl))	{
+            ok = cutCopyFile(temp.filePath(), destUrl, total, true);
+          }
+        } else {
+          ok = QFile(temp.filePath()).rename(destUrl);
+
+          // File exists or move folder between different filesystems, so use
+          // copy/remove method
+          if (!ok) {
+            if (temp.isDir()) {
+              ok = true;
+              copyFolder(temp.filePath(), destUrl, total, true);
+              modelList->clearCutItems();
             }
+            // File already exists, don't do anything
+          }
         }
-        else
-        {
-            emit copyProgressFinished(2,newFiles);
-            return 0;
+      } else {
+        if (temp.isDir()) {
+          copyFolder(temp.filePath(),destUrl,total,false);
+        } else {
+          ok = cutCopyFile(temp.filePath(), destUrl, total, false);
         }
+      }
     }
+  }
 
-
-    //main loop
-    for(int i = 0; i < files.count(); ++i)
-    {
-        if(progress->result() == 1)			//cancelled
-        {
-            emit copyProgressFinished(0,newFiles);
-            return 1;
-        }
-
-        QFileInfo temp(files.at(i).toLocalFile());
-        QString destName = temp.fileName();
-
-        if(temp.path() == newPath)			// only do 'Copy(x) of' if same folder
-        {
-            int num = 1;
-            while(QFile(newPath + "/" + destName).exists())
-            {
-                destName = QString("Copy (%1) of %2").arg(num).arg(temp.fileName());
-                num++;
-            }
-        }
-
-        destName = newPath + "/" + destName;
-        QFileInfo dName(destName);
-
-        if(!dName.exists() || dName.isDir())
-        {
-            newFiles.append(destName);				    //keep a list of new files so we can select them later
-
-            if(cutList.contains(temp.filePath()))			    //cut action
-            {
-                if (temp.isFile()) //files
-                {
-                    QFSFileEngine file(temp.filePath());
-                    if(!file.rename(destName))			    //rename will fail if across different filesystem, so use copy/remove method
-                        ok = cutCopyFile(temp.filePath(), destName, total, true);
-                }
-                else
-                {
-                    ok = QFile(temp.filePath()).rename(destName);
-                    if(!ok)	//file exists or move folder between different filesystems, so use copy/remove method
-                    {
-                        if(temp.isDir())
-                        {
-                            ok = true;
-                            copyFolder(temp.filePath(), destName, total, true);
-                            modelList->clearCutItems();
-                        }
-                        //file already exists, don't do anything
-                    }
-                }
-            }
-            else
-            {
-                if(temp.isDir())
-                    copyFolder(temp.filePath(),destName,total,false);
-                else
-                    ok = cutCopyFile(temp.filePath(), destName, total, false);
-            }
-        }
-    }
-
-    emit copyProgressFinished(0,newFiles);
-    return 1;
+  // Finished
+  emit copyProgressFinished(0, newFiles);
+  return 1;
 }
-
 //---------------------------------------------------------------------------
-bool MainWindow::cutCopyFile(QString source, QString dest, qint64 totalSize, bool cut)
-{
-    QFile in(source);
-    QFile out(dest);
 
-    if(out.exists()) return 1;  //file exists, don't do anything
+/**
+ * @brief Copies source directory to destination directory
+ * @param srcFolder location of source directory
+ * @param dstFolder location of destination directory
+ * @param total total copy size
+ * @param cut true/false if source directory is going to be moved/copied
+ * @return true if copy was successfull
+ */
+bool MainWindow::copyFolder(const QString &srcFolder, const QString &dstFolder,
+                            qint64 total, bool cut) {
 
-    if (dest.length() > 50) dest = "/.../" + dest.split("/").last();
+  // Temporary variables
+  QDir srcDir(srcFolder);
+  QDir dstDir(QFileInfo(dstFolder).path());
+  QStringList files;
+  bool ok = true;
 
-    in.open(QFile::ReadOnly);
-    out.open(QFile::WriteOnly);
+  // Name of destination directory
+  QString folderName = QFileInfo(dstFolder).fileName();
 
-    char block[4096];
-    qint64 total = in.size();
-    qint64 steps = total >> 7;        //shift right 7, same as divide 128, much faster
-    qint64 interTotal = 0;
+  // Id destination location does not exist, create it
+  if (!QFileInfo(dstFolder).exists()) {
+    dstDir.mkdir(folderName);
+  }
+  dstDir = QDir(dstFolder);
 
-    while(!in.atEnd())
-    {
-        if(progress->result() == 1) break;                 //cancelled
+  // Get files in source directory
+  files = srcDir.entryList(QDir::Files | QDir::NoDotAndDotDot | QDir::Hidden);
 
-        qint64 inBytes = in.read(block, sizeof(block));
-        out.write(block, inBytes);
-        interTotal += inBytes;
+  // Copy each file
+  for (int i = 0; i < files.count(); i++) {
+    QString srcName = srcDir.path() + QDir::separator() + files[i];
+    QString dstName = dstDir.path() + QDir::separator() + files[i];
 
-        if(interTotal > steps)
-        {
-            emit updateCopyProgress(interTotal,totalSize,dest);
-            interTotal = 0;
-        }
+    // Don't remove source folder if all files not cut
+    if (!cutCopyFile(srcName, dstName, total, cut)) ok = false;
+
+    // Cancelled
+    if (progress->result() == 1) return 0;
+  }
+
+  // Get directories in source directory
+  files.clear();
+  files = srcDir.entryList(QDir::AllDirs | QDir::NoDotAndDotDot | QDir::Hidden);
+
+  // Copy each directory
+  for (int i = 0; i < files.count(); i++) {
+    if (progress->result() == 1) {
+      return 0;
     }
+    QString srcName = srcDir.path() + QDir::separator() + files[i];
+    QString dstName = dstDir.path() + QDir::separator() + files[i];
+    copyFolder(srcName, dstName, total, cut);
+  }
 
-    emit updateCopyProgress(interTotal,totalSize,dest);
-
-    out.close();
-    in.close();
-
-    if(out.size() != total) return 0;
-    if(cut) in.remove();  //if file is cut remove the source
-    return 1;
+  // Remove source folder if all files moved ok
+  if (cut && ok) {
+    srcDir.rmdir(srcFolder);
+  }
+  return ok;
 }
-
 //---------------------------------------------------------------------------
-bool MainWindow::copyFolder(QString sourceFolder, QString destFolder, qint64 total, bool cut)
-{
-    QDir sourceDir(sourceFolder);
-    QDir destDir(QFileInfo(destFolder).path());
-    QString folderName = QFileInfo(destFolder).fileName();
 
-    bool ok = true;
+/**
+ * @brief Copies or moves file
+ * @param src location of source file
+ * @param dst location of destination file
+ * @param totalSize total copy size
+ * @param cut true/false if source file is going to be moved/copied
+ * @return true if copy was successfull
+ */
+bool MainWindow::cutCopyFile(const QString &src, QString dst, qint64 totalSize,
+                             bool cut) {
 
-    if(!QFileInfo(destFolder).exists()) destDir.mkdir(folderName);
-    destDir = QDir(destFolder);
+  // Create files with given locations
+  QFile srcFile(src);
+  QFile dstFile(dst);
 
-    QStringList files = sourceDir.entryList(QDir::Files | QDir::NoDotAndDotDot | QDir::Hidden);
+  // Destination file already exists, exit
+  if (dstFile.exists()) return 1;
 
-    for(int i = 0; i < files.count(); i++)
-    {
-        QString srcName = sourceDir.path() + "/" + files[i];
-        QString destName = destDir.path() + "/" + files[i];
-        if(!cutCopyFile(srcName, destName, total, cut)) ok = false;     //don't remove source folder if all files not cut
+  // If destination location is too long make it shorter
+  if (dst.length() > 50) dst = "/.../" + dst.split(QDir::separator()).last();
 
-        if(progress->result() == 1) return 0;                           //cancelled
+  // Open source and destination files
+  srcFile.open(QFile::ReadOnly);
+  dstFile.open(QFile::WriteOnly);
+
+  // Determine buffer size, calculate size of file and number of steps
+  char block[4096];
+  qint64 total = srcFile.size();
+  qint64 steps = total >> 7; // shift right 7, same as divide 128, much faster
+  qint64 interTotal = 0;
+
+  // Copy blocks
+  while (!srcFile.atEnd()) {
+    if (progress->result() == 1) break; // cancelled
+    qint64 inBytes = srcFile.read(block, sizeof(block));
+    dstFile.write(block, inBytes);
+    interTotal += inBytes;
+    if (interTotal > steps) {
+      emit updateCopyProgress(interTotal, totalSize, dst);
+      interTotal = 0;
     }
+  }
 
-    files.clear();
-    files = sourceDir.entryList(QDir::AllDirs | QDir::NoDotAndDotDot | QDir::Hidden);
+  // Update copy progress
+  emit updateCopyProgress(interTotal, totalSize, dst);
 
-    for(int i = 0; i < files.count(); i++)
-    {
-        if(progress->result() == 1) return 0;			    //cancelled
+  dstFile.close();
+  srcFile.close();
 
-        QString srcName = sourceDir.path() + "/" + files[i];
-        QString destName = destDir.path() + "/" + files[i];
-        copyFolder(srcName, destName, total, cut);
-    }
-
-    //remove source folder if all files moved ok
-    if(cut && ok) sourceDir.rmdir(sourceFolder);
-    return ok;
+  if (dstFile.size() != total) return 0;
+  if (cut) srcFile.remove();  // if file is cut remove the source
+  return 1;
 }
-
 //---------------------------------------------------------------------------
+
+bool MainWindow::linkFiles(const QList<QUrl> &files, const QString &newPath) {
+
+  // Quit if folder not writable
+  if (!QFileInfo(newPath).isWritable()
+      || newPath == QDir(files.at(0).toLocalFile()).path()) {
+    return false;
+  }
+
+  // TODO: even if symlinks are small we have to make sure that we have space
+  // available for links
+
+  // Main loop
+  for (int i = 0; i < files.count(); ++i) {
+
+    // Choose destination file name and url
+    QFile file(files.at(i).toLocalFile());
+    QFileInfo temp(file);
+    QString destName = temp.fileName();
+    QString destUrl = newPath + QDir::separator() + destName;
+
+    // Only do 'Link(x) of' if same folder
+    if (temp.path() == newPath) {
+      int num = 1;
+      while (QFile(destUrl).exists()) {
+        destName = QString("Link (%1) of %2").arg(num).arg(temp.fileName());
+        destUrl = newPath + QDir::separator() + destName;
+        num++;
+      }
+    }
+
+    // If file does not exists then create link
+    QFileInfo dName(destUrl);
+    if (!dName.exists()) {
+      file.link(destUrl);
+    }
+  }
+  return true;
+}
+//---------------------------------------------------------------------------
+
 void MainWindow::folderPropertiesLauncher()
 {
     QModelIndexList selList;
@@ -1600,25 +1807,30 @@ void MainWindow::editCustomActions()
 void MainWindow::writeSettings()
 {
     settings->setValue("size", size());
-    settings->setValue("viewMode",stackWidget->currentIndex());
-    settings->setValue("iconMode",iconAct->isChecked());
-    settings->setValue("zoom",zoom);
-    settings->setValue("zoomTree",zoomTree);
-    settings->setValue("zoomList",zoomList);
-    settings->setValue("zoomDetail",zoomDetail);
+    settings->setValue("viewMode", stackWidget->currentIndex());
+    settings->setValue("iconMode", iconAct->isChecked());
+    settings->setValue("zoom", zoom);
+    settings->setValue("zoomTree", zoomTree);
+    settings->setValue("zoomList", zoomList);
+    settings->setValue("zoomDetail", zoomDetail);
 
-    settings->setValue("showThumbs",thumbsAct->isChecked());
-    settings->setValue("hiddenMode",hiddenAct->isChecked());
-    settings->setValue("lockLayout",lockLayoutAct->isChecked());
-    settings->setValue("tabsOnTop",tabsOnTopAct->isChecked());
+    // Michal Rost
+    //-----------------------------------------------------------------------
+    settings->setValue("sortBy", currentSortColumn);
+    settings->setValue("sortOrder", currentSortOrder);
+    //-----------------------------------------------------------------------
+
+    settings->setValue("showThumbs", thumbsAct->isChecked());
+    settings->setValue("hiddenMode", hiddenAct->isChecked());
+    settings->setValue("lockLayout", lockLayoutAct->isChecked());
+    settings->setValue("tabsOnTop", tabsOnTopAct->isChecked());
     settings->setValue("windowState", saveState(1));
-    settings->setValue("header",detailTree->header()->saveState());
+    settings->setValue("header", detailTree->header()->saveState());
 
     settings->remove("bookmarks");
     settings->beginGroup("bookmarks");
 
-    for(int i = 0; i < modelBookmarks->rowCount(); i++)
-    {
+    for (int i = 0; i < modelBookmarks->rowCount(); i++) {
         QStringList temp;
         temp << modelBookmarks->item(i)->text() << modelBookmarks->item(i)->data(32).toString() << modelBookmarks->item(i)->data(34).toString() << modelBookmarks->item(i)->data(33).toString();
         settings->setValue(QString(i),temp);

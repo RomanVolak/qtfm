@@ -158,6 +158,34 @@ void MainWindow::createActions()
     iconAct->setIcon(actionIcons->at(9));
     actionList->append(iconAct);
 
+    // Michal Rost: sort actions
+    // ----------------------------------------------------------------------
+    sortNameAct = new QAction(tr("Name"), this);
+    sortNameAct->setStatusTip(tr("Sort icons by name"));
+    sortNameAct->setCheckable(true);
+
+    sortDateAct = new QAction(tr("Date"), this);
+    sortDateAct->setStatusTip(tr("Sort icons by date"));
+    sortDateAct->setCheckable(true);
+
+    sortSizeAct = new QAction(tr("Size"), this);
+    sortSizeAct->setStatusTip(tr("Sort icons by size"));
+    sortSizeAct->setCheckable(true);
+
+    sortByActGrp = new QActionGroup(this);
+    sortByActGrp->addAction(sortNameAct);
+    sortByActGrp->addAction(sortDateAct);
+    sortByActGrp->addAction(sortSizeAct);
+    connect(sortByActGrp, SIGNAL(triggered(QAction*)), SLOT(toggleSortBy(QAction*)));
+
+    sortAscAct = new QAction(tr("Ascending"), this);
+    sortAscAct->setStatusTip(tr("Sort icons in ascending order"));
+    sortAscAct->setCheckable(true);
+    connect(sortAscAct, SIGNAL(triggered()), this, SLOT(switchSortOrder()));
+    actionList->append(sortAscAct);
+
+    // ----------------------------------------------------------------------
+
     hiddenAct = new QAction(tr("Hidden files"),this);
     hiddenAct->setStatusTip(tr("Toggle hidden files"));
     hiddenAct->setCheckable(true);
@@ -490,6 +518,17 @@ void MainWindow::createMenus()
     autoMenu->setTitle(tr("Layout"));
     viewMenu->addMenu(autoMenu);
 
+    // Michal Rost: add sort menu
+    // ----------------------------------------------------------------------
+    QMenu *sortMenu = new QMenu(tr("Sort By"));
+    sortMenu->addAction(sortNameAct);
+    sortMenu->addAction(sortDateAct);
+    sortMenu->addAction(sortSizeAct);
+    sortMenu->addSeparator();
+    sortMenu->addAction(sortAscAct);
+    viewMenu->addMenu(sortMenu);
+    // ----------------------------------------------------------------------
+
     viewMenu->addSeparator();
     viewMenu->addAction(iconAct);
     viewMenu->addAction(detailAct);
@@ -503,10 +542,19 @@ void MainWindow::createMenus()
     viewMenu->addSeparator();
     viewMenu->addAction(refreshAct);
 
+    // Michal Rost: add Go menu
+    // ----------------------------------------------------------------------
+    QMenu *goMenu = new QMenu(tr("Go"));
+    goMenu->addAction(upAct);
+    goMenu->addAction(backAct);
+    goMenu->addAction(homeAct);
+    // ----------------------------------------------------------------------
+
     QMenuBar *menuBar = new QMenuBar;
     menuBar->addMenu(fileMenu);
     menuBar->addMenu(editMenu);
     menuBar->addMenu(viewMenu);
+    menuBar->addMenu(goMenu);
 
     menuToolBar->addWidget(menuBar);
 }
@@ -545,6 +593,7 @@ void MainWindow::createToolBars()
 }
 
 //---------------------------------------------------------------------------
+
 void MainWindow::zoomInAction()
 {
     int zoomLevel;

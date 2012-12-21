@@ -472,7 +472,7 @@ void MainWindow::treeSelectionChanged(QModelIndex current,QModelIndex previous)
     if(!name.exists()) return;
 
     curIndex = name;
-    setWindowTitle(curIndex.fileName() + " - qtFM v5.5");
+    setWindowTitle(curIndex.fileName() + " - qtFM v5.7");
 
     if(tree->hasFocus() && QApplication::mouseButtons() == Qt::MidButton)
     {

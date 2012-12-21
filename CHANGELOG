@@ -1,3 +1,11 @@
+5.7 21-December 2012
+- added settings manager, almost all settings are now centralized in one dialog
+- modified edit menu
+- modified custom action management centralized to CustomActionManager
+- fixed bug loading of file icons, versioned files like 'xy.so.1.0.0' are now displayed propertly
+- fixed bug in bookmarks: newly created bookmarks were not appeared in list of shortcuts until application was restarted or custom actions dialog was opened
+- fixed bug in shortcuts: sometimes shortcut editor show duplicated bookmarks
+
 5.6 17-October 2012
 - added GUI for drag & drop: qtfm asks user about what he want to do (copy, move or create link)
 - added sorting (name, size and date in ascending or descending order)

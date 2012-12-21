@@ -227,17 +227,11 @@ void MainWindow::createActions()
     deleteAct->setIcon(actionIcons->at(14));
     actionList->append(deleteAct);
 
-    customAct = new QAction(tr("Custom actions"), this);
-    customAct->setStatusTip(tr("Edit custom actions"));
-    connect(customAct, SIGNAL(triggered()), this, SLOT(editCustomActions()));
-    customAct->setIcon(actionIcons->at(15));
-    actionList->append(customAct);
-
-    shortcutsAct = new QAction(tr("Configure shortcuts"), this);
-    shortcutsAct->setStatusTip(tr("Edit keybindings"));
-    connect(shortcutsAct, SIGNAL(triggered()), this, SLOT(editShortcuts()));
-    shortcutsAct->setIcon(actionIcons->at(22));
-    actionList->append(shortcutsAct);
+    settingsAct = new QAction(tr("Settings..."), this);
+    settingsAct->setStatusTip(tr("Edit custom actions"));
+    connect(settingsAct, SIGNAL(triggered()), this, SLOT(showEditDialog()));
+    settingsAct->setIcon(actionIcons->at(15));
+    actionList->append(settingsAct);
 
     editFiletypeAct = new QAction(tr("Edit filetype"), this);
     editFiletypeAct->setStatusTip(tr("Set default program for opening selected filetype"));
@@ -342,65 +336,74 @@ void MainWindow::createActions()
 }
 
 //---------------------------------------------------------------------------
-void MainWindow::readShortcuts()
-{
-    QHash<QString,QString> shortcuts;
-    settings->beginGroup("customShortcuts");
-    QStringList keys = settings->childKeys();
-    for(int i = 0; i < keys.count(); ++i)
-    {
-        QStringList temp(settings->value(keys.at(i)).toStringList());
-        shortcuts.insert(temp.at(0),temp.at(1));
+
+/**
+ * @brief Reads shortcuts and registers actions
+ */
+void MainWindow::readShortcuts() {
+
+  // Loads shortcuts
+  QHash<QString, QString> shortcuts;
+  settings->beginGroup("customShortcuts");
+  QStringList keys = settings->childKeys();
+  for (int i = 0; i < keys.count(); ++i) {
+    QStringList temp(settings->value(keys.at(i)).toStringList());
+    shortcuts.insert(temp.at(0),temp.at(1));
+  }
+  settings->endGroup();
+
+  // Default shortcuts
+  if (shortcuts.count() == 0) {
+    shortcuts.insert(openTabAct->text(),"ctrl+t");
+    shortcuts.insert(closeTabAct->text(),"ctrl+w");
+    shortcuts.insert(cutAct->text(),"ctrl+x");
+    shortcuts.insert(copyAct->text(),"ctrl+c");
+    shortcuts.insert(pasteAct->text(),"ctrl+v");
+    shortcuts.insert(upAct->text(),"alt+up");
+    shortcuts.insert(backAct->text(),"backspace");
+    shortcuts.insert(homeAct->text(),"f3");
+    shortcuts.insert(hiddenAct->text(),"ctrl+h");
+    shortcuts.insert(deleteAct->text(),"del");
+    shortcuts.insert(terminalAct->text(),"f4");
+    shortcuts.insert(exitAct->text(),"ctrl+q");
+    shortcuts.insert(renameAct->text(),"f2");
+    shortcuts.insert(refreshAct->text(),"f5");
+    shortcuts.insert(escapeAct->text(),"esc");
+    shortcuts.insert(zoomOutAct->text(),"ctrl+-");
+    shortcuts.insert(zoomInAct->text(),"ctrl++");
+  }
+
+  // Remove all bookmarks from actions
+  foreach (QAction* a, bookmarkActionList) {
+    actionList->removeOne(a);
+    delete a;
+  }
+  bookmarkActionList.clear();
+
+  // Register bookmarks as actions
+  QList<QStandardItem*> tmp = modelBookmarks->findItems("*", Qt::MatchWildcard);
+  foreach (QStandardItem *item, tmp) {
+    if (!item->text().isEmpty()) {
+      QAction *tempAction = new QAction(item->icon(), item->text(), this);
+      connect(tempAction, SIGNAL(triggered()), SLOT(bookmarkShortcutTrigger()));
+      bookmarkActionList.append(tempAction);
+      actionList->append(tempAction);
     }
-    settings->endGroup();
+  }
 
-    if(shortcuts.count() == 0)
-    {
-        shortcuts.insert(openTabAct->text(),"ctrl+t");
-        shortcuts.insert(closeTabAct->text(),"ctrl+w");
-        shortcuts.insert(cutAct->text(),"ctrl+x");
-        shortcuts.insert(copyAct->text(),"ctrl+c");
-        shortcuts.insert(pasteAct->text(),"ctrl+v");
-        shortcuts.insert(upAct->text(),"alt+up");
-        shortcuts.insert(backAct->text(),"backspace");
-        shortcuts.insert(homeAct->text(),"f3");
-        shortcuts.insert(hiddenAct->text(),"ctrl+h");
-        shortcuts.insert(deleteAct->text(),"del");
-        shortcuts.insert(terminalAct->text(),"f4");
-        shortcuts.insert(exitAct->text(),"ctrl+q");
-        shortcuts.insert(renameAct->text(),"f2");
-        shortcuts.insert(refreshAct->text(),"f5");
-        shortcuts.insert(escapeAct->text(),"esc");
-        shortcuts.insert(zoomOutAct->text(),"ctrl+-");
-        shortcuts.insert(zoomInAct->text(),"ctrl++");
+  // Add all actions to MainWindow so they work when menu is hidden
+  // NOTE: QWidget can handle situation when two pointers to the same action
+  // instance are added and holds only one of them
+  foreach (QAction* action, *actionList) {
+    QString text = shortcuts.value(action->text());
+    if (!text.isEmpty()) {
+      action->setShortcut(QKeySequence::fromString(text));
+      addAction(action);
     }
-
-    //bookmark shortcuts
-    QList<QStandardItem *> theBookmarks = modelBookmarks->findItems("*",Qt::MatchWildcard);
-
-    foreach(QStandardItem *item,theBookmarks)
-    {
-        if(!item->text().isEmpty())
-        {
-            QAction *tempAction = new QAction(item->icon(),item->text(),this);
-            connect(tempAction, SIGNAL(triggered()), this, SLOT(bookmarkShortcutTrigger()));
-            actionList->append(tempAction);
-        }
-    }
-
-
-    foreach(QAction* action, *actionList)
-    {
-        QString text = shortcuts.value(action->text());
-        if(!text.isEmpty())
-        {
-            action->setShortcut(QKeySequence::fromString(text));
-            addAction(action);					    //add to MainWindow so they work when menu is hidden
-        }
-    }
+  }
 }
-
 //---------------------------------------------------------------------------
+
 void MainWindow::bookmarkShortcutTrigger()
 {
     QAction* sc = qobject_cast<QAction*>(sender());
@@ -411,81 +414,7 @@ void MainWindow::bookmarkShortcutTrigger()
 }
 
 //---------------------------------------------------------------------------
-void MainWindow::editShortcuts()
-{
-    QDialog *shortcutConfig = new QDialog(this);
-    shortcutConfig->setWindowTitle(tr("Configure shortcuts"));
 
-    QGridLayout *gridLayout = new QGridLayout();
-
-    QTreeWidget *treeWidget = new QTreeWidget();
-    treeWidget->setAlternatingRowColors(true);
-    treeWidget->setRootIsDecorated(false);
-    treeWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
-
-    QTreeWidgetItem *header = treeWidget->headerItem();
-    header->setText(0,tr("Action"));
-    header->setText(1,tr("Shortcut"));
-    treeWidget->setColumnWidth(0,160);
-
-    QDialogButtonBox *buttons = new QDialogButtonBox;
-    buttons->setStandardButtons(QDialogButtonBox::Save|QDialogButtonBox::Cancel);
-    connect(buttons, SIGNAL(accepted()), shortcutConfig, SLOT(accept()));
-    connect(buttons, SIGNAL(rejected()), shortcutConfig, SLOT(reject()));
-
-    gridLayout->addWidget(treeWidget, 0, 0, 1, 2);
-    gridLayout->addWidget(buttons, 1, 1, 1, 1);
-    shortcutConfig->setLayout(gridLayout);
-    shortcutConfig->resize(320,300);
-
-    QPixmap temp(16,16);
-    temp.fill(Qt::transparent);
-    QIcon blank(temp);
-
-    for(int x = 0; x < actionList->count(); ++x)
-    {
-        QTreeWidgetItem *item1 = new QTreeWidgetItem(treeWidget, QStringList() << actionList->at(x)->text() << actionList->at(x)->shortcut().toString());
-        item1->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEditable|Qt::ItemIsEnabled);
-        item1->setIcon(0,actionList->at(x)->icon());
-        if(item1->icon(0).isNull()) item1->setIcon(0,blank);
-    }
-
-    QStringList shortcuts, duplicates;
-
-    if(shortcutConfig->exec() == 1)
-    {
-        settings->remove("customShortcuts");
-        settings->beginGroup("customShortcuts");
-
-        for(int x = 0; x < actionList->count(); ++x)
-        {
-            QTreeWidgetItem *item = treeWidget->topLevelItem(x);
-            actionList->at(x)->setShortcut(QKeySequence::fromString(item->text(1)));
-            if(!item->text(1).isEmpty())
-            {
-                int existing = shortcuts.indexOf(actionList->at(x)->shortcut().toString());
-                if(existing != -1)
-                    duplicates.append(QString("<b>%1</b> - %2").arg(shortcuts.at(existing)).arg(actionList->at(x)->text()));
-                shortcuts.append(actionList->at(x)->shortcut().toString());
-
-                QStringList temp;
-                temp << actionList->at(x)->text() << actionList->at(x)->shortcut().toString();
-                settings->setValue(QString(shortcuts.count()),temp);
-
-                        addAction(actionList->at(x));
-            }
-        }
-
-        settings->endGroup();
-    }
-
-    if(duplicates.count())
-        QMessageBox::information(this,tr("Warning"),QString(tr("Duplicate shortcuts detected:<p>%1")).arg(duplicates.join("<p>")));
-
-    delete shortcutConfig;
-}
-
-//---------------------------------------------------------------------------
 void MainWindow::createMenus()
 {
     QMenu *fileMenu = new QMenu(tr("File"));
@@ -500,15 +429,13 @@ void MainWindow::createMenus()
     editMenu->addAction(cutAct);
     editMenu->addAction(copyAct);
     editMenu->addAction(pasteAct);
-    editMenu->addSeparator();
-    editMenu->addAction(addBookmarkAct);
     editMenu->addAction(renameAct);
+    editMenu->addAction(deleteAct);
+    editMenu->addSeparator();
+    editMenu->addAction(settingsAct);
     editMenu->addSeparator();
     editMenu->addAction(editFiletypeAct);
-    editMenu->addAction(customAct);
-    editMenu->addAction(shortcutsAct);
-    editMenu->addSeparator();
-    editMenu->addAction(deleteAct);
+    editMenu->addAction(addBookmarkAct);
 
     QMenu *viewMenu = new QMenu(tr("View"));
 

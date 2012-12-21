@@ -8,7 +8,6 @@ MOC_DIR = build
 
 # Input
 HEADERS += src/mainwindow.h \
-    src/customactions.h \
     src/mymodel.h \
     src/bookmarkmodel.h \
     src/progressdlg.h \
@@ -16,10 +15,11 @@ HEADERS += src/mainwindow.h \
     src/propertiesdlg.h \
     src/fileutils.h \
     src/tabbar.h \
-    src/mymodelitem.h
+    src/mymodelitem.h \
+    src/settingsdialog.h \
+    src/customactionsmanager.h
 SOURCES += src/main.cpp \
     src/mainwindow.cpp \
-    src/customactions.cpp \
     src/mymodel.cpp \
     src/bookmarks.cpp \
     src/progressdlg.cpp \
@@ -28,7 +28,9 @@ SOURCES += src/main.cpp \
     src/propertiesdlg.cpp \
     src/tabbar.cpp \
     src/actions.cpp \
-    src/mymodelitem.cpp
+    src/mymodelitem.cpp \
+    src/settingsdialog.cpp \
+    src/customactionsmanager.cpp
 
 CONFIG += release warn_off thread
 RESOURCES += resources.qrc

@@ -25,7 +25,6 @@
 #include "mainwindow.h"
 #include <sys/vfs.h>
 #include <sys/stat.h>
-#include <magic.h>
 
 //---------------------------------------------------------------------------
 propertiesDialog::propertiesDialog(QStringList paths, myModel *modelList)
@@ -102,7 +101,7 @@ propertiesDialog::propertiesDialog(QStringList paths, myModel *modelList)
 
             layoutPath->addWidget(iconLabel,0,0);
             layoutPath->addWidget(new QLabel(tr("Filetype:")),3,0);
-            containsInfo->setText(gGetMimeType(pathName));
+            containsInfo->setText(FileUtils::getMimeType(pathName));
         }
 
         path->setWordWrap(1);
@@ -386,12 +385,3 @@ QString getDriveInfo(QString path)
 }
 
 //---------------------------------------------------------------------------------
-QString gGetMimeType(QString path)
-{
-    magic_t cookie = magic_open(MAGIC_MIME);
-    magic_load(cookie,0);
-    QString temp = magic_file(cookie,path.toLocal8Bit());
-    magic_close(cookie);
-
-    return temp.left(temp.indexOf(";"));
-}

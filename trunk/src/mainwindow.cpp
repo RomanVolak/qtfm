@@ -26,10 +26,11 @@
 
 #include "mainwindow.h"
 #include "mymodel.h"
-#include "customactions.h"
 #include "actions.cpp"
 #include "bookmarks.cpp"
 #include "progressdlg.h"
+#include "fileutils.h"
+#include "settingsdialog.h"
 
 MainWindow::MainWindow()
 {
@@ -182,57 +183,14 @@ MainWindow::MainWindow()
     createToolBars();
     createMenus();
 
-    restoreState(settings->value("windowState").toByteArray(),1);
-    resize(settings->value("size", QSize(600, 400)).toSize());
-
     setWindowIcon(QIcon(":/images/qtfm.png"));
 
+    // Creates custom action manager
+    customActManager = new CustomActionsManager(settings, actionList, this);
 
+    // Creates bookmarks model
     modelBookmarks = new bookmarkmodel(modelList->folderIcons);
 
-    settings->beginGroup("bookmarks");
-    foreach (QString key,settings->childKeys()) {
-      QStringList temp(settings->value(key).toStringList());
-      modelBookmarks->addBookmark(temp.at(0),temp.at(1),temp.at(2),temp.last());
-    }
-    settings->endGroup();
-
-    autoBookmarkMounts();
-    bookmarksList->setModel(modelBookmarks);
-    bookmarksList->setResizeMode(QListView::Adjust);
-    bookmarksList->setFlow(QListView::TopToBottom);
-    bookmarksList->setIconSize(QSize(24,24));
-
-    wrapBookmarksAct->setChecked(settings->value("wrapBookmarks",0).toBool());
-    bookmarksList->setWrapping(wrapBookmarksAct->isChecked());
-
-    lockLayoutAct->setChecked(settings->value("lockLayout",0).toBool());
-    toggleLockLayout();
-
-    zoom = settings->value("zoom",48).toInt();
-    zoomTree = settings->value("zoomTree",16).toInt();
-    zoomList = settings->value("zoomList",24).toInt();
-    zoomDetail = settings->value("zoomDetail",16).toInt();
-
-    detailTree->setIconSize(QSize(zoomDetail,zoomDetail));
-    tree->setIconSize(QSize(zoomTree,zoomTree));
-
-    thumbsAct->setChecked(settings->value("showThumbs",1).toBool());
-
-    detailAct->setChecked(settings->value("viewMode",0).toBool());
-    iconAct->setChecked(settings->value("iconMode",0).toBool());
-    toggleDetails();
-
-    hiddenAct->setChecked(settings->value("hiddenMode",0).toBool());
-    toggleHidden();
-
-    detailTree->header()->restoreState(settings->value("header").toByteArray());
-    detailTree->setSortingEnabled(1);
-
-    // Michal Rost
-    //-----------------------------------------------------------------------
-    currentSortColumn = settings->value("sortBy", 0).toInt();
-    currentSortOrder = (Qt::SortOrder) settings->value("sortOrder", 0).toInt();
 
 
     switch (currentSortColumn) {
@@ -246,106 +204,235 @@ MainWindow::MainWindow()
     if(isDaemon) startDaemon();
     else show();
 
+    loadSettings();
+
     QTimer::singleShot(0, this, SLOT(lateStart()));
 }
 
 //---------------------------------------------------------------------------
 
-void MainWindow::lateStart()
-{
-    status->showMessage(getDriveInfo(curIndex.filePath()));
+/**
+ * @brief Initialization
+ */
+void MainWindow::lateStart() {
 
-    bookmarksList->setDragDropMode(QAbstractItemView::DragDrop);
-    bookmarksList->setDropIndicatorShown(true);
-    bookmarksList->setDefaultDropAction(Qt::MoveAction);
-    bookmarksList->setSelectionMode(QAbstractItemView::ExtendedSelection);
+  // Update status panel
+  status->showMessage(getDriveInfo(curIndex.filePath()));
 
-    tree->setDragDropMode(QAbstractItemView::DragDrop);
-    tree->setDefaultDropAction(Qt::MoveAction);
-    tree->setDropIndicatorShown(true);
-    tree->setEditTriggers(QAbstractItemView::EditKeyPressed | QAbstractItemView::SelectedClicked);
+  // Configure bookmarks list
+  bookmarksList->setDragDropMode(QAbstractItemView::DragDrop);
+  bookmarksList->setDropIndicatorShown(true);
+  bookmarksList->setDefaultDropAction(Qt::MoveAction);
+  bookmarksList->setSelectionMode(QAbstractItemView::ExtendedSelection);
 
-    detailTree->setSelectionMode(QAbstractItemView::ExtendedSelection);
-    detailTree->setDragDropMode(QAbstractItemView::DragDrop);
-    detailTree->setDefaultDropAction(Qt::MoveAction);
-    detailTree->setDropIndicatorShown(true);
-    detailTree->setEditTriggers(QAbstractItemView::EditKeyPressed | QAbstractItemView::SelectedClicked);
+  // Configure tree view
+  tree->setDragDropMode(QAbstractItemView::DragDrop);
+  tree->setDefaultDropAction(Qt::MoveAction);
+  tree->setDropIndicatorShown(true);
+  tree->setEditTriggers(QAbstractItemView::EditKeyPressed |
+                        QAbstractItemView::SelectedClicked);
 
-    list->setResizeMode(QListView::Adjust);
-    list->setSelectionMode(QAbstractItemView::ExtendedSelection);
-    list->setSelectionRectVisible(true);
-    list->setFocus();
+  // Configure detail view
+  detailTree->setSelectionMode(QAbstractItemView::ExtendedSelection);
+  detailTree->setDragDropMode(QAbstractItemView::DragDrop);
+  detailTree->setDefaultDropAction(Qt::MoveAction);
+  detailTree->setDropIndicatorShown(true);
+  detailTree->setEditTriggers(QAbstractItemView::EditKeyPressed |
+                              QAbstractItemView::SelectedClicked);
 
-    list->setEditTriggers(QAbstractItemView::EditKeyPressed | QAbstractItemView::SelectedClicked);
-    connect(list,SIGNAL(activated(QModelIndex)),this,SLOT(listDoubleClicked(QModelIndex)));
+  // Configure list view
+  list->setResizeMode(QListView::Adjust);
+  list->setSelectionMode(QAbstractItemView::ExtendedSelection);
+  list->setSelectionRectVisible(true);
+  list->setFocus();
+  list->setEditTriggers(QAbstractItemView::EditKeyPressed |
+                        QAbstractItemView::SelectedClicked);
 
-    if(settings->value("singleClick").toInt() == 1)
-    {
-        connect(list,SIGNAL(clicked(QModelIndex)),this,SLOT(listItemClicked(QModelIndex)));
-        connect(detailTree,SIGNAL(clicked(QModelIndex)),this,SLOT(listItemClicked(QModelIndex)));
-    }
-    if(settings->value("singleClick").toInt() == 2)
-    {
-        connect(list,SIGNAL(clicked(QModelIndex)),this,SLOT(listDoubleClicked(QModelIndex)));
-        connect(detailTree,SIGNAL(clicked(QModelIndex)),this,SLOT(listDoubleClicked(QModelIndex)));
-    }
+  // Watch for mounts
+  int fd = open("/proc/self/mounts", O_RDONLY, 0);
+  notify = new QSocketNotifier(fd, QSocketNotifier::Write);
 
-    customActions = new QMultiHash<QString,QAction*>;
-    customMapper = new QSignalMapper();
-    connect(customMapper, SIGNAL(mapped(QString)),this, SLOT(actionMapper(QString)));
+  // Clipboard configuration
+  progress = 0;
+  clipboardChanged();
 
-    int fd = open("/proc/self/mounts",O_RDONLY,0);
-    notify = new QSocketNotifier(fd,QSocketNotifier::Write);
-    connect(notify, SIGNAL(activated(int)), this, SLOT(mountWatcherTriggered()),Qt::QueuedConnection);
+  // Completer configuration
+  customComplete = new myCompleter;
+  customComplete->setModel(modelTree);
+  customComplete->setCompletionMode(QCompleter::UnfilteredPopupCompletion);
+  customComplete->setMaxVisibleItems(10);
+  pathEdit->setCompleter(customComplete);
 
+  // Tabs configuration
+  tabs->setDrawBase(0);
+  tabs->setExpanding(0);
 
-    term = settings->value("term").toString();
-    progress = 0;
-    clipboardChanged();
+  // Connect mouse clicks in views
+  if (settings->value("singleClick").toInt() == 1) {
+    connect(list, SIGNAL(clicked(QModelIndex)),
+            this, SLOT(listItemClicked(QModelIndex)));
+    connect(detailTree, SIGNAL(clicked(QModelIndex)),
+            this, SLOT(listItemClicked(QModelIndex)));
+  }
+  if (settings->value("singleClick").toInt() == 2) {
+    connect(list, SIGNAL(clicked(QModelIndex))
+            ,this, SLOT(listDoubleClicked(QModelIndex)));
+    connect(detailTree, SIGNAL(clicked(QModelIndex)),
+            this, SLOT(listDoubleClicked(QModelIndex)));
+  }
 
-    customComplete = new myCompleter;
-    customComplete->setModel(modelTree);
-    customComplete->setCompletionMode(QCompleter::UnfilteredPopupCompletion);
-    customComplete->setMaxVisibleItems(10);
-    pathEdit->setCompleter(customComplete);
+  // Connect list view
+  connect(list, SIGNAL(activated(QModelIndex)),
+          this, SLOT(listDoubleClicked(QModelIndex)));
 
-    tabs->setDrawBase(0);
-    tabs->setExpanding(0);
-    tabsOnTopAct->setChecked(settings->value("tabsOnTop",0).toBool());
-    tabsOnTop();
+  // Connect notifier
+  connect(notify, SIGNAL(activated(int)), this, SLOT(mountWatcherTriggered()),
+          Qt::QueuedConnection);
 
-    connect(pathEdit,SIGNAL(activated(QString)),this,SLOT(pathEditChanged(QString)));
-    connect(customComplete,SIGNAL(activated(QString)), this,SLOT(pathEditChanged(QString)));
-    connect(pathEdit->lineEdit(),SIGNAL(cursorPositionChanged(int,int)),this,SLOT(addressChanged(int,int)));
+  // Connect custom action manager
+  connect(customActManager, SIGNAL(actionMapped(QString)),
+          SLOT(actionMapper(QString)));
+  connect(customActManager, SIGNAL(actionsLoaded()), SLOT(readShortcuts()));
+  connect(customActManager, SIGNAL(actionFinished()), SLOT(clearCutItems()));
 
-    connect(bookmarksList,SIGNAL(activated(QModelIndex)),this,SLOT(bookmarkClicked(QModelIndex)));
-    connect(bookmarksList,SIGNAL(clicked(QModelIndex)),this,SLOT(bookmarkClicked(QModelIndex)));
-    connect(bookmarksList,SIGNAL(pressed(QModelIndex)),this,SLOT(bookmarkPressed(QModelIndex)));
+  // Connect path edit
+  connect(pathEdit, SIGNAL(activated(QString)),
+          this, SLOT(pathEditChanged(QString)));
+  connect(customComplete, SIGNAL(activated(QString)),
+          this, SLOT(pathEditChanged(QString)));
+  connect(pathEdit->lineEdit(), SIGNAL(cursorPositionChanged(int,int)),
+          this, SLOT(addressChanged(int,int)));
 
-    connect(QApplication::clipboard(),SIGNAL(changed(QClipboard::Mode)),this,SLOT(clipboardChanged()));
-    connect(detailTree,SIGNAL(activated(QModelIndex)),this,SLOT(listDoubleClicked(QModelIndex)));
-    connect(listSelectionModel,SIGNAL(selectionChanged(const QItemSelection, const QItemSelection)),this,SLOT(listSelectionChanged(const QItemSelection, const QItemSelection)));
+  // Connect bookmarks
+  connect(bookmarksList, SIGNAL(activated(QModelIndex)),
+          this, SLOT(bookmarkClicked(QModelIndex)));
+  connect(bookmarksList, SIGNAL(clicked(QModelIndex)),
+          this, SLOT(bookmarkClicked(QModelIndex)));
+  connect(bookmarksList, SIGNAL(pressed(QModelIndex)),
+          this, SLOT(bookmarkPressed(QModelIndex)));
 
-    connect(this,SIGNAL(copyProgressFinished(int,QStringList)),this,SLOT(progressFinished(int,QStringList)));
+  // Connect selection
+  connect(QApplication::clipboard(), SIGNAL(changed(QClipboard::Mode)),
+          this, SLOT(clipboardChanged()));
+  connect(detailTree,SIGNAL(activated(QModelIndex)),
+          this, SLOT(listDoubleClicked(QModelIndex)));
+  connect(listSelectionModel,
+          SIGNAL(selectionChanged(const QItemSelection, const QItemSelection)),
+          this, SLOT(listSelectionChanged(const QItemSelection,
+                                          const QItemSelection)));
 
-    connect(modelBookmarks, SIGNAL(bookmarkPaste(const QMimeData *, QString, QStringList)),this,SLOT(pasteLauncher(const QMimeData *, QString, QStringList)));
-    connect(modelList,SIGNAL(dragDropPaste(const QMimeData *, QString, myModel::DragMode)),this,SLOT(dragLauncher(const QMimeData *, QString, myModel::DragMode)));
+  // Connect copy progress
+  connect(this, SIGNAL(copyProgressFinished(int,QStringList)),
+          this, SLOT(progressFinished(int,QStringList)));
 
-    connect(tabs,SIGNAL(currentChanged(int)),this,SLOT(tabChanged(int)));
-    connect(tabs,SIGNAL(dragDropTab(const QMimeData *, QString, QStringList)),this,SLOT(pasteLauncher(const QMimeData *, QString, QStringList)));
-    connect(list,SIGNAL(pressed(QModelIndex)),this,SLOT(listItemPressed(QModelIndex)));
-    connect(detailTree,SIGNAL(pressed(QModelIndex)),this,SLOT(listItemPressed(QModelIndex)));
+  // Connect bookmark model
+  connect(modelBookmarks,
+          SIGNAL(bookmarkPaste(const QMimeData *, QString, QStringList)), this,
+          SLOT(pasteLauncher(const QMimeData *, QString, QStringList)));
+  connect(modelBookmarks, SIGNAL(rowsInserted(QModelIndex, int, int)),
+          this, SLOT(readShortcuts()));
+  connect(modelBookmarks, SIGNAL(rowsRemoved(QModelIndex, int, int)),
+          this, SLOT(readShortcuts()));
 
-    connect(modelList,SIGNAL(thumbUpdate(QModelIndex)),this,SLOT(thumbUpdate(QModelIndex)));
+  // Conect list model
+  connect(modelList,
+          SIGNAL(dragDropPaste(const QMimeData *, QString, myModel::DragMode)),
+          this,
+          SLOT(dragLauncher(const QMimeData *, QString, myModel::DragMode)));
 
-    qApp->setKeyboardInputInterval(1000);
+  // Connect tabs
+  connect(tabs, SIGNAL(currentChanged(int)), this, SLOT(tabChanged(int)));
+  connect(tabs, SIGNAL(dragDropTab(const QMimeData *, QString, QStringList)),
+          this, SLOT(pasteLauncher(const QMimeData *, QString, QStringList)));
+  connect(list, SIGNAL(pressed(QModelIndex)),
+          this, SLOT(listItemPressed(QModelIndex)));
+  connect(detailTree, SIGNAL(pressed(QModelIndex)),
+          this, SLOT(listItemPressed(QModelIndex)));
 
-    connect(&daemon,SIGNAL(newConnection()),this,SLOT(newConnection()));
+  connect(modelList, SIGNAL(thumbUpdate(QModelIndex)),
+          this, SLOT(thumbUpdate(QModelIndex)));
 
-    QTimer::singleShot(100,this,SLOT(readCustomActions()));
+  qApp->setKeyboardInputInterval(1000);
+
+  connect(&daemon, SIGNAL(newConnection()), this, SLOT(newConnection()));
+
+  // Read custom actions
+  QTimer::singleShot(100, customActManager, SLOT(readActions()));
 }
-
 //---------------------------------------------------------------------------
+
+/**
+ * @brief Loads application settings
+ */
+void MainWindow::loadSettings() {
+
+  // Restore window state
+  restoreState(settings->value("windowState").toByteArray(), 1);
+  resize(settings->value("size", QSize(600, 400)).toSize());
+
+  // Remove old bookmarks
+  modelBookmarks->removeRows(0, modelBookmarks->rowCount());
+
+  // Load bookmarks
+  settings->beginGroup("bookmarks");
+  foreach (QString key,settings->childKeys()) {
+    QStringList temp(settings->value(key).toStringList());
+    modelBookmarks->addBookmark(temp[0], temp[1], temp[2], temp.last());
+  }
+  settings->endGroup();
+
+  // Set bookmarks
+  autoBookmarkMounts();
+  bookmarksList->setModel(modelBookmarks);
+  bookmarksList->setResizeMode(QListView::Adjust);
+  bookmarksList->setFlow(QListView::TopToBottom);
+  bookmarksList->setIconSize(QSize(24,24));
+
+  // Load information whether bookmarks are displayed
+  wrapBookmarksAct->setChecked(settings->value("wrapBookmarks", 0).toBool());
+  bookmarksList->setWrapping(wrapBookmarksAct->isChecked());
+
+  // Lock information whether layout is locked or not
+  lockLayoutAct->setChecked(settings->value("lockLayout", 0).toBool());
+  toggleLockLayout();
+
+  // Load zoom settings
+  zoom = settings->value("zoom", 48).toInt();
+  zoomTree = settings->value("zoomTree", 16).toInt();
+  zoomList = settings->value("zoomList", 24).toInt();
+  zoomDetail = settings->value("zoomDetail", 16).toInt();
+  detailTree->setIconSize(QSize(zoomDetail, zoomDetail));
+  tree->setIconSize(QSize(zoomTree, zoomTree));
+
+  // Load information whether thumbnails can be shown
+  thumbsAct->setChecked(settings->value("showThumbs", 1).toBool());
+
+  // Load view mode
+  detailAct->setChecked(settings->value("viewMode", 0).toBool());
+  iconAct->setChecked(settings->value("iconMode", 0).toBool());
+  toggleDetails();
+
+  // Load information whether hidden files can be displayed
+  hiddenAct->setChecked(settings->value("hiddenMode", 0).toBool());
+  toggleHidden();
+
+  // Restore header of detail tree
+  detailTree->header()->restoreState(settings->value("header").toByteArray());
+  detailTree->setSortingEnabled(1);
+
+  // Load sorting information
+  currentSortColumn = settings->value("sortBy", 0).toInt();
+  currentSortOrder = (Qt::SortOrder) settings->value("sortOrder", 0).toInt();
+
+  // Load terminal command
+  term = settings->value("term").toString();
+
+  // Load information whether tabs can be shown on top
+  tabsOnTopAct->setChecked(settings->value("tabsOnTop", 0).toBool());
+  tabsOnTop();
+}
+//---------------------------------------------------------------------------
+
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     writeSettings();
@@ -662,7 +749,7 @@ void MainWindow::executeFile(QModelIndex index, bool run)
     {
         QString type = modelList->getMimeType(modelView->mapToSource(index));
 
-        QHashIterator<QString, QAction*> i(*customActions);
+        QHashIterator<QString, QAction*> i(*customActManager->getActions());
         while (i.hasNext())
         {
             i.next();
@@ -1532,6 +1619,12 @@ bool MainWindow::cutCopyFile(const QString &src, QString dst, qint64 totalSize,
 }
 //---------------------------------------------------------------------------
 
+/**
+ * @brief Creates symbolic links to files
+ * @param files
+ * @param newPath
+ * @return true if link creation was successfull
+ */
 bool MainWindow::linkFiles(const QList<QUrl> &files, const QString &newPath) {
 
   // Quit if folder not writable
@@ -1650,7 +1743,7 @@ bool MainWindow::xdgConfig()
     QDialog *xdgConfig = new QDialog(this);
     xdgConfig->setWindowTitle(tr("Configure filetype"));
 
-    QString mimeType = gGetMimeType(curIndex.filePath());
+    QString mimeType = FileUtils::getMimeType(curIndex.filePath());
 
     QLabel *label = new QLabel(tr("Filetype:") + "<b>" + mimeType + "</b><p>" + tr("Open with:"));
     QComboBox * appList = new QComboBox;
@@ -1723,87 +1816,28 @@ bool MainWindow::xdgConfig()
 }
 
 //---------------------------------------------------------------------------
-void MainWindow::readCustomActions()
-{
-    customMenus = new QMultiHash<QString,QMenu*>;
 
-    settings->beginGroup("customActions");
-    QStringList keys = settings->childKeys();
+/**
+ * @brief Displays settings dialog
+ */
+void MainWindow::showEditDialog() {
 
-    for(int i = 0; i < keys.count(); ++i)
-    {
-        keys.insert(i,keys.takeLast());  //reverse order
+  // Deletes current list of custom actions
+  customActManager->freeActions();
 
-        QStringList temp(settings->value(keys.at(i)).toStringList());
+  // Creates settings dialog
+  SettingsDialog *dlg = new SettingsDialog(actionList, settings, this);
+  dlg->exec();
 
-        // temp.at(0) - FileType
-        // temp.at(1) - Text
-        // temp.at(2) - Icon
-        // temp.at(3) - Command
+  // Reload settings
+  loadSettings();
 
-        QAction *tempAction = new QAction(QIcon::fromTheme(temp.at(2)),temp.at(1),this);
-        customMapper->setMapping(tempAction,temp.at(3));
-        connect(tempAction, SIGNAL(triggered()), customMapper, SLOT(map()));
-
-        actionList->append(tempAction);
-
-        QStringList types = temp.at(0).split(",");
-
-        foreach(QString type,types)
-        {
-            QStringList children(temp.at(1).split(" / "));
-            if(children.count() > 1)
-            {
-                QMenu * parent = 0;
-                tempAction->setText(children.at(1));
-
-                foreach(QMenu *subMenu,customMenus->values(type))
-                    if(subMenu->title() == children.at(0)) parent = subMenu;
-
-                if(parent == 0)
-                {
-                    parent = new QMenu(children.at(0));
-                    customMenus->insert(type,parent);
-                }
-
-                parent->addAction(tempAction);
-                customActions->insert("null",tempAction);
-            }
-            else
-                customActions->insert(type,tempAction);
-        }
-    }
-    settings->endGroup();
-
-    readShortcuts();
+  // Reads custom actions
+  customActManager->readActions();
+  delete dlg;
 }
-
 //---------------------------------------------------------------------------
-void MainWindow::editCustomActions()
-{
-    //remove all custom actions from list because we will add them all again below.
-    foreach(QAction *action, *actionList)
-        if(customActions->values().contains(action))
-        {
-            actionList->removeOne(action);
-            delete action;
-        }
 
-    QList<QMenu*> temp = customMenus->values();
-
-    foreach(QMenu* menu, temp)
-        delete menu;
-
-    customActions->clear();
-    customMenus->clear();
-
-    customActionsDialog *dlg = new customActionsDialog(this);
-    dlg->exec();
-    readCustomActions();
-    delete dlg;
-}
-
-//---------------------------------------------------------------------------
 void MainWindow::writeSettings()
 {
     settings->setValue("size", size());
@@ -1876,7 +1910,7 @@ void MainWindow::contextMenuEvent(QContextMenuEvent * event)
             {
                 QString type = modelList->getMimeType(modelList->index(curIndex.filePath()));
 
-                QHashIterator<QString, QAction*> i(*customActions);
+                QHashIterator<QString, QAction*> i(*customActManager->getActions());
                 while (i.hasNext())
                 {
                     i.next();
@@ -1896,7 +1930,7 @@ void MainWindow::contextMenuEvent(QContextMenuEvent * event)
 
                 popup->addActions(actions);
 
-                QHashIterator<QString, QMenu*> m(*customMenus);
+                QHashIterator<QString, QMenu*> m(*customActManager->getMenus());
                 while (m.hasNext())
                 {
                     m.next();
@@ -1911,14 +1945,14 @@ void MainWindow::contextMenuEvent(QContextMenuEvent * event)
                 popup->addAction(renameAct);
                 popup->addSeparator();
 
-                foreach(QMenu* parent, customMenus->values("*"))
+                foreach(QMenu* parent, customActManager->getMenus()->values("*"))
                     popup->addMenu(parent);
 
-                actions = (customActions->values("*"));
+                actions = (customActManager->getActions()->values("*"));
                 popup->addActions(actions);
                 popup->addAction(deleteAct);
                 popup->addSeparator();
-                actions = customActions->values(curIndex.path());    //children of $parent
+                actions = customActManager->getActions()->values(curIndex.path());    //children of $parent
                 if(actions.count())
                 {
                     popup->addActions(actions);
@@ -1936,20 +1970,20 @@ void MainWindow::contextMenuEvent(QContextMenuEvent * event)
                 popup->addAction(renameAct);
                 popup->addSeparator();
 
-                foreach(QMenu* parent, customMenus->values("*"))
+                foreach(QMenu* parent, customActManager->getMenus()->values("*"))
                     popup->addMenu(parent);
 
-                actions = customActions->values("*");
+                actions = customActManager->getActions()->values("*");
                 popup->addActions(actions);
                 popup->addAction(deleteAct);
                 popup->addSeparator();
 
-                foreach(QMenu* parent, customMenus->values("folder"))
+                foreach(QMenu* parent, customActManager->getMenus()->values("folder"))
                     popup->addMenu(parent);
 
-                actions = customActions->values(curIndex.fileName());               //specific folder
-                actions.append(customActions->values(curIndex.path()));    //children of $parent
-                actions.append(customActions->values("folder"));                    //all folders
+                actions = customActManager->getActions()->values(curIndex.fileName());               //specific folder
+                actions.append(customActManager->getActions()->values(curIndex.path()));    //children of $parent
+                actions.append(customActManager->getActions()->values("folder"));                    //all folders
                 if(actions.count())
                 {
                     popup->addActions(actions);
@@ -1973,10 +2007,10 @@ void MainWindow::contextMenuEvent(QContextMenuEvent * event)
             popup->addAction(addBookmarkAct);
             popup->addSeparator();
 
-            foreach(QMenu* parent, customMenus->values("folder"))
+            foreach(QMenu* parent, customActManager->getMenus()->values("folder"))
                 popup->addMenu(parent);
-            actions = customActions->values(curIndex.fileName());
-            actions.append(customActions->values("folder"));
+            actions = customActManager->getActions()->values(curIndex.fileName());
+            actions.append(customActManager->getActions()->values("folder"));
             if(actions.count())
             {
                 foreach(QAction*action, actions)
@@ -2024,11 +2058,11 @@ void MainWindow::contextMenuEvent(QContextMenuEvent * event)
 
         popup->addSeparator();
 
-        foreach(QMenu* parent, customMenus->values("folder"))
+        foreach(QMenu* parent, customActManager->getMenus()->values("folder"))
             popup->addMenu(parent);
-        actions = customActions->values(curIndex.fileName());
-        actions.append(customActions->values(curIndex.path()));
-        actions.append(customActions->values("folder"));
+        actions = customActManager->getActions()->values(curIndex.fileName());
+        actions.append(customActManager->getActions()->values(curIndex.path()));
+        actions.append(customActManager->getActions()->values("folder"));
         if(actions.count())
         {
             foreach(QAction*action, actions)
@@ -2095,57 +2129,10 @@ void MainWindow::actionMapper(QString cmd)
 
     cmd.replace("%F",temp.join(" "));
 
-    temp = cmd.split(" ");
-
-    QString exec = temp.at(0);
-    temp.removeAt(0);
-
-    temp.replaceInStrings("\\","\ ");
-
-    QProcess *customProcess = new QProcess();
-    customProcess->setWorkingDirectory(pathEdit->itemText(0));
-
-    connect(customProcess,SIGNAL(error(QProcess::ProcessError)),this,SLOT(customActionError(QProcess::ProcessError)));
-    connect(customProcess,SIGNAL(finished(int)),this,SLOT(customActionFinished(int)));
-
-    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-    if(exec.at(0) == '|')
-    {
-        exec.remove(0,1);
-        env.insert("QTFM", "1");
-        customProcess->setProcessEnvironment(env);
-    }
-
-    customProcess->start(exec,temp);
+    customActManager->execAction(cmd, pathEdit->itemText(0));
 }
+//---------------------------------------------------------------------------
 
-//---------------------------------------------------------------------------------
-void MainWindow::customActionError(QProcess::ProcessError error)
-{
-    QProcess* process = qobject_cast<QProcess*>(sender());
-    QMessageBox::warning(this,"Error",process->errorString());
-    customActionFinished(0);
-}
-
-//---------------------------------------------------------------------------------
-void MainWindow::customActionFinished(int ret)
-{
-    QProcess* process = qobject_cast<QProcess*>(sender());
-
-    if(process->processEnvironment().contains("QTFM"))
-    {
-        QString output = process->readAllStandardError();
-        if(!output.isEmpty()) QMessageBox::warning(this,tr("Error - Custom action"),output);
-
-        output = process->readAllStandardOutput();
-        if(!output.isEmpty()) QMessageBox::information(this,tr("Output - Custom action"),output);
-    }
-
-    QTimer::singleShot(100,this,SLOT(clearCutItems()));                //updates file sizes
-    process->deleteLater();
-}
-
-//---------------------------------------------------------------------------------
 void MainWindow::refresh()
 {
     QApplication::clipboard()->clear();

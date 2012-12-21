@@ -176,7 +176,7 @@ QString myModel::getMimeType(const QModelIndex &index)
 
     if(item->mMimeType.isNull())
     {
-        if(realMimeTypes) item->mMimeType = gGetMimeType(item->absoluteFilePath());
+        if(realMimeTypes) item->mMimeType = FileUtils::getMimeType(item->absoluteFilePath());
         else
         {
             if(item->fileInfo().isDir()) item->mMimeType = "folder";
@@ -643,161 +643,197 @@ QByteArray myModel::getThumb(QString item)
 }
 
 //---------------------------------------------------------------------------------
-QVariant myModel::data(const QModelIndex & index, int role) const
-{
-    myModelItem *item = static_cast<myModelItem*>(index.internalPointer());
 
-    if(role == Qt::ForegroundRole)
-    {
-        QFileInfo type(item->fileInfo());
+/**
+ * @brief Returns model data (information about directories and files)
+ * @param index
+ * @param role
+ * @return model data
+ */
+QVariant myModel::data(const QModelIndex & index, int role) const {
 
-        if(cutItems.contains(type.filePath())) return colors.mid();
-        else if(type.isHidden()) return colors.dark();
-        else if(type.isSymLink()) return colors.link();
-        else if(type.isDir()) return colors.windowText();
-        else if(type.isExecutable()) return QBrush(QColor(Qt::darkGreen));
+  // Retrieve model item
+  myModelItem *item = static_cast<myModelItem*>(index.internalPointer());
+
+  // Color of filename (depends on file type)
+  if (role == Qt::ForegroundRole) {
+    QFileInfo type(item->fileInfo());
+    if (cutItems.contains(type.filePath())) {
+      return colors.mid();
+    } else if (type.isHidden()) {
+      return colors.dark();
+    } else if (type.isSymLink()) {
+      return colors.link();
+    } else if (type.isDir()) {
+      return colors.windowText();
+    } else if (type.isExecutable()) {
+      return QBrush(QColor(Qt::darkGreen));
     }
-    else
-    if(role == Qt::TextAlignmentRole)
-    {
-        if(index.column() == 1) return Qt::AlignRight + Qt::AlignVCenter;
+  }
+  // Alignment of filename
+  else if (role == Qt::TextAlignmentRole) {
+    if (index.column() == 1) {
+      return Qt::AlignRight + Qt::AlignVCenter;
     }
-    else
-    if(role == Qt::DisplayRole)
-    {
-        QVariant data;
-        switch(index.column())
-        {
-            case 0:
-                data = item->fileName();
-                break;
-            case 1:
-                if(item->fileInfo().isDir()) data = "";
-                else data = formatSize(item->fileInfo().size());
-                break;
-            case 2:
-                if(item->mMimeType.isNull())
-                {
-                    if(realMimeTypes) item->mMimeType = gGetMimeType(item->absoluteFilePath());
-                    else
-                    {
-                        if(item->fileInfo().isDir()) item->mMimeType = "folder";
-                        else item->mMimeType = item->fileInfo().suffix();
-                        if(item->mMimeType.isNull()) item->mMimeType = "file";
-                    }
-                }
-                data = item->mMimeType;
-                break;
-            case 3:
-                data = item->fileInfo().lastModified().toString(Qt::LocalDate);
-                break;
-            case 4:
-                {
-                    if(item->mPermissions.isNull())
-                    {
-                        QString str;
-
-                        QFlags<QFile::Permissions> perms = item->fileInfo().permissions();
-                        if(perms.testFlag(QFile::ReadOwner)) str.append("r"); else str.append(("-"));
-                        if(perms.testFlag(QFile::WriteOwner)) str.append("w"); else str.append(("-"));
-                        if(perms.testFlag(QFile::ExeOwner)) str.append("x"); else str.append(("-"));
-                        if(perms.testFlag(QFile::ReadGroup)) str.append("r"); else str.append(("-"));
-                        if(perms.testFlag(QFile::WriteGroup)) str.append("w"); else str.append(("-"));
-                        if(perms.testFlag(QFile::ExeGroup)) str.append("x"); else str.append(("-"));
-                        if(perms.testFlag(QFile::ReadOther)) str.append("r"); else str.append(("-"));
-                        if(perms.testFlag(QFile::WriteOther)) str.append("w"); else str.append(("-"));
-                        if(perms.testFlag(QFile::ExeOther)) str.append("x"); else str.append(("-"));
-                        str.append(" " + item->fileInfo().owner() + " " + item->fileInfo().group());
-                        item->mPermissions = str;
-                    }
-                    return item->mPermissions;
-                }
-            default:
-                data = "";
-                break;
+  }
+  // Display information about file
+  else if (role == Qt::DisplayRole) {
+    QVariant data;
+    switch (index.column()) {
+      case 0 :
+        data = item->fileName();
+        break;
+      case 1 :
+        data = item->fileInfo().isDir() ? "" : formatSize(item->fileInfo().size());
+        break;
+      case 2 :
+        if (item->mMimeType.isNull()) {
+          if (realMimeTypes) {
+            item->mMimeType = FileUtils::getMimeType(item->absoluteFilePath());
+          } else {
+            item->mMimeType = item->fileInfo().isDir() ? "folder" : item->fileInfo().suffix();
+            if (item->mMimeType.isNull()) item->mMimeType = "file";
+          }
         }
-        return data;
-    }
-    else
-    if(role == Qt::DecorationRole)
-    {
-        if(index.column() != 0) return QVariant();
-
-        QFileInfo type(item->fileInfo());
-
-        if(type.isDir())
-        {
-            if(folderIcons->contains(type.fileName())) return folderIcons->value(type.fileName());
-            return iconFactory->icon(type);
+        data = item->mMimeType;
+        break;
+      case 3 :
+        data = item->fileInfo().lastModified().toString(Qt::LocalDate);
+        break;
+      case 4 : {
+        if (item->mPermissions.isNull()) {
+          QString str;
+          QFlags<QFile::Permissions> perms = item->fileInfo().permissions();
+          str.append(perms.testFlag(QFile::ReadOwner) ? "r" : "-" );
+          str.append(perms.testFlag(QFile::WriteOwner) ? "w" : "-" );
+          str.append(perms.testFlag(QFile::ExeOwner) ? "x" : "-" );
+          str.append(perms.testFlag(QFile::ReadGroup) ? "r" : "-" );
+          str.append(perms.testFlag(QFile::WriteGroup) ? "w" : "-" );
+          str.append(perms.testFlag(QFile::ExeGroup) ? "x" : "-" );
+          str.append(perms.testFlag(QFile::ReadOther) ? "r" : "-" );
+          str.append(perms.testFlag(QFile::WriteOther) ? "w" : "-" );
+          str.append(perms.testFlag(QFile::ExeOther) ? "x" : "-" );
+          str.append(" " + item->fileInfo().owner() + " " + item->fileInfo().group());
+          item->mPermissions = str;
         }
-        else
-        {
-            if(showThumbs)
-            {
-                if(icons->contains(item->absoluteFilePath())) return *icons->object(item->absoluteFilePath());
-                else
-                    if(thumbs->contains(item->absoluteFilePath()))
-                    {
-                        QPixmap pic;
-                        pic.loadFromData(thumbs->value(item->absoluteFilePath()));
-                        icons->insert(item->absoluteFilePath(),new QIcon(pic),1);
-                        return *icons->object(item->absoluteFilePath());
-                    }
-            }
-
-            QString suffix = type.suffix();
-            if(mimeIcons->contains(suffix)) return mimeIcons->value(suffix);
-
-            QIcon theIcon;
-
-            if(suffix.isEmpty())
-            {
-                if(type.isExecutable()) suffix = "exec";
-                else suffix = "none";
-
-                if(mimeIcons->contains(suffix)) return mimeIcons->value(suffix);
-
-                theIcon = QIcon(qApp->style()->standardIcon(QStyle::SP_FileIcon));
-                if(suffix == "exec") theIcon = QIcon::fromTheme("application-x-executable",theIcon);
-             }
-            else
-            {
-                if(mimeGlob->count() == 0) loadMimeTypes();
-
-                //try mimeType as it is
-                QString mimeType = mimeGlob->value(type.suffix().toLower());
-                if(QIcon::hasThemeIcon(mimeType)) theIcon = QIcon::fromTheme(mimeType);
-                else
-                {
-                    //try matching generic icon
-                    if(QIcon::hasThemeIcon(mimeGeneric->value(mimeType))) theIcon = QIcon::fromTheme(mimeGeneric->value(mimeType));
-                    else
-                    {
-                        //last resort try adding "-x-generic" to base type
-                        if(QIcon::hasThemeIcon(mimeType.split("-").at(0) + "-x-generic")) theIcon = QIcon::fromTheme(mimeType.split("-").at(0) + "-x-generic");
-                        else theIcon = QIcon(qApp->style()->standardIcon(QStyle::SP_FileIcon));
-                    }
-                }
-            }
-
-            mimeIcons->insert(suffix,theIcon);
-            return theIcon;
-        }
+        return item->mPermissions;
+      }
+      default :
+        data = "";
+        break;
     }
-    else
-    if(role == Qt::EditRole)
-    {
-        return item->fileName();
+    return data;
+  }
+  // Display file icon
+  else if (role == Qt::DecorationRole) {
+    if (index.column() != 0) {
+      return QVariant();
     }
-    if(role == Qt::StatusTipRole)
-    {
-        return item->fileName();
-    }
+    return findIcon(item);
+  }
+  // Display file name
+  else if(role == Qt::EditRole) {
+    return item->fileName();
+  }
 
-    return QVariant();
+  if (role == Qt::StatusTipRole) {
+    return item->fileName();
+  }
+  return QVariant();
 }
+//------------------------------------------------------------------------------
 
-//---------------------------------------------------------------------------------
+/**
+ * @brief Finds icon of file
+ * @param item
+ * @return icon
+ */
+QVariant myModel::findIcon(myModelItem *item) const {
+
+  // If type of file is directory, return icon of directory
+  QFileInfo type(item->fileInfo());
+  if (type.isDir()) {
+    if (folderIcons->contains(type.fileName())) {
+      return folderIcons->value(type.fileName());
+    }
+    return iconFactory->icon(type);
+  }
+
+  // If thumbnails are allowed and current file has it, show it
+  if (showThumbs) {
+    if (icons->contains(item->absoluteFilePath())) {
+      return *icons->object(item->absoluteFilePath());
+    } else if (thumbs->contains(item->absoluteFilePath())) {
+      QPixmap pic;
+      pic.loadFromData(thumbs->value(item->absoluteFilePath()));
+      icons->insert(item->absoluteFilePath(), new QIcon(pic), 1);
+      return *icons->object(item->absoluteFilePath());
+    }
+  }
+
+  // NOTE: Suffix is resolved using method getRealSuffix instead of suffix()
+  // method. It is because files can contain version suffix e.g. .so.1.0.0
+
+  // If there is icon for current suffix then return it
+  QString suffix = FileUtils::getRealSuffix(type.fileName()); /*type.suffix();*/
+  if (mimeIcons->contains(suffix)) {
+    return mimeIcons->value(suffix);
+  }
+
+  // The icon
+  QIcon theIcon;
+
+  // If file has not suffix
+  if (suffix.isEmpty()) {
+
+    // File can be executable or unknown
+    suffix = type.isExecutable() ? "exec" : "none";
+
+    // Find icon for new suffix, if it wasn't found create new one
+    if (mimeIcons->contains(suffix)) {
+      theIcon = mimeIcons->value(suffix);
+    } else {
+      if (suffix == "exec") {
+        theIcon = QIcon::fromTheme("application-x-executable", theIcon);
+      } else {
+        theIcon = QIcon(qApp->style()->standardIcon(QStyle::SP_FileIcon));
+      }
+    }
+  }
+  // If file has unknown suffix (icon hasn't been assigned)
+  else {
+
+    // Load mime types
+    if (mimeGlob->count() == 0) loadMimeTypes();
+
+    // Try mimeType as it is
+    QString mimeType = mimeGlob->value(suffix.toLower());
+    if (QIcon::hasThemeIcon(mimeType)) {
+      theIcon = QIcon::fromTheme(mimeType);
+    } else {
+
+      // Try matching generic icon
+      if (QIcon::hasThemeIcon(mimeGeneric->value(mimeType))) {
+        theIcon = QIcon::fromTheme(mimeGeneric->value(mimeType));
+      } else {
+
+        // Last resort try adding "-x-generic" to base type
+        if (QIcon::hasThemeIcon(mimeType.split("-").at(0) + "-x-generic")) {
+          theIcon = QIcon::fromTheme(mimeType.split("-").at(0) + "-x-generic");
+        } else {
+          theIcon = QIcon(qApp->style()->standardIcon(QStyle::SP_FileIcon));
+        }
+      }
+    }
+  }
+
+  // Insert icon to the list of icons
+  mimeIcons->insert(suffix, theIcon);
+  return theIcon;
+}
+//------------------------------------------------------------------------------
+
+
 bool myModel::setData(const QModelIndex & index, const QVariant & value, int role)
 {
     //can only set the filename

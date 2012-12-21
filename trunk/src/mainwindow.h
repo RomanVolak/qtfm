@@ -43,6 +43,7 @@
 #include "icondlg.h"
 #include "tabbar.h"
 #include "fileutils.h"
+#include "customactionsmanager.h"
 
 QT_BEGIN_NAMESPACE
 class QAction;
@@ -102,13 +103,11 @@ public slots:
     void editBookmark();
     void toggleWrapBookmarks();
     bool xdgConfig();
-    void readCustomActions();
-    void editCustomActions();
+    void showEditDialog();
     bool copyFolder(const QString &srcFolder, const QString &dstFolder, qint64, bool);
     void autoBookmarkMounts();
     void renameFile();
     void actionMapper(QString);
-    void editShortcuts();
     void folderPropertiesLauncher();
     void bookmarkClicked(QModelIndex);
     void bookmarkPressed(QModelIndex);
@@ -131,8 +130,6 @@ public slots:
 
     void refresh();
     void clearCutItems();
-    void customActionFinished(int ret);
-    void customActionError(QProcess::ProcessError error);
     void zoomInAction();
     void zoomOutAction();
     void focusAction();
@@ -145,17 +142,19 @@ public slots:
     void thumbUpdate(QModelIndex);
 
     void addressChanged(int,int);
+    void loadSettings();
 
 signals:
     void updateCopyProgress(qint64, qint64, QString);
     void copyProgressFinished(int,QStringList);
 
+private slots:
+    void readShortcuts();
 private:
     void createActions();
     void createActionIcons();
     void createMenus();
     void createToolBars();
-    void readShortcuts();
     void writeSettings();
     void recurseFolder(QString path, QString parent, QStringList *);
     int showReplaceMsgBox(const QFileInfo &f1, const QFileInfo &f2);
@@ -202,11 +201,10 @@ private:
 
     QStringList mounts;
 
-    QList<QAction*> *actionList;
     QList<QIcon> *actionIcons;
-    QMultiHash<QString,QAction*> *customActions;
-    QMultiHash<QString,QMenu*> *customMenus;
-    QSignalMapper *customMapper;
+    QList<QAction*> *actionList;
+    QList<QAction*> bookmarkActionList;
+    CustomActionsManager* customActManager;
 
     QToolBar *editToolBar;
     QToolBar *viewToolBar;
@@ -243,8 +241,7 @@ private:
     QAction *cutAct;
     QAction *copyAct;
     QAction *pasteAct;
-    QAction *customAct;
-    QAction *shortcutsAct;
+    QAction *settingsAct;
     QAction *editFiletypeAct;
     QAction *renameAct;
     QAction *terminalAct;

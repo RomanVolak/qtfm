@@ -102,6 +102,7 @@ protected:
                int role = Qt::EditRole);
   int columnCount(const QModelIndex &parent) const;
   Qt::ItemFlags flags(const QModelIndex &index) const;
+  QVariant findIcon(myModelItem *item) const;
 private:
   bool showThumbs;
   int thumbCount;

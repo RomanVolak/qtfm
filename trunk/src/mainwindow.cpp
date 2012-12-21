@@ -361,6 +361,10 @@ void MainWindow::loadSettings() {
   restoreState(settings->value("windowState").toByteArray(), 1);
   resize(settings->value("size", QSize(600, 400)).toSize());
 
+  // Load information whether hidden files can be displayed
+  hiddenAct->setChecked(settings->value("hiddenMode", 0).toBool());
+  toggleHidden();
+
   // Remove old bookmarks
   modelBookmarks->removeRows(0, modelBookmarks->rowCount());
 
@@ -402,10 +406,6 @@ void MainWindow::loadSettings() {
   detailAct->setChecked(settings->value("viewMode", 0).toBool());
   iconAct->setChecked(settings->value("iconMode", 0).toBool());
   toggleDetails();
-
-  // Load information whether hidden files can be displayed
-  hiddenAct->setChecked(settings->value("hiddenMode", 0).toBool());
-  toggleHidden();
 
   // Restore header of detail tree
   detailTree->header()->restoreState(settings->value("header").toByteArray());

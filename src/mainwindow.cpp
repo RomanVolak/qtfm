@@ -192,15 +192,6 @@ MainWindow::MainWindow()
     modelBookmarks = new bookmarkmodel(modelList->folderIcons);
 
 
-
-    switch (currentSortColumn) {
-      case 0 : toggleSortBy(sortNameAct); break;
-      case 1 : toggleSortBy(sortSizeAct); break;
-      case 3 : toggleSortBy(sortDateAct); break;
-    }
-    setSortOrder(currentSortOrder);
-    //-----------------------------------------------------------------------
-
     if(isDaemon) startDaemon();
     else show();
 
@@ -423,6 +414,12 @@ void MainWindow::loadSettings() {
   // Load sorting information
   currentSortColumn = settings->value("sortBy", 0).toInt();
   currentSortOrder = (Qt::SortOrder) settings->value("sortOrder", 0).toInt();
+  switch (currentSortColumn) {
+    case 0 : toggleSortBy(sortNameAct); break;
+    case 1 : toggleSortBy(sortSizeAct); break;
+    case 3 : toggleSortBy(sortDateAct); break;
+  }
+  setSortOrder(currentSortOrder);
 
   // Load terminal command
   term = settings->value("term").toString();
@@ -1010,18 +1007,27 @@ void MainWindow::toggleSortBy(QAction *action) {
     currentSortColumn = 1;
   }
   modelView->sort(currentSortColumn, currentSortOrder);
+  settings->setValue("sortBy", currentSortColumn);
 }
 //---------------------------------------------------------------------------
 
-// Michal Rost: toggle sort order
+/**
+ * @brief Sets sort order
+ * @param order
+ */
 void MainWindow::setSortOrder(Qt::SortOrder order) {
 
+  // Set root index
   if (list->rootIndex() != modelList->index(pathEdit->currentText())) {
     list->setRootIndex(modelView->mapFromSource(modelList->index(pathEdit->currentText())));
   }
 
+  // Change sort order
   currentSortOrder = order;
   sortAscAct->setChecked(!((bool) currentSortOrder));
+  settings->setValue("sortOrder", currentSortOrder);
+
+  // Sort
   modelView->sort(currentSortColumn, currentSortOrder);
 }
 //---------------------------------------------------------------------------

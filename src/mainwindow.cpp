@@ -191,15 +191,14 @@ MainWindow::MainWindow()
     // Creates bookmarks model
     modelBookmarks = new bookmarkmodel(modelList->folderIcons);
 
-
-    if(isDaemon) startDaemon();
-    else show();
-
+    // Load settings before showing window
     loadSettings();
+
+    if (isDaemon) startDaemon();
+    else show();
 
     QTimer::singleShot(0, this, SLOT(lateStart()));
 }
-
 //---------------------------------------------------------------------------
 
 /**

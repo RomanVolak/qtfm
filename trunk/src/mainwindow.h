@@ -94,8 +94,9 @@ public slots:
     void toggleHidden();
     void toggleIcons();
     void toggleSortBy(QAction* action);
-    void switchSortOrder();
+    void toggleSortOrder();
     void setSortOrder(Qt::SortOrder order);
+    void setSortColumn(QAction *columnAct);
     void toggleThumbs();
     void addBookmarkAction();
     void addSeparatorAction();

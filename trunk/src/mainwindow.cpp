@@ -411,15 +411,16 @@ void MainWindow::loadSettings() {
   detailTree->header()->restoreState(settings->value("header").toByteArray());
   detailTree->setSortingEnabled(1);
 
-  // Load sorting information
+  // Load sorting information and sort
   currentSortColumn = settings->value("sortBy", 0).toInt();
   currentSortOrder = (Qt::SortOrder) settings->value("sortOrder", 0).toInt();
   switch (currentSortColumn) {
-    case 0 : toggleSortBy(sortNameAct); break;
-    case 1 : toggleSortBy(sortSizeAct); break;
-    case 3 : toggleSortBy(sortDateAct); break;
+    case 0 : setSortColumn(sortNameAct); break;
+    case 1 : setSortColumn(sortSizeAct); break;
+    case 3 : setSortColumn(sortDateAct); break;
   }
   setSortOrder(currentSortOrder);
+  modelView->sort(currentSortColumn, currentSortOrder);
 
   // Load terminal command
   term = settings->value("term").toString();
@@ -990,24 +991,36 @@ void MainWindow::toggleIcons()
 }
 //---------------------------------------------------------------------------
 
-// Michal Rost: toggle sort by
-void MainWindow::toggleSortBy(QAction *action) {
+/**
+ * @brief Sets sort column
+ * @param columnAct
+ */
+void MainWindow::setSortColumn(QAction *columnAct) {
 
   if (list->rootIndex() != modelList->index(pathEdit->currentText())) {
     list->setRootIndex(modelView->mapFromSource(modelList->index(pathEdit->currentText())));
   }
 
-  action->setChecked(true);
+  columnAct->setChecked(true);
 
-  if (action == sortNameAct) {
+  if (columnAct == sortNameAct) {
     currentSortColumn =  0;
-  } else if (action == sortDateAct) {
+  } else if (columnAct == sortDateAct) {
     currentSortColumn =  3;
-  } else if (action == sortSizeAct) {
+  } else if (columnAct == sortSizeAct) {
     currentSortColumn = 1;
   }
-  modelView->sort(currentSortColumn, currentSortOrder);
   settings->setValue("sortBy", currentSortColumn);
+}
+//---------------------------------------------------------------------------
+
+/**
+ * @brief Sets sort column
+ * @param action
+ */
+void MainWindow::toggleSortBy(QAction *action) {
+  setSortColumn(action);
+  modelView->sort(currentSortColumn, currentSortOrder);
 }
 //---------------------------------------------------------------------------
 
@@ -1026,15 +1039,16 @@ void MainWindow::setSortOrder(Qt::SortOrder order) {
   currentSortOrder = order;
   sortAscAct->setChecked(!((bool) currentSortOrder));
   settings->setValue("sortOrder", currentSortOrder);
-
-  // Sort
-  modelView->sort(currentSortColumn, currentSortOrder);
 }
 //---------------------------------------------------------------------------
 
-// Michal Rost: toggle sort order
-void MainWindow::switchSortOrder() {
-  setSortOrder(currentSortOrder == Qt::AscendingOrder ? Qt::DescendingOrder : Qt::AscendingOrder);
+/**
+ * @brief Changes sort order
+ */
+void MainWindow::toggleSortOrder() {
+  setSortOrder(currentSortOrder == Qt::AscendingOrder ? Qt::DescendingOrder
+                                                      : Qt::AscendingOrder);
+  modelView->sort(currentSortColumn, currentSortOrder);
 }
 //---------------------------------------------------------------------------
 

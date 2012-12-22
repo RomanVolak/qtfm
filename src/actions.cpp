@@ -181,7 +181,7 @@ void MainWindow::createActions()
     sortAscAct = new QAction(tr("Ascending"), this);
     sortAscAct->setStatusTip(tr("Sort icons in ascending order"));
     sortAscAct->setCheckable(true);
-    connect(sortAscAct, SIGNAL(triggered()), this, SLOT(switchSortOrder()));
+    connect(sortAscAct, SIGNAL(triggered()), this, SLOT(toggleSortOrder()));
     actionList->append(sortAscAct);
 
     // ----------------------------------------------------------------------

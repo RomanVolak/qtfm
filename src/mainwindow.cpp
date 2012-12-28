@@ -89,7 +89,7 @@ MainWindow::MainWindow()
 
     QIcon::setThemeName(temp);
 
-    modelList = new myModel(settings->value("realMimeTypes").toBool());
+    modelList = new myModel(settings->value("realMimeTypes", true).toBool());
 
     dockTree = new QDockWidget(tr("Tree"),this,Qt::SubWindow);
     dockTree->setObjectName("treeDock");
@@ -175,7 +175,8 @@ MainWindow::MainWindow()
     status->addPermanentWidget(statusDate);
 
     treeSelectionModel = tree->selectionModel();
-    connect(treeSelectionModel,SIGNAL(currentChanged(QModelIndex,QModelIndex)),this,SLOT(treeSelectionChanged(QModelIndex,QModelIndex)));
+    connect(treeSelectionModel, SIGNAL(currentChanged(QModelIndex,QModelIndex)),
+            this, SLOT(treeSelectionChanged(QModelIndex,QModelIndex)));
     tree->setCurrentIndex(modelTree->mapFromSource(modelList->index(startPath)));
     tree->scrollTo(tree->currentIndex());
 
@@ -359,6 +360,9 @@ void MainWindow::loadSettings() {
   // Restore window state
   restoreState(settings->value("windowState").toByteArray(), 1);
   resize(settings->value("size", QSize(600, 400)).toSize());
+
+  // Load info whether use real mime types
+  modelList->setRealMimeTypes(settings->value("realMimeTypes", true).toBool());
 
   // Load information whether hidden files can be displayed
   hiddenAct->setChecked(settings->value("hiddenMode", 0).toBool());
@@ -1056,67 +1060,58 @@ void MainWindow::toggleThumbs()
     if(currentView != 2) toggleIcons();
     else toggleDetails();
 }
-
 //---------------------------------------------------------------------------
-void MainWindow::toggleDetails()
-{
-    if(detailAct->isChecked() == false)
-    {
-        toggleIcons();
 
-        stackWidget->setCurrentIndex(0);
-        detailTree->setMouseTracking(false);
+void MainWindow::toggleDetails() {
+  if (detailAct->isChecked() == false) {
+    toggleIcons();
+    stackWidget->setCurrentIndex(0);
+    detailTree->setMouseTracking(false);
+  } else {
+    currentView = 2;
+    if (detailTree->rootIndex() != modelList->index(pathEdit->currentText())) {
+      detailTree->setRootIndex(modelView->mapFromSource(
+                                 modelList->index(pathEdit->currentText())));
     }
-    else
-    {
-        currentView = 2;
-        if(detailTree->rootIndex() != modelList->index(pathEdit->currentText()))
-            detailTree->setRootIndex(modelView->mapFromSource(modelList->index(pathEdit->currentText())));
-
-        detailTree->setMouseTracking(true);
-
-        stackWidget->setCurrentIndex(1);
-        modelList->setMode(thumbsAct->isChecked());
-        iconAct->setChecked(0);
-
-        if(tabs->count()) tabs->setType(2);
+    detailTree->setMouseTracking(true);
+    stackWidget->setCurrentIndex(1);
+    modelList->setMode(thumbsAct->isChecked());
+    iconAct->setChecked(0);
+    if (tabs->count()) {
+      tabs->setType(2);
     }
+  }
 }
-
 //---------------------------------------------------------------------------
-void MainWindow::toggleHidden()
-{
-    if(hiddenAct->isChecked() == false)
-    {
-        if(curIndex.isHidden())
-            listSelectionModel->clear();
 
-        modelView->setFilterRegExp("no");
-        modelTree->setFilterRegExp("no");
-    }
-    else
-    {
-        modelView->setFilterRegExp("");
-        modelTree->setFilterRegExp("");
-    }
+void MainWindow::toggleHidden() {
 
-    modelView->invalidate();
-    dirLoaded();
+  if (hiddenAct->isChecked() == false) {
+    if (curIndex.isHidden()) {
+      listSelectionModel->clear();
+    }
+    modelView->setFilterRegExp("no");
+    modelTree->setFilterRegExp("no");
+  } else {
+    modelView->setFilterRegExp("");
+    modelTree->setFilterRegExp("");
+  }
+
+  modelView->invalidate();
+  dirLoaded();
 }
-
 //---------------------------------------------------------------------------
-void MainWindow::clipboardChanged()
-{
-    if(QApplication::clipboard()->mimeData()->hasUrls())
-        pasteAct->setEnabled(true);
-    else
-    {
-        modelList->clearCutItems();
-        pasteAct->setEnabled(false);
-    }
+
+void MainWindow::clipboardChanged() {
+  if (QApplication::clipboard()->mimeData()->hasUrls()) {
+    pasteAct->setEnabled(true);
+  } else {
+    modelList->clearCutItems();
+    pasteAct->setEnabled(false);
+  }
 }
-
 //---------------------------------------------------------------------------
+
 void MainWindow::cutFile()
 {
     QModelIndexList selList;
@@ -1753,85 +1748,91 @@ void MainWindow::toggleLockLayout()
         lockLayoutAct->setText(tr("Lock layout"));
     }
 }
-
 //---------------------------------------------------------------------------
-bool MainWindow::xdgConfig()
-{
-    if(!listSelectionModel->currentIndex().isValid()) return 0;
 
-    QDialog *xdgConfig = new QDialog(this);
-    xdgConfig->setWindowTitle(tr("Configure filetype"));
+/**
+ * @brief Displays dialog with default application assignment
+ * @return true if success
+ */
+bool MainWindow::xdgConfig() {
 
-    QString mimeType = FileUtils::getMimeType(curIndex.filePath());
+  // Check for index validity
+  if (!listSelectionModel->currentIndex().isValid()) {
+    return false;
+  }
 
-    QLabel *label = new QLabel(tr("Filetype:") + "<b>" + mimeType + "</b><p>" + tr("Open with:"));
-    QComboBox * appList = new QComboBox;
+  // Create dialog
+  QDialog *xdgConfig = new QDialog(this);
+  xdgConfig->setWindowTitle(tr("Configure filetype"));
 
-    QDialogButtonBox *buttons = new QDialogButtonBox;
-    buttons->setStandardButtons(QDialogButtonBox::Save|QDialogButtonBox::Cancel);
-    connect(buttons, SIGNAL(accepted()), xdgConfig, SLOT(accept()));
-    connect(buttons, SIGNAL(rejected()), xdgConfig, SLOT(reject()));
+  // Retrieve mime type of currently selected file
+  QString mimeType = FileUtils::getMimeType(curIndex.filePath());
 
-    appList->setEditable(true);
-    QVBoxLayout *layout = new QVBoxLayout;
-    layout->addWidget(label);
-    layout->addWidget(appList);
-    layout->addWidget(buttons);
-    xdgConfig->setLayout(layout);
+  // Create controls
+  QLabel *label = new QLabel(tr("Filetype: ") + "<b>" + mimeType + "</b><p>"
+                             + tr("Open with:"));
+  QDialogButtonBox *buttons = new QDialogButtonBox;
+  buttons->setStandardButtons(QDialogButtonBox::Save | QDialogButtonBox::Cancel);
+  connect(buttons, SIGNAL(accepted()), xdgConfig, SLOT(accept()));
+  connect(buttons, SIGNAL(rejected()), xdgConfig, SLOT(reject()));
+  QComboBox * appList = new QComboBox(xdgConfig);
+  appList->setEditable(true);
 
-    QStringList apps;
-    QDirIterator it("/usr/share/applications",QStringList("*.desktop"),QDir::Files | QDir::NoDotAndDotDot , QDirIterator::Subdirectories);
-    while (it.hasNext())
-    {
-        it.next();
-        apps.append(it.fileName());
+  // Create layout
+  QVBoxLayout *layout = new QVBoxLayout(xdgConfig);
+  layout->addWidget(label);
+  layout->addWidget(appList);
+  layout->addWidget(buttons);
+
+  // Get available applications
+  QStringList apps = FileUtils::getApplications();
+  apps.replaceInStrings(".desktop","");
+  apps.sort();
+  appList->addItems(apps);
+
+  // Get the icons
+  QDir appIcons("/usr/share/pixmaps", "", 0, QDir::Files | QDir::NoDotAndDotDot);
+  apps = appIcons.entryList();
+  QIcon defaultIcon = QIcon::fromTheme("application-x-executable");
+  for (int i = 0; i < appList->count(); ++i) {
+    QString baseName = appList->itemText(i);
+    QPixmap temp = QIcon::fromTheme(baseName).pixmap(16,16);
+    if (!temp.isNull()) {
+      appList->setItemIcon(i, temp);
+    } else {
+      QStringList searchIcons = apps.filter(baseName);
+      if (searchIcons.count() > 0) {
+        appList->setItemIcon(i,QIcon("/usr/share/pixmaps/" + searchIcons.at(0)));
+      } else {
+        appList->setItemIcon(i, defaultIcon);
+      }
     }
+  }
 
-    apps.replaceInStrings(".desktop","");
-    apps.sort();
-    appList->addItems(apps);
+  // Load default application
+  QString xdgDefaults;
+  QString tmp = QDir::homePath() + "/.local/share/applications/mimeapps.list";
+  if (QFileInfo(tmp).exists()) {
+    xdgDefaults = tmp;
+  } else {
+    xdgDefaults = QDir::homePath() + "/.local/share/applications/defaults.list";
+  }
+  QSettings defaults(xdgDefaults, QSettings::IniFormat, this);
+  QString temp = defaults.value("Default Applications/" + mimeType).toString();
+  appList->setCurrentIndex(appList->findText(temp.remove(".desktop"),
+                                             Qt::MatchFixedString));
+  // Show dialog and save results
+  bool ok = xdgConfig->exec();
+  if (ok) {
+    QProcess *p = new QProcess();
+    p->start("xdg-mime", QStringList() << "default" << appList->currentText()
+             + ".desktop" << mimeType);
+    p->waitForFinished();
+    delete p;
+  }
 
-    //now get the icons
-    QDir appIcons("/usr/share/pixmaps","",0,QDir::Files | QDir::NoDotAndDotDot);
-    apps = appIcons.entryList();
-    QIcon defaultIcon = QIcon::fromTheme("application-x-executable");
-
-    for(int i = 0; i < appList->count(); ++i)
-    {
-        QString baseName = appList->itemText(i);
-        QPixmap temp = QIcon::fromTheme(baseName).pixmap(16,16);
-
-        if(!temp.isNull()) appList->setItemIcon(i,temp);
-        else
-        {
-            QStringList searchIcons = apps.filter(baseName);
-            if(searchIcons.count() > 0) appList->setItemIcon(i,QIcon("/usr/share/pixmaps/" + searchIcons.at(0)));
-            else appList->setItemIcon(i,defaultIcon);
-        }
-    }
-
-    QString xdgDefaults;
-
-    //xdg changes -> now uses mimeapps.list instead of defaults.list
-    if(QFileInfo(QDir::homePath() + "/.local/share/applications/mimeapps.list").exists())
-        xdgDefaults = QDir::homePath() + "/.local/share/applications/mimeapps.list";
-    else
-        xdgDefaults = QDir::homePath() + "/.local/share/applications/defaults.list";
-
-    QSettings defaults(xdgDefaults,QSettings::IniFormat,this);
-
-    QString temp = defaults.value("Default Applications/" + mimeType).toString();
-    appList->setCurrentIndex(appList->findText(temp.remove(".desktop"),Qt::MatchFixedString));
-
-    bool ok = xdgConfig->exec();
-    if(ok)
-    {
-        QProcess *myProcess = new QProcess(this);
-        myProcess->start("xdg-mime",QStringList() << "default" << appList->currentText() + ".desktop" << mimeType);
-    }
-
-    delete xdgConfig;
-    return ok;
+  delete xdgConfig;
+  return ok;
 }
 
 //---------------------------------------------------------------------------
@@ -1866,19 +1867,15 @@ void MainWindow::writeSettings()
     settings->setValue("zoomTree", zoomTree);
     settings->setValue("zoomList", zoomList);
     settings->setValue("zoomDetail", zoomDetail);
-
-    // Michal Rost
-    //-----------------------------------------------------------------------
     settings->setValue("sortBy", currentSortColumn);
     settings->setValue("sortOrder", currentSortOrder);
-    //-----------------------------------------------------------------------
-
     settings->setValue("showThumbs", thumbsAct->isChecked());
     settings->setValue("hiddenMode", hiddenAct->isChecked());
     settings->setValue("lockLayout", lockLayoutAct->isChecked());
     settings->setValue("tabsOnTop", tabsOnTopAct->isChecked());
     settings->setValue("windowState", saveState(1));
     settings->setValue("header", detailTree->header()->saveState());
+    settings->setValue("realMimeTypes",  modelList->isRealMimeTypes());
 
     settings->remove("bookmarks");
     settings->beginGroup("bookmarks");

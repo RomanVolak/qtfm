@@ -224,6 +224,7 @@ private:
     QAction *backAct;
     QAction *homeAct;
     QAction *hiddenAct;
+    QAction *filterAct;
     QAction *detailAct;
     QAction *addBookmarkAct;
     QAction *addSeparatorAct;

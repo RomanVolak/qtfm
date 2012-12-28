@@ -1,5 +1,7 @@
 #include "settingsdialog.h"
 #include "icondlg.h"
+#include "fileutils.h"
+#include "comboboxdelegate.h"
 
 /**
  * @brief Creates settings dialog
@@ -28,8 +30,8 @@ SettingsDialog::SettingsDialog(QList<QAction *> *actionList,
   connect(btns, SIGNAL(rejected()), this, SLOT(reject()));
 
   // Size
-  this->setMinimumWidth(800);
-  this->setMinimumHeight(500);
+  this->setMinimumWidth(640);
+  this->setMinimumHeight(480);
 
   // Layouts
   QHBoxLayout* layoutMain = new QHBoxLayout(this);
@@ -44,19 +46,26 @@ SettingsDialog::SettingsDialog(QList<QAction *> *actionList,
   QIcon icon1 = QIcon::fromTheme("system-file-manager");
   QIcon icon2 = QIcon::fromTheme("applications-system");
   QIcon icon3 = QIcon::fromTheme("accessories-character-map");
+  QIcon icon4 = QIcon::fromTheme("preferences-desktop-filetype-association");
 
   // Add widget with configurations
-  selector->setMinimumWidth(180);
+  selector->setMinimumWidth(160);
   selector->setViewMode(QListView::ListMode);
-  selector->setIconSize(QSize(48, 48));
+  selector->setIconSize(QSize(32, 32));
   selector->addItem(new QListWidgetItem(icon1, tr("General"), selector));
   selector->addItem(new QListWidgetItem(icon2, tr("Custom actions"), selector));
   selector->addItem(new QListWidgetItem(icon3, tr("Shortcuts"), selector));
+  selector->addItem(new QListWidgetItem(icon4, tr("Mime types"), selector));
+
   stack->addWidget(createGeneralSettings());
   stack->addWidget(createActionsSettings());
   stack->addWidget(createShortcutSettings());
+  stack->addWidget(createMimeProgress());
+  stack->addWidget(createMimeSettings());
   connect(selector, SIGNAL(currentRowChanged(int)), stack,
           SLOT(setCurrentIndex(int)));
+  connect(selector, SIGNAL(currentRowChanged(int)), SLOT(loadMimes(int)));
+
 
   // Align items
   for (int i = 0; i < selector->count(); i++) {
@@ -203,6 +212,92 @@ QWidget* SettingsDialog::createShortcutSettings() {
 //---------------------------------------------------------------------------
 
 /**
+ * @brief Creates widget with mime progress bar
+ * @return widget
+ */
+QWidget* SettingsDialog::createMimeProgress() {
+
+  // Widget and its layout
+  QWidget* widget = new QWidget();
+  QGridLayout* layout = new QGridLayout(widget);
+
+  // Mime progress bar
+  progressMime = new QProgressBar(widget);
+  progressMime->setMinimumWidth(250);
+  progressMime->setMaximumWidth(250);
+  layout->addWidget(new QLabel(tr("Loading mime types..."), widget), 1, 1);
+  layout->addWidget(progressMime, 2, 1);
+  layout->addItem(new QSpacerItem(0, 0, QSizePolicy::MinimumExpanding), 0, 0, 4);
+  layout->addItem(new QSpacerItem(0, 0, QSizePolicy::MinimumExpanding), 0, 2, 4);
+  layout->addItem(new QSpacerItem(0, 0, QSizePolicy::Fixed,
+                                  QSizePolicy::MinimumExpanding), 0, 1);
+  layout->addItem(new QSpacerItem(0, 0, QSizePolicy::Fixed,
+                                  QSizePolicy::MinimumExpanding), 3, 1);
+
+  return widget;
+}
+//---------------------------------------------------------------------------
+
+/**
+ * @brief Creates widget with mime settings
+ * @return widget
+ */
+QWidget* SettingsDialog::createMimeSettings() {
+
+  // Widget and its layout
+  QWidget *widget = new QWidget();
+  QVBoxLayout* layoutWidget = new QVBoxLayout(widget);
+
+  // Shortcuts group box
+  QGroupBox* grpMimes = new QGroupBox(tr("Mime types"), widget);
+  QVBoxLayout *layoutMimes = new QVBoxLayout(grpMimes);
+
+  // Tree widget with list of shortcuts
+  mimesWidget = new QTreeWidget(grpMimes);
+  mimesWidget->setAlternatingRowColors(true);
+  mimesWidget->setRootIsDecorated(false);
+  mimesWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
+  QTreeWidgetItem *header = mimesWidget->headerItem();
+  header->setText(0, tr("Mime"));
+  header->setText(1, tr("Application"));
+  mimesWidget->setColumnWidth(0, 220);
+  layoutMimes->addWidget(mimesWidget);
+  layoutWidget->addWidget(grpMimes);
+
+  // Load application list
+  QStringList apps = FileUtils::getApplications();
+  apps.replaceInStrings(".desktop", "");
+  apps.sort();
+
+  // Prepare source of icons
+  QDir appIcons("/usr/share/pixmaps","", 0, QDir::Files | QDir::NoDotAndDotDot);
+  QStringList iconFiles = appIcons.entryList();
+  QIcon defaultIcon = QIcon::fromTheme("application-x-executable");
+
+  // Loads icon list
+  QList<QIcon> icons;
+  foreach (QString app, apps) {
+    QPixmap temp = QIcon::fromTheme(app).pixmap(16, 16);
+    if (!temp.isNull()) {
+      icons.append(temp);
+    } else {
+      QStringList searchIcons = iconFiles.filter(app);
+      if (searchIcons.count() > 0) {
+        icons.append(QIcon("/usr/share/pixmaps/" + searchIcons.at(0)));
+      } else {
+        icons.append(defaultIcon);
+      }
+    }
+  }
+
+  // Set delegate
+  mimesWidget->setItemDelegateForColumn(1, new ComboBoxDelegate(apps, icons));
+
+  return widget;
+}
+//---------------------------------------------------------------------------
+
+/**
  * @brief Reads settings
  */
 void SettingsDialog::readSettings() {
@@ -318,12 +413,83 @@ void SettingsDialog::readShortcuts() {
 //---------------------------------------------------------------------------
 
 /**
+ * @brief Loads mime types
+ * @param section
+ */
+void SettingsDialog::loadMimes(int section) {
+
+  // Mime progress section
+  const int MIME_PROGRESS_SECTION = 3;
+
+  // If section is not mime type configuration section exit
+  if (section != MIME_PROGRESS_SECTION) {
+    return;
+  }
+
+  // If mimes have been already loaded move to another section (mime config)
+  if (mimesWidget->topLevelItemCount() > 0) {
+    stack->setCurrentIndex(MIME_PROGRESS_SECTION + 1);
+    return;
+  }
+
+  // Load list of mimes
+  QStringList mimes = FileUtils::getMimeTypes();
+
+  // Init process
+  progressMime->setRange(1, mimes.size());
+
+  // Load list of default applications
+  // NOTE: xdg changes -> now uses mimeapps.list instead of defaults.list
+  QString xdgDefaults;
+  QString path = QDir::homePath() + "/.local/share/applications/mimeapps.list";
+  if (QFileInfo(path).exists()) {
+    xdgDefaults = path;
+  } else {
+    xdgDefaults = QDir::homePath() + "/.local/share/applications/defaults.list";
+  }
+  QSettings defaults(xdgDefaults, QSettings::IniFormat, this);
+
+  // Load mime settings
+  foreach (QString mime, mimes) {
+
+    // Updates progress
+    progressMime->setValue(progressMime->value() + 1);
+
+    // Skip all 'inode' nodes including 'inode/directory'
+    if (mime.startsWith("inode")) {
+      continue;
+    }
+
+    // Skip all 'x-content' and 'message' nodes
+    if (mime.startsWith("x-content") || mime.startsWith('message')) {
+      continue;
+    }
+
+    // Load icon and default application for current mime
+    QIcon icon = FileUtils::getMimeIconOrUnknown(mime);
+    QString appName = defaults.value("Default Applications/" + mime).toString();
+
+    // Create item from current mime
+    QTreeWidgetItem *item = new QTreeWidgetItem(mimesWidget);
+    item->setIcon(0, icon);
+    item->setText(0, mime);
+    item->setText(1, appName.remove(".desktop"));
+    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEditable | Qt::ItemIsEnabled);
+  }
+
+  // Move to mimes
+  stack->setCurrentIndex(MIME_PROGRESS_SECTION + 1);
+}
+//---------------------------------------------------------------------------
+
+/**
  * @brief Saves settings
  * @return true if successfull
  */
 bool SettingsDialog::saveSettings() {
 
   // General settings
+  // ------------------------------------------------------------------------
   settingsPtr->setValue("showThumbs", checkThumbs->isChecked());
   settingsPtr->setValue("tabsOnTop", checkTabs->isChecked());
   settingsPtr->setValue("hiddenMode", checkHidden->isChecked());
@@ -331,6 +497,7 @@ bool SettingsDialog::saveSettings() {
   settingsPtr->setValue("term", editTerm->text());
 
   // Custom actions
+  // ------------------------------------------------------------------------
   settingsPtr->remove("customActions");
   settingsPtr->beginGroup("customActions");
   for (int i = 0; i < actionsWidget->topLevelItemCount(); i++) {
@@ -347,6 +514,7 @@ bool SettingsDialog::saveSettings() {
   settingsPtr->setValue("customHeader", actionsWidget->header()->saveState());
 
   // Shortcuts
+  // ------------------------------------------------------------------------
   QStringList shortcuts, duplicates;
   settingsPtr->remove("customShortcuts");
   settingsPtr->beginGroup("customShortcuts");
@@ -366,7 +534,21 @@ bool SettingsDialog::saveSettings() {
   }
   settingsPtr->endGroup();
 
-  // Duplicite shortcuts
+  // Mime types
+  // ------------------------------------------------------------------------
+  QProcess *p = new QProcess(this);
+  for (int i = 0; i < mimesWidget->topLevelItemCount(); ++i) {
+    QString mime = mimesWidget->topLevelItem(i)->text(0);
+    QString appName = mimesWidget->topLevelItem(i)->text(1);
+    if (!appName.isEmpty()) {
+      appName += ".desktop";
+      p->start("xdg-mime", QStringList() << "default" << appName << mime);
+      p->waitForFinished();
+    }
+  }
+
+  // Check for shortcuts duplicity
+  // ------------------------------------------------------------------------
   if (duplicates.count()) {
     QMessageBox::information(this, tr("Warning"),
                              QString(tr("Duplicate shortcuts detected:<p>%1"))

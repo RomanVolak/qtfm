@@ -95,15 +95,61 @@ qint64 FileUtils::totalSize(const QList<QUrl> &files) {
 
 /**
  * @brief Returns mime type of given file
+ * @note This operation is slow, prevent its mass application
  * @param path path to file
  * @return mime type
  */
 QString FileUtils::getMimeType(const QString &path) {
   magic_t cookie = magic_open(MAGIC_MIME);
-  magic_load(cookie,0);
+  magic_load(cookie, 0);
   QString temp = magic_file(cookie, path.toLocal8Bit());
   magic_close(cookie);
   return temp.left(temp.indexOf(";"));
+}
+//---------------------------------------------------------------------------
+
+/**
+ * @brief Returns list of available applications
+ * @return application list
+ */
+QStringList FileUtils::getApplications() {
+  QStringList apps;
+  QDirIterator it("/usr/share/applications", QStringList("*.desktop"),
+                  QDir::Files | QDir::NoDotAndDotDot,
+                  QDirIterator::Subdirectories);
+  while (it.hasNext()) {
+    it.next();
+    apps.append(it.fileName());
+  }
+  return apps;
+}
+//---------------------------------------------------------------------------
+
+/**
+ * @brief Returns list of mime types
+ * @return list of available mimetypes
+ */
+QStringList FileUtils::getMimeTypes() {
+
+  // Check whether file with mime descriptions exists
+  QFile file("/usr/share/mime/types");
+  if (!file.exists()) {
+    return QStringList();
+  }
+
+  // Try to open file
+  if (!file.open(QFile::ReadOnly)) {
+    return QStringList();
+  }
+
+  // Read mime types
+  QStringList result;
+  QTextStream stream(&file);
+  while (!stream.atEnd()) {
+    result.append(stream.readLine());
+  }
+  file.close();
+  return result;
 }
 //---------------------------------------------------------------------------
 
@@ -125,5 +171,45 @@ QString FileUtils::getRealSuffix(const QString &name) {
     tmp.removeLast();
   }
   return "";
+}
+//---------------------------------------------------------------------------
+
+/**
+ * @brief Returns mime icon
+ * @param mime
+ * @return icon
+ */
+QIcon FileUtils::getMimeIcon(QString mime) {
+
+  // Try to find icon
+  QIcon icon = QIcon::fromTheme(mime.replace("/", "-"));
+  if (!icon.isNull()) {
+    return icon;
+  }
+
+  // Search for generic icon
+  QStringList tmp = mime.split("-");
+  while (tmp.size() > 2) {
+    tmp.removeLast();
+    icon = QIcon::fromTheme(tmp.join("-") + "-generic");
+    if (!icon.isNull()) {
+      return icon;
+    }
+  }
+
+  // One last chance
+  icon = QIcon::fromTheme(tmp.first() + "-x-generic");
+  return icon;
+}
+//---------------------------------------------------------------------------
+
+/**
+ * @brief Returns mime icon or uknown icon
+ * @param mime
+ * @return mime icon or uknown icon
+ */
+QIcon FileUtils::getMimeIconOrUnknown(QString mime) {
+  QIcon icon = getMimeIcon(mime);
+  return icon.isNull() ? QIcon::fromTheme("unknown") : icon;
 }
 //---------------------------------------------------------------------------

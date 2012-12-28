@@ -25,60 +25,89 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 
-//---------------------------------------------------------------------------------
-myModel::myModel(bool realMime)
-{
-    mimeGeneric = new QHash<QString,QString>;
-    mimeGlob = new QHash<QString,QString>;
-    mimeIcons = new QHash<QString,QIcon>;
-    folderIcons = new QHash<QString,QIcon>;
-    thumbs = new QHash<QString,QByteArray>;
-    icons = new QCache<QString,QIcon>;
-    icons->setMaxCost(500);
+/**
+ * @brief Creates file system model
+ * @param realMime
+ */
+myModel::myModel(bool realMime) {
 
-    QFile fileIcons(QDir::homePath() + "/.config/qtfm/file.cache");
-    fileIcons.open(QIODevice::ReadOnly);
-    QDataStream out(&fileIcons);
-    out >> *mimeIcons;
-    fileIcons.close();
+  // Initialization
+  mimeGeneric = new QHash<QString,QString>;
+  mimeGlob = new QHash<QString,QString>;
+  mimeIcons = new QHash<QString,QIcon>;
+  folderIcons = new QHash<QString,QIcon>;
+  thumbs = new QHash<QString,QByteArray>;
+  icons = new QCache<QString,QIcon>;
+  icons->setMaxCost(500);
 
-    fileIcons.setFileName(QDir::homePath() + "/.config/qtfm/folder.cache");
-    fileIcons.open(QIODevice::ReadOnly);
-    out.setDevice(&fileIcons);
-    out >> *folderIcons;
-    fileIcons.close();
+  // Loads cached mime icons
+  QFile fileIcons(QDir::homePath() + "/.config/qtfm/file.cache");
+  fileIcons.open(QIODevice::ReadOnly);
+  QDataStream out(&fileIcons);
+  out >> *mimeIcons;
+  fileIcons.close();
 
-    rootItem = new myModelItem(QFileInfo("/"),new myModelItem(QFileInfo(),0));
+  // Loads folder cache
+  fileIcons.setFileName(QDir::homePath() + "/.config/qtfm/folder.cache");
+  fileIcons.open(QIODevice::ReadOnly);
+  out.setDevice(&fileIcons);
+  out >> *folderIcons;
+  fileIcons.close();
 
-    currentRootPath = "/";
+  // Create root item
+  rootItem = new myModelItem(QFileInfo("/"), new myModelItem(QFileInfo(), 0));
+  currentRootPath = "/";
+  QDir root("/");
+  QFileInfoList drives = root.entryInfoList(QDir::AllEntries | QDir::Files
+                                            | QDir::Hidden | QDir::System
+                                            | QDir::NoDotAndDotDot);
 
-    QDir root("/");
-    QFileInfoList drives = root.entryInfoList(QDir::AllEntries | QDir::Files | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System);
+  // Create item per each drive
+  foreach (QFileInfo drive, drives) {
+    new myModelItem(drive, rootItem);
+  }
 
-    foreach(QFileInfo drive, drives)
-        new myModelItem(drive,rootItem);
+  rootItem->walked = true;
+  rootItem = rootItem->parent();
 
-    rootItem->walked = true;
-    rootItem = rootItem->parent();
+  iconFactory = new QFileIconProvider();
 
-    iconFactory = new QFileIconProvider();
+  inotifyFD = inotify_init();
+  notifier = new QSocketNotifier(inotifyFD, QSocketNotifier::Read, this);
+  connect(notifier, SIGNAL(activated(int)), this, SLOT(notifyChange()));
+  connect(&eventTimer,SIGNAL(timeout()),this,SLOT(eventTimeout()));
 
-    inotifyFD = inotify_init();
-    notifier = new QSocketNotifier(inotifyFD, QSocketNotifier::Read, this);
-    connect(notifier, SIGNAL(activated(int)), this, SLOT(notifyChange()));
-    connect(&eventTimer,SIGNAL(timeout()),this,SLOT(eventTimeout()));
-
-    realMimeTypes = realMime;
+  realMimeTypes = realMime;
 }
+//---------------------------------------------------------------------------
 
-//---------------------------------------------------------------------------------------
-myModel::~myModel()
-{
-    delete rootItem;
-    delete iconFactory;
+/**
+ * @brief Deletes model of file system
+ */
+myModel::~myModel() {
+  delete rootItem;
+  delete iconFactory;
 }
+//---------------------------------------------------------------------------
 
-//---------------------------------------------------------------------------------------
+/**
+ * @brief Sets whether use real mime types or not
+ * @param realMimeTypes
+ */
+void myModel::setRealMimeTypes(bool realMimeTypes) {
+  this->realMimeTypes = realMimeTypes;
+}
+//---------------------------------------------------------------------------
+
+/**
+ * @brief Returns true if real mime types are used
+ * @return true if real mime types are used
+ */
+bool myModel::isRealMimeTypes() const {
+  return realMimeTypes;
+}
+//---------------------------------------------------------------------------
+
 QModelIndex myModel::index(int row, int column, const QModelIndex &parent) const
 {
     if(parent.isValid() && parent.column() != 0)
@@ -522,127 +551,137 @@ void myModel::cacheInfo()
     }
 }
 
-//---------------------------------------------------------------------------------
-void myModel::setMode(bool icons)
-{
-    showThumbs = icons;
-}
-
-//---------------------------------------------------------------------------------
-void myModel::loadMimeTypes() const
-{
-    QFile mimeInfo("/usr/share/mime/globs");
-    mimeInfo.open(QIODevice::ReadOnly);
-    QTextStream out(&mimeInfo);
-
-    do
-    {
-        QStringList line = out.readLine().split(":");
-        if(line.count() == 2)
-        {
-            QString suffix = line.at(1);
-            suffix.remove("*.");
-            QString mimeName = line.at(0);
-            mimeName.replace("/","-");
-            mimeGlob->insert(suffix,mimeName);
-        }
-    }
-    while (!out.atEnd());
-
-    mimeInfo.close();
-
-    mimeInfo.setFileName("/usr/share/mime/generic-icons");
-    mimeInfo.open(QIODevice::ReadOnly);
-    out.setDevice(&mimeInfo);
-
-    do
-    {
-        QStringList line = out.readLine().split(":");
-        if(line.count() == 2)
-        {
-            QString mimeName = line.at(0);
-            mimeName.replace("/","-");
-            QString icon = line.at(1);
-            mimeGeneric->insert(mimeName,icon);
-        }
-    }
-    while (!out.atEnd());
-
-    mimeInfo.close();
-}
-
 //---------------------------------------------------------------------------
-void myModel::loadThumbs(QModelIndexList indexes)
-{
-    QStringList files,types;
-    types << "jpg" << "jpeg" << "png" << "bmp" << "ico" << "svg" << "gif";
 
-    foreach(QModelIndex item,indexes)
-    {
-        if(types.contains(QFileInfo(fileName(item)).suffix(),Qt::CaseInsensitive))
-            files.append(filePath(item));
-    }
-
-    if(files.count())
-    {
-        if(thumbs->count() == 0)
-        {
-            QFile fileIcons(QDir::homePath() + "/.config/qtfm/thumbs.cache");
-            fileIcons.open(QIODevice::ReadOnly);
-            QDataStream out(&fileIcons);
-            out >> *thumbs;
-            fileIcons.close();
-            thumbCount = thumbs->count();
-        }
-
-        foreach(QString item, files)
-        {
-            if(!thumbs->contains(item)) thumbs->insert(item,getThumb(item));
-            emit thumbUpdate(index(item));
-        }
-    }
+/**
+ * @brief Sets indicator wthether show thumbnails of pictures
+ * @param icons
+ */
+void myModel::setMode(bool icons) {
+  showThumbs = icons;
 }
-
-
 //---------------------------------------------------------------------------
-QByteArray myModel::getThumb(QString item)
-{
-    QImage theThumb, background;
-    QImageReader pic(item);
-    int w = pic.size().width();
-    int h = pic.size().height();
 
-    background = QImage(128,128,QImage::Format_RGB32);
-    background.fill(QApplication::palette().color(QPalette::Base).rgb());
+/**
+ * @brief Loads mime types
+ */
+void myModel::loadMimeTypes() const {
 
-    if( w > 128 || h > 128)
-    {
-        pic.setScaledSize(QSize(123,93));
-        QImage temp = pic.read();
+  // Open file with mime/suffix associations
+  QFile mimeInfo("/usr/share/mime/globs");
+  mimeInfo.open(QIODevice::ReadOnly);
+  QTextStream out(&mimeInfo);
 
-        theThumb.load(":/images/background.png");           //shadow template
-
-        QPainter painter(&theThumb);
-        painter.drawImage(QPoint(0,0),temp);
+  // Read associations
+  do {
+    QStringList line = out.readLine().split(":");
+    if (line.count() == 2) {
+      QString suffix = line.at(1);
+      suffix.remove("*.");
+      QString mimeName = line.at(0);
+      mimeName.replace("/","-");
+      mimeGlob->insert(suffix, mimeName);
     }
-    else
-    {
-        pic.setScaledSize(QSize(64,64));
-        theThumb = pic.read();
+  } while (!out.atEnd());
+  mimeInfo.close();
+
+  // Open file with mime/generic-mime associations
+  mimeInfo.setFileName("/usr/share/mime/generic-icons");
+  mimeInfo.open(QIODevice::ReadOnly);
+  out.setDevice(&mimeInfo);
+
+  // Read associations
+  do {
+    QStringList line = out.readLine().split(":");
+    if (line.count() == 2) {
+      QString mimeName = line.at(0);
+      mimeName.replace("/","-");
+      QString icon = line.at(1);
+      mimeGeneric->insert(mimeName, icon);
     }
-
-    QPainter painter(&background);
-    painter.drawImage(QPoint((123 - theThumb.width())/2,(115 - theThumb.height())/2),theThumb);
-
-    QBuffer buffer;
-    QImageWriter writer(&buffer,"jpg");
-    writer.setQuality(50);
-    writer.write(background);
-
-    return buffer.buffer();
+  } while (!out.atEnd());
+  mimeInfo.close();
 }
+//---------------------------------------------------------------------------
 
-//---------------------------------------------------------------------------------
+/**
+ * @brief Loads thumbnails
+ * @param indexes
+ */
+void myModel::loadThumbs(QModelIndexList indexes) {
+
+  // Types that should be thumbnailed
+  QStringList files, types;
+  types << "jpg" << "jpeg" << "png" << "bmp" << "ico" << "svg" << "gif";
+
+  // Remember files with valid suffix
+  foreach (QModelIndex item, indexes) {
+    QString suffix = QFileInfo(fileName(item)).suffix();
+    if (types.contains(suffix, Qt::CaseInsensitive)) {
+      files.append(filePath(item));
+    }
+  }
+
+  // Loads thumbnails from cache
+  if (files.count()) {
+    if (thumbs->count() == 0) {
+      QFile fileIcons(QDir::homePath() + "/.config/qtfm/thumbs.cache");
+      fileIcons.open(QIODevice::ReadOnly);
+      QDataStream out(&fileIcons);
+      out >> *thumbs;
+      fileIcons.close();
+      thumbCount = thumbs->count();
+    }
+    foreach (QString item, files) {
+      if (!thumbs->contains(item)) thumbs->insert(item, getThumb(item));
+      emit thumbUpdate(index(item));
+    }
+  }
+}
+//---------------------------------------------------------------------------
+
+/**
+ * @brief Creates thumbnail for given item
+ * @param item
+ * @return thumbnail
+ */
+QByteArray myModel::getThumb(QString item) {
+
+  // Thumbnail image
+  QImage theThumb, background;
+  QImageReader pic(item);
+  int w = pic.size().width();
+  int h = pic.size().height();
+
+  // Background
+  background = QImage(128, 128, QImage::Format_RGB32);
+  background.fill(QApplication::palette().color(QPalette::Base).rgb());
+
+  // Scale image and create its shadow template (background.png)
+  if (w > 128 || h > 128) {
+    pic.setScaledSize(QSize(123, 93));
+    QImage temp = pic.read();
+    theThumb.load(":/images/background.png");
+    QPainter painter(&theThumb);
+    painter.drawImage(QPoint(0, 0), temp);
+  } else {
+    pic.setScaledSize(QSize(64, 64));
+    theThumb = pic.read();
+  }
+
+  // Draw thumbnail picture
+  QPainter painter(&background);
+  painter.drawImage(QPoint((123 - theThumb.width()) / 2,
+                           (115 - theThumb.height()) / 2), theThumb);
+
+  // Write it to buffer
+  QBuffer buffer;
+  QImageWriter writer(&buffer, "jpg");
+  writer.setQuality(50);
+  writer.write(background);
+  return buffer.buffer();
+}
+//---------------------------------------------------------------------------
 
 /**
  * @brief Returns model data (information about directories and files)
@@ -684,14 +723,16 @@ QVariant myModel::data(const QModelIndex & index, int role) const {
         data = item->fileName();
         break;
       case 1 :
-        data = item->fileInfo().isDir() ? "" : formatSize(item->fileInfo().size());
+        data = item->fileInfo().isDir() ? "" : formatSize(
+               item->fileInfo().size());
         break;
       case 2 :
         if (item->mMimeType.isNull()) {
           if (realMimeTypes) {
             item->mMimeType = FileUtils::getMimeType(item->absoluteFilePath());
           } else {
-            item->mMimeType = item->fileInfo().isDir() ? "folder" : item->fileInfo().suffix();
+            item->mMimeType = item->fileInfo().isDir() ? "folder" :
+                              item->fileInfo().suffix();
             if (item->mMimeType.isNull()) item->mMimeType = "file";
           }
         }
@@ -713,7 +754,8 @@ QVariant myModel::data(const QModelIndex & index, int role) const {
           str.append(perms.testFlag(QFile::ReadOther) ? "r" : "-" );
           str.append(perms.testFlag(QFile::WriteOther) ? "w" : "-" );
           str.append(perms.testFlag(QFile::ExeOther) ? "x" : "-" );
-          str.append(" " + item->fileInfo().owner() + " " + item->fileInfo().group());
+          str.append(" " + item->fileInfo().owner() + " "
+                     + item->fileInfo().group());
           item->mPermissions = str;
         }
         return item->mPermissions;
@@ -741,10 +783,10 @@ QVariant myModel::data(const QModelIndex & index, int role) const {
   }
   return QVariant();
 }
-//------------------------------------------------------------------------------
+//---------------------------------------------------------------------------
 
 /**
- * @brief Finds icon of file
+ * @brief Finds icon of a file
  * @param item
  * @return icon
  */
@@ -786,53 +828,67 @@ QVariant myModel::findIcon(myModelItem *item) const {
   // If file has not suffix
   if (suffix.isEmpty()) {
 
-    // File can be executable or unknown
-    suffix = type.isExecutable() ? "exec" : "none";
+    // If file is not executable, read mime type info from the system and create
+    // an icon for it
+    // NOTE: the icon cannot be cached because this file has not any suffix,
+    // however operation 'getMimeType' could cause slowdown
+    if (!type.isExecutable()) {
+      QString mime = FileUtils::getMimeType(type.absoluteFilePath());
+      return FileUtils::getMimeIconOrUnknown(mime);
+    }
 
-    // Find icon for new suffix, if it wasn't found create new one
+    // If file is executable, set suffix to exec and find/create icon for it
+    suffix = "exec";
     if (mimeIcons->contains(suffix)) {
       theIcon = mimeIcons->value(suffix);
     } else {
-      if (suffix == "exec") {
-        theIcon = QIcon::fromTheme("application-x-executable", theIcon);
-      } else {
-        theIcon = QIcon(qApp->style()->standardIcon(QStyle::SP_FileIcon));
-      }
+      theIcon = QIcon::fromTheme("application-x-executable", theIcon);
     }
   }
   // If file has unknown suffix (icon hasn't been assigned)
   else {
 
-    // Load mime types
+    // Load mime/suffix associations if they aren't loaded yet
     if (mimeGlob->count() == 0) loadMimeTypes();
 
-    // Try mimeType as it is
-    QString mimeType = mimeGlob->value(suffix.toLower());
-    if (QIcon::hasThemeIcon(mimeType)) {
-      theIcon = QIcon::fromTheme(mimeType);
-    } else {
-
-      // Try matching generic icon
-      if (QIcon::hasThemeIcon(mimeGeneric->value(mimeType))) {
-        theIcon = QIcon::fromTheme(mimeGeneric->value(mimeType));
-      } else {
-
-        // Last resort try adding "-x-generic" to base type
-        if (QIcon::hasThemeIcon(mimeType.split("-").at(0) + "-x-generic")) {
-          theIcon = QIcon::fromTheme(mimeType.split("-").at(0) + "-x-generic");
-        } else {
-          theIcon = QIcon(qApp->style()->standardIcon(QStyle::SP_FileIcon));
-        }
-      }
+    // Retrieve mime type for current suffix, if suffix is not present in list
+    // from '/usr/share/mime/globs', its mime has to be detected manually
+    QString mimeType = mimeGlob->value(suffix.toLower(), "");
+    if (mimeType.isEmpty()) {
+      mimeType = FileUtils::getMimeType(type.absoluteFilePath());
+      mimeGlob->insert(suffix.toLower(), mimeType);
     }
+
+    // Load the icon
+    theIcon = FileUtils::getMimeIconOrUnknown(mimeType);
   }
 
   // Insert icon to the list of icons
   mimeIcons->insert(suffix, theIcon);
   return theIcon;
 }
-//------------------------------------------------------------------------------
+//---------------------------------------------------------------------------
 
+/**
+ * @brief Finds icon of a file, based on file mime type
+ * @param item
+ * @return icon
+ */
+QVariant myModel::findMimeIcon(myModelItem *item) const {
+
+  // Retrieve mime and search cache for it
+  QString mime = FileUtils::getMimeType(item->absoluteFilePath());
+  if (mimeIcons->contains(mime)) {
+    return mimeIcons->value(mime);
+  }
+
+  // Search file system for icon
+  qDebug() << mime;
+  QIcon theIcon = FileUtils::getMimeIcon(mime);
+  mimeIcons->insert(mime, theIcon);
+  return theIcon;
+}
+//---------------------------------------------------------------------------
 
 bool myModel::setData(const QModelIndex & index, const QVariant & value, int role)
 {

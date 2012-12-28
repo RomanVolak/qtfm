@@ -186,16 +186,23 @@ void MainWindow::createActions()
 
     // ----------------------------------------------------------------------
 
-    hiddenAct = new QAction(tr("Hidden files"),this);
+    hiddenAct = new QAction(tr("Hidden files"), this);
     hiddenAct->setStatusTip(tr("Toggle hidden files"));
     hiddenAct->setCheckable(true);
-    connect(hiddenAct, SIGNAL(triggered()),this,SLOT(toggleHidden()));
+    connect(hiddenAct, SIGNAL(triggered()), this, SLOT(toggleHidden()));
     hiddenAct->setIcon(actionIcons->at(10));
     actionList->append(hiddenAct);
 
-    addBookmarkAct = new QAction(tr("Add bookmark"),this);
+    // TODO: create filter act that will use grep like filtering
+    /*filterAct = new QAction(tr("Filter..."), this);
+    filterAct->setStatusTip(tr("Filter current directory"));
+    connect(hiddenAct, SIGNAL(triggered()), this, SLOT(toggleFilter()));
+    hiddenAct->setIcon(actionIcons->at(10));
+    actionList->append(filterAct);*/
+
+    addBookmarkAct = new QAction(tr("Add bookmark"), this);
     addBookmarkAct->setStatusTip(tr("Add this folder to bookmarks"));
-    connect(addBookmarkAct, SIGNAL(triggered()),this,SLOT(addBookmarkAction()));
+    connect(addBookmarkAct, SIGNAL(triggered()), this, SLOT(addBookmarkAction()));
     addBookmarkAct->setIcon(actionIcons->at(12));
     actionList->append(addBookmarkAct);
 

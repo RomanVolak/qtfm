@@ -65,6 +65,8 @@ public:
   bool isDir(const QModelIndex &index);
   bool canFetchMore (const QModelIndex & parent) const;
   bool setRootPath(const QString& path);
+  void setRealMimeTypes(bool realMimeTypes);
+  bool isRealMimeTypes() const;
   QModelIndex index(int row, int column, const QModelIndex &parent) const;
   QModelIndex index(const QString& path) const;
   QModelIndex parent(const QModelIndex &index) const;
@@ -84,7 +86,6 @@ public:
   QHash<QString,QIcon> *folderIcons;
   //QHash<QString,QIcon> *icons;
   QCache<QString,QIcon> *icons;
-  bool realMimeTypes;
 public slots:
   void notifyChange();
   void notifyProcess(int eventID);
@@ -103,7 +104,9 @@ protected:
   int columnCount(const QModelIndex &parent) const;
   Qt::ItemFlags flags(const QModelIndex &index) const;
   QVariant findIcon(myModelItem *item) const;
+  QVariant findMimeIcon(myModelItem *item) const;
 private:
+  bool realMimeTypes;
   bool showThumbs;
   int thumbCount;
 

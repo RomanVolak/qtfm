@@ -1,3 +1,8 @@
+5.?
+- added mime type based default application configuration into the settings dialog
+- modified icon view more mime types are recognized now
+- modified more compact settings dialog
+
 5.7 21-December 2012
 - added settings manager, almost all settings are now centralized in one dialog
 - modified edit menu

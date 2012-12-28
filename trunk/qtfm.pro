@@ -17,7 +17,8 @@ HEADERS += src/mainwindow.h \
     src/tabbar.h \
     src/mymodelitem.h \
     src/settingsdialog.h \
-    src/customactionsmanager.h
+    src/customactionsmanager.h \
+    src/comboboxdelegate.h
 SOURCES += src/main.cpp \
     src/mainwindow.cpp \
     src/mymodel.cpp \
@@ -30,7 +31,8 @@ SOURCES += src/main.cpp \
     src/actions.cpp \
     src/mymodelitem.cpp \
     src/settingsdialog.cpp \
-    src/customactionsmanager.cpp
+    src/customactionsmanager.cpp \
+    src/comboboxdelegate.cpp
 
 CONFIG += release warn_off thread
 RESOURCES += resources.qrc

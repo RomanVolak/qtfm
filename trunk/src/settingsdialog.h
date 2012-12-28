@@ -8,6 +8,7 @@
 #include <QTreeWidget>
 #include <QToolButton>
 #include <QSettings>
+#include <QProgressBar>
 
 /**
  * @class SettingsDialog
@@ -22,6 +23,7 @@ public:
                           QWidget *parent = 0);
 public slots:
   void accept();
+  void loadMimes(int section);
   void readSettings();
   void readShortcuts();
   bool saveSettings();
@@ -35,6 +37,8 @@ protected:
   QWidget* createGeneralSettings();
   QWidget* createActionsSettings();
   QWidget* createShortcutSettings();
+  QWidget* createMimeProgress();
+  QWidget* createMimeSettings();
 
   QSettings* settingsPtr;
   QList<QAction*> *actionListPtr;
@@ -54,6 +58,9 @@ protected:
   QToolButton *infoButton;
 
   QTreeWidget* shortsWidget;
+
+  QProgressBar* progressMime;
+  QTreeWidget* mimesWidget;
 };
 
 #endif // SETTINGSDIALOG_H

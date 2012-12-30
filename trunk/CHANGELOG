@@ -1,4 +1,5 @@
 5.?
+- added process dialog for custom actions. If custom action is executed, then dialog with action output popups. When action is finished, dialog is closed. This feature can be turned on/off in settings
 - added mime type based default application configuration into the settings dialog
 - modified icon view more mime types are recognized now
 - modified more compact settings dialog

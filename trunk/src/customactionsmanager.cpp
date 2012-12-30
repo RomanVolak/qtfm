@@ -1,4 +1,5 @@
 #include "customactionsmanager.h"
+#include "processdialog.h"
 #include <QMessageBox>
 #include <QMenu>
 #include <QTimer>
@@ -151,6 +152,11 @@ void CustomActionsManager::execAction(const QString &cmd, const QString &path) {
   QProcess *p = new QProcess();
   p->setWorkingDirectory(path);
 
+  // Create process dialog
+  if (settingsPtr->value("showActionOutput", true).toBool()) {
+    new ProcessDialog(p, exec, qobject_cast<QWidget*>(parent()));
+  }
+
   // Connect process
   connect(p, SIGNAL(finished(int)), this, SLOT(onActionFinished(int)));
   connect(p, SIGNAL(error(QProcess::ProcessError)), this,
@@ -173,7 +179,7 @@ void CustomActionsManager::execAction(const QString &cmd, const QString &path) {
  */
 void CustomActionsManager::onActionError(QProcess::ProcessError error) {
   QProcess* process = qobject_cast<QProcess*>(sender());
-  QMessageBox::warning(NULL, "Error" ,process->errorString());
+  QMessageBox::warning(NULL, "Error", process->errorString());
   onActionFinished(0);
 }
 //---------------------------------------------------------------------------

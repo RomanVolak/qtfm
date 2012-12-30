@@ -125,12 +125,18 @@ QWidget *SettingsDialog::createGeneralSettings() {
  */
 QWidget* SettingsDialog::createActionsSettings() {
 
-  // Layouts
+  // Widget
   QWidget* widget = new QWidget(this);
-  QVBoxLayout *outerLayout = new QVBoxLayout(widget);
+
+  // Options group box
+  QGroupBox* grpOptions = new QGroupBox(tr("Options"), widget);
+  checkOutput = new QCheckBox(grpOptions);
+  QFormLayout* layoutOptions = new QFormLayout(grpOptions);
+  layoutOptions->addRow(tr("Show dialog with action's output:"), checkOutput);
+
+  // Actions group box
   QGroupBox* grpMain = new QGroupBox(tr("Custom actions"), widget);
   QVBoxLayout* mainLayout = new QVBoxLayout(grpMain);
-  outerLayout->addWidget(grpMain);
 
   // Create actions widget
   actionsWidget = new QTreeWidget(grpMain);
@@ -176,6 +182,11 @@ QWidget* SettingsDialog::createActionsSettings() {
   horizontalLayout->addWidget(delButton);
   horizontalLayout->addItem(new QSpacerItem(0, 0, QSizePolicy::MinimumExpanding));
   mainLayout->addLayout(horizontalLayout);
+
+  // Outer layout
+  QVBoxLayout *outerLayout = new QVBoxLayout(widget);
+  outerLayout->addWidget(grpMain);
+  outerLayout->addWidget(grpOptions);
 
   return widget;
 }
@@ -310,6 +321,7 @@ void SettingsDialog::readSettings() {
   editTerm->setText(settingsPtr->value("term").toString());
 
   // Read custom actions
+  checkOutput->setChecked(settingsPtr->value("showActionOutput", true).toBool());
   settingsPtr->beginGroup("customActions");
   QStringList keys = settingsPtr->childKeys();
   for (int i = 0; i < keys.count(); ++i) {
@@ -498,6 +510,7 @@ bool SettingsDialog::saveSettings() {
 
   // Custom actions
   // ------------------------------------------------------------------------
+  settingsPtr->setValue("showActionOutput", checkOutput->isChecked());
   settingsPtr->remove("customActions");
   settingsPtr->beginGroup("customActions");
   for (int i = 0; i < actionsWidget->topLevelItemCount(); i++) {

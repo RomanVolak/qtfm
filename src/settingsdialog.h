@@ -56,6 +56,7 @@ protected:
   QToolButton *addButton;
   QToolButton *delButton;
   QToolButton *infoButton;
+  QCheckBox* checkOutput;
 
   QTreeWidget* shortsWidget;
 

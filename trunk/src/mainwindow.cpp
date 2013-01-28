@@ -19,7 +19,6 @@
 *
 ****************************************************************************/
 
-
 #include <QtGui>
 #include <sys/vfs.h>
 #include <fcntl.h>
@@ -31,6 +30,7 @@
 #include "progressdlg.h"
 #include "fileutils.h"
 #include "settingsdialog.h"
+#include "applicationdialog.h"
 
 MainWindow::MainWindow()
 {
@@ -434,40 +434,43 @@ void MainWindow::loadSettings() {
 }
 //---------------------------------------------------------------------------
 
-void MainWindow::closeEvent(QCloseEvent *event)
-{
-    writeSettings();
+/**
+ * @brief Close event
+ * @param event
+ */
+void MainWindow::closeEvent(QCloseEvent *event) {
 
-    if(isDaemon)
-    {
-        this->setVisible(0);
-        startDaemon();
-        customComplete->setModel(0);
-        modelList->refresh();           //clear model, reduce memory
-        tabs->setCurrentIndex(0);
+  // Save settings
+  writeSettings();
 
-        tree->setCurrentIndex(modelTree->mapFromSource(modelList->index(startPath)));
-        tree->scrollTo(tree->currentIndex());
-        customComplete->setModel(modelTree);
-
-        event->ignore();
-    }
-    else
-    {
-        modelList->cacheInfo();
-        event->accept();
-    }
+  // If deamon, ignore event
+  if (isDaemon) {
+    this->setVisible(0);
+    startDaemon();
+    customComplete->setModel(0);
+    modelList->refresh();
+    tabs->setCurrentIndex(0);
+    tree->setCurrentIndex(modelTree->mapFromSource(modelList->index(startPath)));
+    tree->scrollTo(tree->currentIndex());
+    customComplete->setModel(modelTree);
+    event->ignore();
+  } else {
+    modelList->cacheInfo();
+    event->accept();
+  }
 }
-
 //---------------------------------------------------------------------------
-void MainWindow::exitAction()
-{
-    isDaemon = 0;
-    close();
+
+/**
+ * @brief Closes main window
+ */
+void MainWindow::exitAction() {
+  isDaemon = 0;
+  close();
 }
-
 //---------------------------------------------------------------------------
-void MainWindow::treeSelectionChanged(QModelIndex current,QModelIndex previous)
+
+void MainWindow::treeSelectionChanged(QModelIndex current, QModelIndex previous)
 {
     QFileInfo name = modelList->fileInfo(modelTree->mapToSource(current));
     if(!name.exists()) return;
@@ -767,7 +770,7 @@ void MainWindow::executeFile(QModelIndex index, bool run)
         myProcess->terminate();
         if(myProcess->exitCode() != 0)
         {
-            if(xdgConfig()) executeFile(index,run);
+          qDebug() << "xdg config deleted";
         }
     }
 }
@@ -1751,93 +1754,6 @@ void MainWindow::toggleLockLayout()
 //---------------------------------------------------------------------------
 
 /**
- * @brief Displays dialog with default application assignment
- * @return true if success
- */
-bool MainWindow::xdgConfig() {
-
-  // Check for index validity
-  if (!listSelectionModel->currentIndex().isValid()) {
-    return false;
-  }
-
-  // Create dialog
-  QDialog *xdgConfig = new QDialog(this);
-  xdgConfig->setWindowTitle(tr("Configure filetype"));
-
-  // Retrieve mime type of currently selected file
-  QString mimeType = FileUtils::getMimeType(curIndex.filePath());
-
-  // Create controls
-  QLabel *label = new QLabel(tr("Filetype: ") + "<b>" + mimeType + "</b><p>"
-                             + tr("Open with:"));
-  QDialogButtonBox *buttons = new QDialogButtonBox;
-  buttons->setStandardButtons(QDialogButtonBox::Save | QDialogButtonBox::Cancel);
-  connect(buttons, SIGNAL(accepted()), xdgConfig, SLOT(accept()));
-  connect(buttons, SIGNAL(rejected()), xdgConfig, SLOT(reject()));
-  QComboBox * appList = new QComboBox(xdgConfig);
-  appList->setEditable(true);
-
-  // Create layout
-  QVBoxLayout *layout = new QVBoxLayout(xdgConfig);
-  layout->addWidget(label);
-  layout->addWidget(appList);
-  layout->addWidget(buttons);
-
-  // Get available applications
-  QStringList apps = FileUtils::getApplications();
-  apps.replaceInStrings(".desktop","");
-  apps.sort();
-  appList->addItems(apps);
-
-  // Get the icons
-  QDir appIcons("/usr/share/pixmaps", "", 0, QDir::Files | QDir::NoDotAndDotDot);
-  apps = appIcons.entryList();
-  QIcon defaultIcon = QIcon::fromTheme("application-x-executable");
-  for (int i = 0; i < appList->count(); ++i) {
-    QString baseName = appList->itemText(i);
-    QPixmap temp = QIcon::fromTheme(baseName).pixmap(16,16);
-    if (!temp.isNull()) {
-      appList->setItemIcon(i, temp);
-    } else {
-      QStringList searchIcons = apps.filter(baseName);
-      if (searchIcons.count() > 0) {
-        appList->setItemIcon(i,QIcon("/usr/share/pixmaps/" + searchIcons.at(0)));
-      } else {
-        appList->setItemIcon(i, defaultIcon);
-      }
-    }
-  }
-
-  // Load default application
-  QString xdgDefaults;
-  QString tmp = QDir::homePath() + "/.local/share/applications/mimeapps.list";
-  if (QFileInfo(tmp).exists()) {
-    xdgDefaults = tmp;
-  } else {
-    xdgDefaults = QDir::homePath() + "/.local/share/applications/defaults.list";
-  }
-  QSettings defaults(xdgDefaults, QSettings::IniFormat, this);
-  QString temp = defaults.value("Default Applications/" + mimeType).toString();
-  appList->setCurrentIndex(appList->findText(temp.remove(".desktop"),
-                                             Qt::MatchFixedString));
-  // Show dialog and save results
-  bool ok = xdgConfig->exec();
-  if (ok) {
-    QProcess *p = new QProcess();
-    p->start("xdg-mime", QStringList() << "default" << appList->currentText()
-             + ".desktop" << mimeType);
-    p->waitForFinished();
-    delete p;
-  }
-
-  delete xdgConfig;
-  return ok;
-}
-
-//---------------------------------------------------------------------------
-
-/**
  * @brief Displays settings dialog
  */
 void MainWindow::showEditDialog() {
@@ -1845,12 +1761,23 @@ void MainWindow::showEditDialog() {
   // Deletes current list of custom actions
   customActManager->freeActions();
 
+  // Loads current icon theme
+  QString oldTheme = settings->value("forceTheme").toString();
+
   // Creates settings dialog
   SettingsDialog *dlg = new SettingsDialog(actionList, settings, this);
-  dlg->exec();
+  if (dlg->exec()) {
 
-  // Reload settings
-  loadSettings();
+    // Reload settings
+    loadSettings();
+
+    // If icon theme has changed, use new theme and clear cache
+    QString newTheme = settings->value("forceTheme").toString();
+    if (oldTheme.compare(newTheme) != 0) {
+      modelList->clearIconCache();
+      QIcon::setThemeName(newTheme);
+    }
+  }
 
   // Reads custom actions
   customActManager->readActions();
@@ -1858,241 +1785,360 @@ void MainWindow::showEditDialog() {
 }
 //---------------------------------------------------------------------------
 
-void MainWindow::writeSettings()
-{
-    settings->setValue("size", size());
-    settings->setValue("viewMode", stackWidget->currentIndex());
-    settings->setValue("iconMode", iconAct->isChecked());
-    settings->setValue("zoom", zoom);
-    settings->setValue("zoomTree", zoomTree);
-    settings->setValue("zoomList", zoomList);
-    settings->setValue("zoomDetail", zoomDetail);
-    settings->setValue("sortBy", currentSortColumn);
-    settings->setValue("sortOrder", currentSortOrder);
-    settings->setValue("showThumbs", thumbsAct->isChecked());
-    settings->setValue("hiddenMode", hiddenAct->isChecked());
-    settings->setValue("lockLayout", lockLayoutAct->isChecked());
-    settings->setValue("tabsOnTop", tabsOnTopAct->isChecked());
-    settings->setValue("windowState", saveState(1));
-    settings->setValue("header", detailTree->header()->saveState());
-    settings->setValue("realMimeTypes",  modelList->isRealMimeTypes());
+/**
+ * @brief Writes settings into config file
+ */
+void MainWindow::writeSettings() {
 
-    settings->remove("bookmarks");
-    settings->beginGroup("bookmarks");
+  // Write general settings
+  settings->setValue("size", size());
+  settings->setValue("viewMode", stackWidget->currentIndex());
+  settings->setValue("iconMode", iconAct->isChecked());
+  settings->setValue("zoom", zoom);
+  settings->setValue("zoomTree", zoomTree);
+  settings->setValue("zoomList", zoomList);
+  settings->setValue("zoomDetail", zoomDetail);
+  settings->setValue("sortBy", currentSortColumn);
+  settings->setValue("sortOrder", currentSortOrder);
+  settings->setValue("showThumbs", thumbsAct->isChecked());
+  settings->setValue("hiddenMode", hiddenAct->isChecked());
+  settings->setValue("lockLayout", lockLayoutAct->isChecked());
+  settings->setValue("tabsOnTop", tabsOnTopAct->isChecked());
+  settings->setValue("windowState", saveState(1));
+  settings->setValue("header", detailTree->header()->saveState());
+  settings->setValue("realMimeTypes",  modelList->isRealMimeTypes());
 
-    for (int i = 0; i < modelBookmarks->rowCount(); i++) {
-        QStringList temp;
-        temp << modelBookmarks->item(i)->text() << modelBookmarks->item(i)->data(32).toString() << modelBookmarks->item(i)->data(34).toString() << modelBookmarks->item(i)->data(33).toString();
-        settings->setValue(QString(i),temp);
-    }
-    settings->endGroup();
+  // Write bookmarks
+  settings->remove("bookmarks");
+  settings->beginGroup("bookmarks");
+  for (int i = 0; i < modelBookmarks->rowCount(); i++) {
+    QStringList temp;
+    temp << modelBookmarks->item(i)->text()
+         << modelBookmarks->item(i)->data(32).toString()
+         << modelBookmarks->item(i)->data(34).toString()
+         << modelBookmarks->item(i)->data(33).toString();
+    settings->setValue(QString(i),temp);
+  }
+  settings->endGroup();
 }
+//---------------------------------------------------------------------------
 
-//---------------------------------------------------------------------------------
-void MainWindow::contextMenuEvent(QContextMenuEvent * event)
-{
-    QMenu *popup;
-    QWidget *widget = childAt(event->pos());
+/**
+ * @brief Display popup menu
+ * @param event
+ */
+void MainWindow::contextMenuEvent(QContextMenuEvent * event) {
 
-    if(widget == tabs)
-    {
-        popup = new QMenu(this);
-        popup->addAction(closeTabAct);
-        popup->exec(event->globalPos());
-        return;
-    }
-    else
-    if(widget == status)
-    {
-        popup = createPopupMenu();
-        popup->addSeparator();
-        popup->addAction(lockLayoutAct);
-        popup->exec(event->globalPos());
-        return;
-    }
+  // Retreive widget under mouse
+  QMenu *popup;
+  QWidget *widget = childAt(event->pos());
 
-    QList<QAction*> actions;
+  // Create popup for tab or for status bar
+  if (widget == tabs) {
     popup = new QMenu(this);
+    popup->addAction(closeTabAct);
+    popup->exec(event->globalPos());
+    return;
+  } else if (widget == status) {
+    popup = createPopupMenu();
+    popup->addSeparator();
+    popup->addAction(lockLayoutAct);
+    popup->exec(event->globalPos());
+    return;
+  }
 
-    if(focusWidget() == list || focusWidget() == detailTree)
-    {
-        bookmarksList->clearSelection();
+  // Continue with poups for folders and files
+  QList<QAction*> actions;
+  popup = new QMenu(this);
 
-        if(listSelectionModel->hasSelection())	    //could be file or folder
-        {
-            curIndex = modelList->filePath(modelView->mapToSource(listSelectionModel->currentIndex()));
+  if (focusWidget() == list || focusWidget() == detailTree) {
 
-            if(!curIndex.isDir())		    //file
-            {
-                QString type = modelList->getMimeType(modelList->index(curIndex.filePath()));
+    // Clear selection in bookmarks
+    bookmarksList->clearSelection();
 
-                QHashIterator<QString, QAction*> i(*customActManager->getActions());
-                while (i.hasNext())
-                {
-                    i.next();
-                    if(type.contains(i.key())) actions.append(i.value());
-                }
+    // Could be file or folder
+    if (listSelectionModel->hasSelection())	{
 
-                foreach(QAction*action, actions)
-                    if(action->text() == "Open")
-                    {
-                        popup->addAction(action);
-                        break;
-                    }
+      // Get index of source model
+      curIndex = modelList->filePath(modelView->mapToSource(listSelectionModel->currentIndex()));
 
-                if(popup->actions().count() == 0) popup->addAction(openAct);
+      // File
+      if (!curIndex.isDir()) {
+        QString type = modelList->getMimeType(modelList->index(curIndex.filePath()));
 
-                if(curIndex.isExecutable()) popup->addAction(runAct);
-
-                popup->addActions(actions);
-
-                QHashIterator<QString, QMenu*> m(*customActManager->getMenus());
-                while (m.hasNext())
-                {
-                    m.next();
-                    if(type.contains(m.key())) popup->addMenu(m.value());
-                }
-
-                popup->addSeparator();
-                popup->addAction(cutAct);
-                popup->addAction(copyAct);
-                popup->addAction(pasteAct);
-                popup->addSeparator();
-                popup->addAction(renameAct);
-                popup->addSeparator();
-
-                foreach(QMenu* parent, customActManager->getMenus()->values("*"))
-                    popup->addMenu(parent);
-
-                actions = (customActManager->getActions()->values("*"));
-                popup->addActions(actions);
-                popup->addAction(deleteAct);
-                popup->addSeparator();
-                actions = customActManager->getActions()->values(curIndex.path());    //children of $parent
-                if(actions.count())
-                {
-                    popup->addActions(actions);
-                    popup->addSeparator();
-                }
-            }
-            else
-            {	//folder
-                popup->addAction(openAct);
-                popup->addSeparator();
-                popup->addAction(cutAct);
-                popup->addAction(copyAct);
-                popup->addAction(pasteAct);
-                popup->addSeparator();
-                popup->addAction(renameAct);
-                popup->addSeparator();
-
-                foreach(QMenu* parent, customActManager->getMenus()->values("*"))
-                    popup->addMenu(parent);
-
-                actions = customActManager->getActions()->values("*");
-                popup->addActions(actions);
-                popup->addAction(deleteAct);
-                popup->addSeparator();
-
-                foreach(QMenu* parent, customActManager->getMenus()->values("folder"))
-                    popup->addMenu(parent);
-
-                actions = customActManager->getActions()->values(curIndex.fileName());               //specific folder
-                actions.append(customActManager->getActions()->values(curIndex.path()));    //children of $parent
-                actions.append(customActManager->getActions()->values("folder"));                    //all folders
-                if(actions.count())
-                {
-                    popup->addActions(actions);
-                    popup->addSeparator();
-                }
-            }
-
-            popup->addAction(folderPropertiesAct);
-
-        }
-        else
-        {   //whitespace
-            popup->addAction(newDirAct);
-            popup->addAction(newFileAct);
-            popup->addSeparator();
-            if(pasteAct->isEnabled())
-            {
-                popup->addAction(pasteAct);
-                popup->addSeparator();
-            }
-            popup->addAction(addBookmarkAct);
-            popup->addSeparator();
-
-            foreach(QMenu* parent, customActManager->getMenus()->values("folder"))
-                popup->addMenu(parent);
-            actions = customActManager->getActions()->values(curIndex.fileName());
-            actions.append(customActManager->getActions()->values("folder"));
-            if(actions.count())
-            {
-                foreach(QAction*action, actions)
-                    popup->addAction(action);
-                popup->addSeparator();
-            }
-
-            popup->addAction(folderPropertiesAct);
-        }
-    }
-    else
-    {	//tree or bookmarks
-        if(focusWidget() == bookmarksList)
-        {
-            listSelectionModel->clearSelection();
-            if(bookmarksList->indexAt(bookmarksList->mapFromGlobal(event->globalPos())).isValid())
-            {
-                curIndex = bookmarksList->currentIndex().data(32).toString();
-                popup->addAction(delBookmarkAct);
-                popup->addAction(editBookmarkAct);	//icon
-            }
-            else
-            {
-                bookmarksList->clearSelection();
-                popup->addAction(addSeparatorAct);	//seperator
-                popup->addAction(wrapBookmarksAct);
-            }
-            popup->addSeparator();
-        }
-        else
-        {
-            bookmarksList->clearSelection();
-            popup->addAction(newDirAct);
-            popup->addAction(newFileAct);
-            popup->addAction(openTabAct);
-            popup->addSeparator();
-            popup->addAction(cutAct);
-            popup->addAction(copyAct);
-            popup->addAction(pasteAct);
-            popup->addSeparator();
-            popup->addAction(renameAct);
-            popup->addSeparator();
-            popup->addAction(deleteAct);
+        // Add custom actions to the list of actions
+        QHashIterator<QString, QAction*> i(*customActManager->getActions());
+        while (i.hasNext()) {
+          i.next();
+          if (type.contains(i.key())) actions.append(i.value());
         }
 
+        // Add run action or open with default application action
+        if (curIndex.isExecutable()) {
+          popup->addAction(runAct);
+        } else {
+          popup->addAction(openAct);
+        }
+
+        // Add open action
+        /*foreach (QAction* action, actions) {
+          if (action->text() == "Open") {
+            popup->addAction(action);
+            break;
+          }
+        }*/
+
+        // Add open with menu
+        popup->addMenu(createOpenWithMenu());
+
+        //if (popup->actions().count() == 0) popup->addAction(openAct);
+
+        // Add custom actions that are associated only with this file type
+        if (!actions.isEmpty()) {
+          popup->addSeparator();
+          popup->addActions(actions);
+        }
+
+        // Add menus
+        QHashIterator<QString, QMenu*> m(*customActManager->getMenus());
+        while (m.hasNext()) {
+          m.next();
+          if (type.contains(m.key())) popup->addMenu(m.value());
+        }
+
+        // Add cut/copy/paste/rename actions
+        popup->addSeparator();
+        popup->addAction(cutAct);
+        popup->addAction(copyAct);
+        popup->addAction(pasteAct);
+        popup->addSeparator();
+        popup->addAction(renameAct);
         popup->addSeparator();
 
-        foreach(QMenu* parent, customActManager->getMenus()->values("folder"))
-            popup->addMenu(parent);
-        actions = customActManager->getActions()->values(curIndex.fileName());
-        actions.append(customActManager->getActions()->values(curIndex.path()));
-        actions.append(customActManager->getActions()->values("folder"));
-        if(actions.count())
-        {
-            foreach(QAction*action, actions)
-                popup->addAction(action);
-            popup->addSeparator();
+        // Add custom actions that are associated with all file types
+        foreach (QMenu* parent, customActManager->getMenus()->values("*")) {
+          popup->addMenu(parent);
         }
-        popup->addAction(folderPropertiesAct);
+        actions = (customActManager->getActions()->values("*"));
+        popup->addActions(actions);
+        popup->addAction(deleteAct);
+        popup->addSeparator();
+        actions = customActManager->getActions()->values(curIndex.path());    //children of $parent
+        if (actions.count()) {
+          popup->addActions(actions);
+          popup->addSeparator();
+        }
+      }
+      // Folder/directory
+      else {
+        popup->addAction(openAct);
+        popup->addSeparator();
+        popup->addAction(cutAct);
+        popup->addAction(copyAct);
+        popup->addAction(pasteAct);
+        popup->addSeparator();
+        popup->addAction(renameAct);
+        popup->addSeparator();
+
+        foreach (QMenu* parent, customActManager->getMenus()->values("*")) {
+          popup->addMenu(parent);
+        }
+
+        actions = customActManager->getActions()->values("*");
+        popup->addActions(actions);
+        popup->addAction(deleteAct);
+        popup->addSeparator();
+
+        foreach (QMenu* parent, customActManager->getMenus()->values("folder")) {
+          popup->addMenu(parent);
+        }
+        actions = customActManager->getActions()->values(curIndex.fileName());   // specific folder
+        actions.append(customActManager->getActions()->values(curIndex.path())); // children of $parent
+        actions.append(customActManager->getActions()->values("folder"));        // all folders
+        if (actions.count()) {
+          popup->addActions(actions);
+          popup->addSeparator();
+        }
+      }
+      popup->addAction(folderPropertiesAct);
+    }
+    // Whitespace
+    else {
+      popup->addAction(newDirAct);
+      popup->addAction(newFileAct);
+      popup->addSeparator();
+      if (pasteAct->isEnabled()) {
+        popup->addAction(pasteAct);
+        popup->addSeparator();
+      }
+      popup->addAction(addBookmarkAct);
+      popup->addSeparator();
+
+      foreach (QMenu* parent, customActManager->getMenus()->values("folder")) {
+        popup->addMenu(parent);
+      }
+      actions = customActManager->getActions()->values(curIndex.fileName());
+      actions.append(customActManager->getActions()->values("folder"));
+      if (actions.count()) {
+        foreach (QAction*action, actions) {
+          popup->addAction(action);
+        }
+        popup->addSeparator();
+      }
+      popup->addAction(folderPropertiesAct);
+    }
+  }
+  // Tree or bookmarks
+  else {
+    if (focusWidget() == bookmarksList) {
+      listSelectionModel->clearSelection();
+      if (bookmarksList->indexAt(bookmarksList->mapFromGlobal(event->globalPos())).isValid()) {
+        curIndex = bookmarksList->currentIndex().data(32).toString();
+        popup->addAction(delBookmarkAct);
+        popup->addAction(editBookmarkAct);	//icon
+      } else {
+        bookmarksList->clearSelection();
+        popup->addAction(addSeparatorAct);	//seperator
+        popup->addAction(wrapBookmarksAct);
+      }
+      popup->addSeparator();
+    } else {
+      bookmarksList->clearSelection();
+      popup->addAction(newDirAct);
+      popup->addAction(newFileAct);
+      popup->addAction(openTabAct);
+      popup->addSeparator();
+      popup->addAction(cutAct);
+      popup->addAction(copyAct);
+      popup->addAction(pasteAct);
+      popup->addSeparator();
+      popup->addAction(renameAct);
+      popup->addSeparator();
+      popup->addAction(deleteAct);
+    }
+    popup->addSeparator();
+
+    foreach (QMenu* parent, customActManager->getMenus()->values("folder")) {
+      popup->addMenu(parent);
+    }
+    actions = customActManager->getActions()->values(curIndex.fileName());
+    actions.append(customActManager->getActions()->values(curIndex.path()));
+    actions.append(customActManager->getActions()->values("folder"));
+    if (actions.count()) {
+      foreach (QAction*action, actions) popup->addAction(action);
+      popup->addSeparator();
+    }
+    popup->addAction(folderPropertiesAct);
+  }
+
+  popup->exec(event->globalPos());
+  delete popup;
+}
+//---------------------------------------------------------------------------
+
+/**
+ * @brief Creates menu for opening file in selected application
+ * @return menu
+ */
+QMenu* MainWindow::createOpenWithMenu() {
+
+  // Add open with functionality ...
+  QMenu *openMenu = new QMenu(tr("Open with"));
+
+  // Select action
+  QAction *selectAppAct = new QAction(tr("Select..."), openMenu);
+  selectAppAct->setStatusTip(tr("Select application for opening the file"));
+  //selectAppAct->setIcon(actionIcons->at(18));
+  connect(selectAppAct, SIGNAL(triggered()), this, SLOT(selectApp()));
+
+  // Load default applications for current mime
+  QString mime = FileUtils::getMimeType(curIndex.filePath());
+  Properties defaults = FileUtils::loadDefaults();
+  QStringList appNames = defaults.value(mime).toString().split(";");
+
+  // Create actions for opening
+  QList<QAction*> defaultApps;
+  foreach (QString appName, appNames) {
+
+    // Skip empty app name
+    if (appName.isEmpty()) {
+      continue;
     }
 
-    popup->exec(event->globalPos());
-    delete popup;
-}
+    // Load desktop file for application
+    DesktopFile df = DesktopFile("/usr/share/applications/" + appName);
 
-//---------------------------------------------------------------------------------
+    // Create action
+    QAction* action = new QAction(df.getName(), openMenu);
+    action->setData(df.getExec());
+    action->setIcon(FileUtils::searchAppIcon(df));
+    defaultApps.append(action);
+
+    // TODO: icon and connect
+    connect(action, SIGNAL(triggered()), SLOT(openInApp()));
+
+    // Add action to menu
+    openMenu->addAction(action);
+  }
+
+  // Add open action to menu
+  if (!defaultApps.isEmpty()) {
+    openMenu->addSeparator();
+  }
+  openMenu->addAction(selectAppAct);
+  return openMenu;
+}
+//---------------------------------------------------------------------------
+
+/**
+ * @brief Selects application for opening file
+ */
+void MainWindow::selectApp() {
+
+  // Select application in the dialog
+  ApplicationDialog *dialog = new ApplicationDialog(this);
+  if (dialog->exec()) {
+    if (dialog->getCurrentLauncher().compare("") != 0) {
+      QString appName = dialog->getCurrentLauncher() + ".desktop";
+      DesktopFile df = DesktopFile("/usr/share/applications/" + appName);
+      openInApp(df.getExec());
+    }
+  }
+}
+//---------------------------------------------------------------------------
+
+/**
+ * @brief Opens file in application
+ */
+void MainWindow::openInApp() {
+  QAction* action = dynamic_cast<QAction*>(sender());
+  if (action) {
+    openInApp(action->data().toString());
+  }
+}
+//---------------------------------------------------------------------------
+
+/**
+ * @brief Opens file in application
+ * @param exec
+ */
+void MainWindow::openInApp(QString exec) {
+
+  // Create execute command
+  if (exec.toLower().contains("%f")) {
+    exec.replace(" %f", "", Qt::CaseInsensitive);
+  } else if (exec.toLower().contains("%u")) {
+    exec.replace(" %u", "", Qt::CaseInsensitive);
+  }
+
+  // Start application
+  QProcess *myProcess = new QProcess(this);
+  myProcess->startDetached(exec, QStringList() << curIndex.filePath());
+  myProcess->waitForFinished(1000);
+  //myProcess->terminate();
+}
+//---------------------------------------------------------------------------
+
 void MainWindow::actionMapper(QString cmd)
 {
     QModelIndexList selList;

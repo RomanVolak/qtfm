@@ -84,7 +84,6 @@ public:
   QMimeData * mimeData(const QModelIndexList & indexes) const;
   QHash<QString,QIcon> *mimeIcons;
   QHash<QString,QIcon> *folderIcons;
-  //QHash<QString,QIcon> *icons;
   QCache<QString,QIcon> *icons;
 public slots:
   void notifyChange();
@@ -92,6 +91,7 @@ public slots:
   void eventTimeout();
   void addWatcher(myModelItem* path);
   void clearCutItems();
+  void clearIconCache();
 signals:
   void dragDropPaste(const QMimeData *data, QString newPath,
                      myModel::DragMode mode = DM_UNKNOWN);

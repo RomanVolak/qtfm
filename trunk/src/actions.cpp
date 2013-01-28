@@ -240,12 +240,6 @@ void MainWindow::createActions()
     settingsAct->setIcon(actionIcons->at(15));
     actionList->append(settingsAct);
 
-    editFiletypeAct = new QAction(tr("Edit filetype"), this);
-    editFiletypeAct->setStatusTip(tr("Set default program for opening selected filetype"));
-    connect(editFiletypeAct, SIGNAL(triggered()), this, SLOT(xdgConfig()));
-    editFiletypeAct->setIcon(actionIcons->at(16));
-    actionList->append(editFiletypeAct);
-
     renameAct = new QAction(tr("Rename"), this);
     renameAct->setStatusTip(tr("Rename file"));
     connect(renameAct, SIGNAL(triggered()),this, SLOT(renameFile()));
@@ -439,10 +433,9 @@ void MainWindow::createMenus()
     editMenu->addAction(renameAct);
     editMenu->addAction(deleteAct);
     editMenu->addSeparator();
-    editMenu->addAction(settingsAct);
-    editMenu->addSeparator();
-    editMenu->addAction(editFiletypeAct);
     editMenu->addAction(addBookmarkAct);
+    editMenu->addSeparator();
+    editMenu->addAction(settingsAct);
 
     QMenu *viewMenu = new QMenu(tr("View"));
 

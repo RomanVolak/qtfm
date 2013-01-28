@@ -103,7 +103,6 @@ public slots:
     void delBookmark();
     void editBookmark();
     void toggleWrapBookmarks();
-    bool xdgConfig();
     void showEditDialog();
     bool copyFolder(const QString &srcFolder, const QString &dstFolder, qint64, bool);
     void autoBookmarkMounts();
@@ -151,6 +150,9 @@ signals:
 
 private slots:
     void readShortcuts();
+    void selectApp();
+    void openInApp(QString exec);
+    void openInApp();
 private:
     void createActions();
     void createActionIcons();
@@ -159,6 +161,7 @@ private:
     void writeSettings();
     void recurseFolder(QString path, QString parent, QStringList *);
     int showReplaceMsgBox(const QFileInfo &f1, const QFileInfo &f2);
+    QMenu* createOpenWithMenu();
 
     int zoom;
     int zoomTree;
@@ -244,7 +247,6 @@ private:
     QAction *copyAct;
     QAction *pasteAct;
     QAction *settingsAct;
-    QAction *editFiletypeAct;
     QAction *renameAct;
     QAction *terminalAct;
     QAction *openAct;

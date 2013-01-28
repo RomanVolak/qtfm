@@ -91,6 +91,17 @@ myModel::~myModel() {
 //---------------------------------------------------------------------------
 
 /**
+ * @brief Deletes icon cache
+ */
+void myModel::clearIconCache() {
+  folderIcons->clear();
+  mimeIcons->clear();
+  QFile(QDir::homePath() + "/.config/qtfm/folder.cache").remove();
+  QFile(QDir::homePath() + "/.config/qtfm/file.cache").remove();
+}
+//---------------------------------------------------------------------------
+
+/**
  * @brief Sets whether use real mime types or not
  * @param realMimeTypes
  */
@@ -834,7 +845,7 @@ QVariant myModel::findIcon(myModelItem *item) const {
     // however operation 'getMimeType' could cause slowdown
     if (!type.isExecutable()) {
       QString mime = FileUtils::getMimeType(type.absoluteFilePath());
-      return FileUtils::getMimeIconOrUnknown(mime);
+      return FileUtils::searchMimeIcon(mime);
     }
 
     // If file is executable, set suffix to exec and find/create icon for it
@@ -860,7 +871,7 @@ QVariant myModel::findIcon(myModelItem *item) const {
     }
 
     // Load the icon
-    theIcon = FileUtils::getMimeIconOrUnknown(mimeType);
+    theIcon = FileUtils::searchMimeIcon(mimeType);
   }
 
   // Insert icon to the list of icons
@@ -883,8 +894,7 @@ QVariant myModel::findMimeIcon(myModelItem *item) const {
   }
 
   // Search file system for icon
-  qDebug() << mime;
-  QIcon theIcon = FileUtils::getMimeIcon(mime);
+  QIcon theIcon = FileUtils::searchMimeIcon(mime);
   mimeIcons->insert(mime, theIcon);
   return theIcon;
 }

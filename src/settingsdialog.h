@@ -9,6 +9,8 @@
 #include <QToolButton>
 #include <QSettings>
 #include <QProgressBar>
+#include <QComboBox>
+#include <QGroupBox>
 
 /**
  * @class SettingsDialog
@@ -33,6 +35,12 @@ protected slots:
   void infoCustomAction();
   void getIcon(QTreeWidgetItem *item, int column);
   void onActionChanged(QTreeWidgetItem *item, int column);
+  void onMimeSelected(QTreeWidgetItem* current, QTreeWidgetItem* previous);
+  void updateMimeAssoc(QTreeWidgetItem* item);
+  void showAppDialog();
+  void removeAppAssoc();
+  void moveAppAssocUp();
+  void moveAppAssocDown();
 protected:
   QWidget* createGeneralSettings();
   QWidget* createActionsSettings();
@@ -51,6 +59,7 @@ protected:
   QCheckBox* checkTabs;
   QCheckBox* checkDelete;
   QLineEdit* editTerm;
+  QComboBox* cmbIconTheme;
 
   QTreeWidget *actionsWidget;
   QToolButton *addButton;
@@ -60,8 +69,10 @@ protected:
 
   QTreeWidget* shortsWidget;
 
+  QGroupBox* grpAssoc;
   QProgressBar* progressMime;
   QTreeWidget* mimesWidget;
+  QListWidget* listAssoc;
 };
 
 #endif // SETTINGSDIALOG_H

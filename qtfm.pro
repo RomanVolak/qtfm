@@ -18,8 +18,10 @@ HEADERS += src/mainwindow.h \
     src/mymodelitem.h \
     src/settingsdialog.h \
     src/customactionsmanager.h \
-    src/comboboxdelegate.h \
-    src/processdialog.h
+    src/processdialog.h \
+    src/desktopfile.h \
+    src/applicationdialog.h \
+    src/properties.h
 SOURCES += src/main.cpp \
     src/mainwindow.cpp \
     src/mymodel.cpp \
@@ -33,8 +35,10 @@ SOURCES += src/main.cpp \
     src/mymodelitem.cpp \
     src/settingsdialog.cpp \
     src/customactionsmanager.cpp \
-    src/comboboxdelegate.cpp \
-    src/processdialog.cpp
+    src/processdialog.cpp \
+    src/desktopfile.cpp \
+    src/applicationdialog.cpp \
+    src/properties.cpp
 
 CONFIG += release warn_off thread
 RESOURCES += resources.qrc

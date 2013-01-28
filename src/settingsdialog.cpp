@@ -1,7 +1,8 @@
 #include "settingsdialog.h"
 #include "icondlg.h"
 #include "fileutils.h"
-#include "comboboxdelegate.h"
+#include "applicationdialog.h"
+#include "properties.h"
 
 /**
  * @brief Creates settings dialog
@@ -66,7 +67,6 @@ SettingsDialog::SettingsDialog(QList<QAction *> *actionList,
           SLOT(setCurrentIndex(int)));
   connect(selector, SIGNAL(currentRowChanged(int)), SLOT(loadMimes(int)));
 
-
   // Align items
   for (int i = 0; i < selector->count(); i++) {
     selector->item(i)->setTextAlignment(Qt::AlignLeft | Qt::AlignVCenter);
@@ -93,6 +93,8 @@ QWidget *SettingsDialog::createGeneralSettings() {
   checkThumbs = new QCheckBox(grpAppear);
   checkHidden = new QCheckBox(grpAppear);
   checkTabs = new QCheckBox(grpAppear);
+  cmbIconTheme = new QComboBox(grpAppear);
+  layoutAppear->addRow(tr("Icon theme:"), cmbIconTheme);
   layoutAppear->addRow(tr("Show thumbnails: "), checkThumbs);
   layoutAppear->addRow(tr("Show hidden files: "), checkHidden);
   layoutAppear->addRow(tr("Tabs on top: "), checkTabs);
@@ -263,10 +265,25 @@ QWidget* SettingsDialog::createMimeSettings() {
   QGroupBox* grpMimes = new QGroupBox(tr("Mime types"), widget);
   QVBoxLayout *layoutMimes = new QVBoxLayout(grpMimes);
 
+  // Editation of application list
+  grpAssoc = new QGroupBox(tr("Applications"), widget);
+  grpAssoc->setEnabled(false);
+  QGridLayout* layoutAssoc = new QGridLayout(grpAssoc);
+  listAssoc = new QListWidget(grpAssoc);
+  QPushButton* btnAdd = new QPushButton(tr("Add.."), grpAssoc);
+  QPushButton* btnRem = new QPushButton(tr("Remove"), grpAssoc);
+  QPushButton* btnUp = new QPushButton(tr("Move up"), grpAssoc);
+  QPushButton* btnDown = new QPushButton(tr("Move down"), grpAssoc);
+  layoutAssoc->addWidget(listAssoc, 0, 0, 4, 1);
+  layoutAssoc->addWidget(btnAdd, 0, 1);
+  layoutAssoc->addWidget(btnRem, 1, 1);
+  layoutAssoc->addWidget(btnUp, 2, 1);
+  layoutAssoc->addWidget(btnDown, 3, 1);
+
   // Tree widget with list of shortcuts
   mimesWidget = new QTreeWidget(grpMimes);
   mimesWidget->setAlternatingRowColors(true);
-  mimesWidget->setRootIsDecorated(false);
+  mimesWidget->setRootIsDecorated(true);
   mimesWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
   QTreeWidgetItem *header = mimesWidget->headerItem();
   header->setText(0, tr("Mime"));
@@ -274,9 +291,10 @@ QWidget* SettingsDialog::createMimeSettings() {
   mimesWidget->setColumnWidth(0, 220);
   layoutMimes->addWidget(mimesWidget);
   layoutWidget->addWidget(grpMimes);
+  layoutWidget->addWidget(grpAssoc);
 
   // Load application list
-  QStringList apps = FileUtils::getApplications();
+  QStringList apps = FileUtils::getApplicationNames();
   apps.replaceInStrings(".desktop", "");
   apps.sort();
 
@@ -301,10 +319,157 @@ QWidget* SettingsDialog::createMimeSettings() {
     }
   }
 
-  // Set delegate
-  mimesWidget->setItemDelegateForColumn(1, new ComboBoxDelegate(apps, icons));
+  // Connect
+  connect(mimesWidget,
+          SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)),
+          SLOT(onMimeSelected(QTreeWidgetItem*,QTreeWidgetItem*)));
+  connect(btnAdd, SIGNAL(clicked()), SLOT(showAppDialog()));
+  connect(btnRem, SIGNAL(clicked()), SLOT(removeAppAssoc()));
+  connect(btnUp, SIGNAL(clicked()), SLOT(moveAppAssocUp()));
+  connect(btnDown, SIGNAL(clicked()), SLOT(moveAppAssocDown()));
 
   return widget;
+}
+//---------------------------------------------------------------------------
+
+/**
+ * @brief Updates default applications editor
+ * @param current
+ * @param previous
+ */
+void SettingsDialog::onMimeSelected(QTreeWidgetItem *current,
+                                    QTreeWidgetItem *previous) {
+
+  // Store previously used associations
+  updateMimeAssoc(previous);
+
+  // Clear previously used associations
+  listAssoc->clear();
+
+  // Check if current is editable
+  if (current->childCount() > 0) {
+    grpAssoc->setEnabled(false);
+    return;
+  }
+
+  // Enable editation
+  grpAssoc->setEnabled(true);
+
+  // Prepare source of icons
+  QDir appIcons("/usr/share/pixmaps","", 0, QDir::Files | QDir::NoDotAndDotDot);
+  QStringList iconFiles = appIcons.entryList();
+  QIcon defaultIcon = QIcon::fromTheme("application-x-executable");
+
+  QStringList apps = mimesWidget->currentItem()->text(1).remove(" ").split(";");
+  foreach (QString app, apps) {
+
+    // Skip empty string
+    if (app.compare("") == 0) {
+      continue;
+    }
+
+    // Finds icon
+    QIcon temp = QIcon::fromTheme(app).pixmap(16, 16);
+    if (temp.isNull()) {
+      QStringList searchIcons = iconFiles.filter(app);
+      if (searchIcons.count() > 0) {
+        temp = QIcon("/usr/share/pixmaps/" + searchIcons.at(0));
+      } else {
+        temp = defaultIcon;
+      }
+    }
+
+    // Add application
+    listAssoc->addItem(new QListWidgetItem(temp, app, listAssoc));
+  }
+}
+//---------------------------------------------------------------------------
+
+/**
+ * @brief Updates mime association
+ * @param item
+ */
+void SettingsDialog::updateMimeAssoc(QTreeWidgetItem* item) {
+  if (item && item->childCount() == 0) {
+    QStringList associations;
+    for (int i = 0; i < listAssoc->count(); i++) {
+      associations.append(listAssoc->item(i)->text());
+    }
+    item->setText(1, associations.join(";"));
+  }
+}
+//---------------------------------------------------------------------------
+
+/**
+ * @brief Displays application chooser dialog
+ */
+void SettingsDialog::showAppDialog() {
+
+  // Choose application
+  ApplicationDialog *dialog = new ApplicationDialog(this);
+  if (dialog->exec()) {
+
+    // If application name is empty, exit
+    if (dialog->getCurrentLauncher().isEmpty()) {
+      return;
+    }
+
+    // Retrieve launcher name
+    QString name = dialog->getCurrentLauncher();
+
+    // If application with same name is already used, exit
+    for (int i = 0; i < listAssoc->count(); i++) {
+      if (listAssoc->item(i)->text().compare(name) == 0) {
+        return;
+      }
+    }
+
+    // Add new launcher to the list of launchers
+    if (dialog->getCurrentLauncher().compare("") != 0) {
+      QIcon icon = QIcon::fromTheme(name).pixmap(16, 16);
+      listAssoc->addItem(new QListWidgetItem(icon, name, listAssoc));
+      updateMimeAssoc(mimesWidget->currentItem());
+    }
+  }
+}
+//---------------------------------------------------------------------------
+
+/**
+ * @brief Removes association of application and mime type
+ */
+void SettingsDialog::removeAppAssoc() {
+  qDeleteAll(listAssoc->selectedItems());
+  updateMimeAssoc(mimesWidget->currentItem());
+}
+//---------------------------------------------------------------------------
+
+/**
+ * @brief Moves association up in list
+ */
+void SettingsDialog::moveAppAssocUp() {
+  QListWidgetItem *current = listAssoc->currentItem();
+  int currIndex = listAssoc->row(current);
+  QListWidgetItem *prev = listAssoc->item(listAssoc->row(current) - 1);
+  int prevIndex = listAssoc->row(prev);
+  QListWidgetItem *temp = listAssoc->takeItem(prevIndex);
+  listAssoc->insertItem(prevIndex, current);
+  listAssoc->insertItem(currIndex, temp);
+  updateMimeAssoc(mimesWidget->currentItem());
+}
+//---------------------------------------------------------------------------
+
+/**
+ * @brief Moves association down in list
+ */
+void SettingsDialog::moveAppAssocDown() {
+  QListWidgetItem *current = listAssoc->currentItem();
+  int currIndex = listAssoc->row(current);
+  QListWidgetItem *next = listAssoc->item(listAssoc->row(current) + 1);
+  int nextIndex = listAssoc->row(next);
+  QListWidgetItem *temp = listAssoc->takeItem(nextIndex);
+  listAssoc->insertItem(currIndex, temp);
+  listAssoc->insertItem(nextIndex, current);
+  updateMimeAssoc(mimesWidget->currentItem());
 }
 //---------------------------------------------------------------------------
 
@@ -319,6 +484,17 @@ void SettingsDialog::readSettings() {
   checkHidden->setChecked(settingsPtr->value("hiddenMode", true).toBool());
   checkDelete->setChecked(settingsPtr->value("confirmDelete", true).toBool());
   editTerm->setText(settingsPtr->value("term").toString());
+
+   // Load icon themes
+  QString currentTheme = settingsPtr->value("forceTheme").toString();
+  QDirIterator it("/usr/share/icons", QDir::Dirs | QDir::NoDotAndDotDot);
+  QStringList iconThemes;
+  while (it.hasNext()) {
+    it.next();
+    iconThemes.append(it.fileName());
+  }
+  cmbIconTheme->addItems(iconThemes);
+  cmbIconTheme->setCurrentIndex(iconThemes.indexOf(currentTheme));
 
   // Read custom actions
   checkOutput->setChecked(settingsPtr->value("showActionOutput", true).toBool());
@@ -451,15 +627,14 @@ void SettingsDialog::loadMimes(int section) {
   progressMime->setRange(1, mimes.size());
 
   // Load list of default applications
-  // NOTE: xdg changes -> now uses mimeapps.list instead of defaults.list
-  QString xdgDefaults;
-  QString path = QDir::homePath() + "/.local/share/applications/mimeapps.list";
-  if (QFileInfo(path).exists()) {
-    xdgDefaults = path;
-  } else {
-    xdgDefaults = QDir::homePath() + "/.local/share/applications/defaults.list";
-  }
-  QSettings defaults(xdgDefaults, QSettings::IniFormat, this);
+  Properties defaults = FileUtils::loadDefaults();
+
+  // Default icon
+  QIcon defaultIcon = QIcon::fromTheme("unknown");
+
+  // Mime cathegories and their icons
+  QMap<QString, QTreeWidgetItem*> categories;
+  QMap<QTreeWidgetItem*, QIcon> genericIcons;
 
   // Load mime settings
   foreach (QString mime, mimes) {
@@ -477,16 +652,35 @@ void SettingsDialog::loadMimes(int section) {
       continue;
     }
 
+    // Parse mime
+    QStringList splitMime = mime.split("/");
+
+    // Retrieve cathegory
+    QIcon icon;
+    QString categoryName = splitMime.first();
+    QTreeWidgetItem* category = categories.value(categoryName, NULL);
+    if (!category) {
+      category = new QTreeWidgetItem(mimesWidget);
+      category->setText(0, categoryName);
+      category->setFlags(Qt::ItemIsEnabled);
+      categories.insert(categoryName, category);
+      icon = FileUtils::searchGenericIcon(categoryName, defaultIcon);
+      genericIcons.insert(category, icon);
+    } else {
+      icon = genericIcons.value(category);
+    }
+
     // Load icon and default application for current mime
-    QIcon icon = FileUtils::getMimeIconOrUnknown(mime);
-    QString appName = defaults.value("Default Applications/" + mime).toString();
+    // NOTE: if icon is not found generic icon is used
+    icon = FileUtils::searchMimeIcon(mime, icon);
+    QString appName = defaults.value(mime).toString();
 
     // Create item from current mime
-    QTreeWidgetItem *item = new QTreeWidgetItem(mimesWidget);
+    QTreeWidgetItem *item = new QTreeWidgetItem(category);
     item->setIcon(0, icon);
-    item->setText(0, mime);
+    item->setText(0, splitMime.at(1));
     item->setText(1, appName.remove(".desktop"));
-    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEditable | Qt::ItemIsEnabled);
+    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
   }
 
   // Move to mimes
@@ -507,6 +701,7 @@ bool SettingsDialog::saveSettings() {
   settingsPtr->setValue("hiddenMode", checkHidden->isChecked());
   settingsPtr->setValue("confirmDelete", checkDelete->isChecked());
   settingsPtr->setValue("term", editTerm->text());
+  settingsPtr->setValue("forceTheme", cmbIconTheme->currentText());
 
   // Custom actions
   // ------------------------------------------------------------------------
@@ -551,23 +746,32 @@ bool SettingsDialog::saveSettings() {
   // ------------------------------------------------------------------------
   QProcess *p = new QProcess(this);
   for (int i = 0; i < mimesWidget->topLevelItemCount(); ++i) {
-    QString mime = mimesWidget->topLevelItem(i)->text(0);
-    QString appName = mimesWidget->topLevelItem(i)->text(1);
-    if (!appName.isEmpty()) {
-      appName += ".desktop";
-      p->start("xdg-mime", QStringList() << "default" << appName << mime);
-      p->waitForFinished();
+    QTreeWidgetItem* cathegory = mimesWidget->topLevelItem(i);
+    QString cathegoryName = cathegory->text(0) + "/";
+    for (int j = 0; j < cathegory->childCount(); j++) {
+      QString mime = cathegoryName + cathegory->child(j)->text(0);
+      QString appNames = cathegory->child(j)->text(1);
+      if (!appNames.isEmpty()) {
+        QStringList temps = appNames.split(";");
+        for (int i = 0; i < temps.size(); i++) {
+          temps[i] = temps[i] + ".desktop";
+        }
+        QString appName = temps.join(";");
+        p->start("xdg-mime", QStringList() << "default" << appName << mime);
+        p->waitForFinished();
+      }
     }
   }
 
   // Check for shortcuts duplicity
   // ------------------------------------------------------------------------
   if (duplicates.count()) {
-    QMessageBox::information(this, tr("Warning"),
-                             QString(tr("Duplicate shortcuts detected:<p>%1"))
-                             .arg(duplicates.join("<p>")));
+    QString title = tr("Warning");
+    QString msg = tr("Duplicate shortcuts detected:<p>%1");
+    QMessageBox::information(this, title, msg.arg(duplicates.join("<p>")));
   }
 
+  // Save succeded
   return true;
 }
 //---------------------------------------------------------------------------
@@ -622,7 +826,7 @@ void SettingsDialog::addCustomAction() {
                 | Qt::ItemIsEnabled
                 | Qt::ItemIsDragEnabled
                 | Qt::ItemIsUserCheckable);
-  tmp->setCheckState(3,Qt::Unchecked);
+  tmp->setCheckState(3, Qt::Unchecked);
   tmp->setSelected(true);
   actionsWidget->setCurrentItem(tmp);
   actionsWidget->scrollToItem(tmp);

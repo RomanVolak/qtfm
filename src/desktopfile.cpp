@@ -17,13 +17,14 @@ DesktopFile::DesktopFile(const QString &fileName) {
     return;
   }
 
-  // Loads file
-  Properties desktop(fileName);
+  // Loads .desktop file (read from 'Desktop Entry' group)
+  Properties desktop(fileName, "Desktop Entry");
   name = desktop.value("Name", "").toString();
   exec = desktop.value("Exec", "").toString();
   icon = desktop.value("Icon", "").toString();
   type = desktop.value("Type", "Application").toString();
   categories = desktop.value("Categories").toString().remove(" ").split(";");
+  mimeType = desktop.value("MimeType").toString().remove(" ").split(";");
 
   // Fix categories
   if (categories.first().compare("") == 0) {
@@ -64,5 +65,10 @@ QString DesktopFile::getType() const {
 
 QStringList DesktopFile::getCategories() const {
   return categories;
+}
+//---------------------------------------------------------------------------
+
+QStringList DesktopFile::getMimeType() const {
+  return mimeType;
 }
 //---------------------------------------------------------------------------

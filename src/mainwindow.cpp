@@ -20,16 +20,26 @@
 ****************************************************************************/
 
 #include <QtGui>
+#include <QDockWidget>
+#include <QHeaderView>
+#include <QMessageBox>
+#include <QInputDialog>
+#include <QPushButton>
+#include <QApplication>
+#include <QStatusBar>
+#include <QMenu>
 #include <sys/vfs.h>
 #include <fcntl.h>
 
+#if QT_VERSION >= 0x050000
+  #include <QtConcurrent/QtConcurrent>
+#else
+#endif
+
 #include "mainwindow.h"
 #include "mymodel.h"
-#include "actions.cpp"
-#include "bookmarks.cpp"
 #include "progressdlg.h"
 #include "fileutils.h"
-#include "settingsdialog.h"
 #include "applicationdialog.h"
 
 MainWindow::MainWindow()
@@ -89,7 +99,15 @@ MainWindow::MainWindow()
 
     QIcon::setThemeName(temp);
 
-    modelList = new myModel(settings->value("realMimeTypes", true).toBool());
+    // Create mime utils
+    mimeUtils = new MimeUtils(this);
+    QString tmp = "/.local/share/applications/mimeapps.list";
+    QString name = settings->value("defMimeAppsFile", tmp).toString();
+    mimeUtils->setDefaultsFileName(name);
+
+    // Create filesystem model
+    bool realMime = settings->value("realMimeTypes", true).toBool();
+    modelList = new myModel(realMime, mimeUtils);
 
     dockTree = new QDockWidget(tr("Tree"),this,Qt::SubWindow);
     dockTree->setObjectName("treeDock");
@@ -186,10 +204,10 @@ MainWindow::MainWindow()
 
     setWindowIcon(QIcon(":/images/qtfm.png"));
 
-    // Creates custom action manager
+    // Create custom action manager
     customActManager = new CustomActionsManager(settings, actionList, this);
 
-    // Creates bookmarks model
+    // Create bookmarks model
     modelBookmarks = new bookmarkmodel(modelList->folderIcons);
 
     // Load settings before showing window
@@ -349,6 +367,9 @@ void MainWindow::lateStart() {
 
   // Read custom actions
   QTimer::singleShot(100, customActManager, SLOT(readActions()));
+
+  // Read defaults
+  QTimer::singleShot(100, mimeUtils, SLOT(generateDefaults()));
 }
 //---------------------------------------------------------------------------
 
@@ -476,7 +497,7 @@ void MainWindow::treeSelectionChanged(QModelIndex current, QModelIndex previous)
     if(!name.exists()) return;
 
     curIndex = name;
-    setWindowTitle(curIndex.fileName() + " - qtFM v5.7");
+    setWindowTitle(curIndex.fileName() + " - QtFM 5.8");
 
     if(tree->hasFocus() && QApplication::mouseButtons() == Qt::MidButton)
     {
@@ -730,381 +751,40 @@ void MainWindow::tabChanged(int index)
 
 
 //---------------------------------------------------------------------------
-void MainWindow::listDoubleClicked(QModelIndex current)
-{
-    Qt::KeyboardModifiers mods = QApplication::keyboardModifiers();
-    if(mods == Qt::ControlModifier || mods == Qt::ShiftModifier) return;
 
-    if(modelList->isDir(modelView->mapToSource(current)))
-        tree->setCurrentIndex(modelTree->mapFromSource(modelView->mapToSource(current)));
-    else
-        executeFile(current,0);
-}
-
-
-//---------------------------------------------------------------------------
-void MainWindow::executeFile(QModelIndex index, bool run)
-{
-    QProcess *myProcess = new QProcess(this);
-
-    if(run)
-        myProcess->startDetached(modelList->filePath(modelView->mapToSource(index)));             //is executable?
-    else
-    {
-        QString type = modelList->getMimeType(modelView->mapToSource(index));
-
-        QHashIterator<QString, QAction*> i(*customActManager->getActions());
-        while (i.hasNext())
-        {
-            i.next();
-            if(type.contains(i.key()))
-                if(i.value()->text() == "Open")
-                {
-                    i.value()->trigger();
-                    return;
-                }
-        }
-
-        myProcess->start("xdg-open",QStringList() << modelList->filePath(modelView->mapToSource(index)));
-        myProcess->waitForFinished(1000);
-        myProcess->terminate();
-        if(myProcess->exitCode() != 0)
-        {
-          qDebug() << "xdg config deleted";
-        }
-    }
-}
-
-//---------------------------------------------------------------------------
-void MainWindow::runFile()
-{
-    executeFile(listSelectionModel->currentIndex(),1);
-}
-
-//---------------------------------------------------------------------------
-void MainWindow::openFolderAction()
-{
-    tree->setCurrentIndex(modelTree->mapFromSource(listSelectionModel->currentIndex()));
-}
-
-//---------------------------------------------------------------------------
-void MainWindow::openFile()
-{
-    QModelIndexList items;
-
-    if(listSelectionModel->selectedRows(0).count()) items = listSelectionModel->selectedRows(0);
-    else items = listSelectionModel->selectedIndexes();
-
-    foreach(QModelIndex index, items)
-        executeFile(index,0);
-}
-
-//---------------------------------------------------------------------------
-void MainWindow::goUpDir()
-{
-    tree->setCurrentIndex(tree->currentIndex().parent());
-}
-
-//---------------------------------------------------------------------------
-void MainWindow::goBackDir()
-{
-    if(pathEdit->count() == 1) return;
-
-    QString current = pathEdit->currentText();
-
-    if(current.contains(pathEdit->itemText(1)))
-        backIndex = modelList->index(current);
-
-    do
-    {
-        pathEdit->removeItem(0);
-        if(tabs->count()) tabs->remHistory();
-    }
-    while(!QFileInfo(pathEdit->itemText(0)).exists() || pathEdit->itemText(0) == current);
-
-    tree->setCurrentIndex(modelTree->mapFromSource(modelList->index(pathEdit->itemText(0))));
-}
-
-//---------------------------------------------------------------------------
-void MainWindow::goHomeDir()
-{
-    tree->setCurrentIndex(modelTree->mapFromSource(modelList->index(QDir::homePath())));
-}
-
-//---------------------------------------------------------------------------
-void MainWindow::pathEditChanged(QString path)
-{
-    QString info = path;
-
-    if(!QFileInfo(path).exists()) return;
-    info.replace("~",QDir::homePath());
-
-    QModelIndex temp = modelList->index(info);
-    //modelTree->invalidate();
-
-    tree->setCurrentIndex(modelTree->mapFromSource(temp));
-}
-
-//---------------------------------------------------------------------------
-void MainWindow::terminalRun()
-{
-    if(term.isEmpty())
-    {
-        term = QInputDialog::getText(this,tr("Setting"), tr("Default terminal:"), QLineEdit::Normal, "urxvt");
-        settings->setValue("term",term);
-    }
-
-    QStringList args(term.split(" "));
-    QString name = args.at(0);
-    args.removeAt(0);
-    QProcess::startDetached(name,args,pathEdit->itemText(0));
-}
-
-//---------------------------------------------------------------------------
-void MainWindow::newDir()
-{
-    QModelIndex newDir;
-
-    if(!QFileInfo(pathEdit->itemText(0)).isWritable())
-    {
-        status->showMessage(tr("Read only...cannot create folder"));
-        return;
-    }
-
-    newDir = modelView->mapFromSource(modelList->insertFolder(modelList->index(pathEdit->itemText(0))));
-    listSelectionModel->setCurrentIndex(newDir,QItemSelectionModel::ClearAndSelect);
-
-    if(stackWidget->currentIndex() == 0) list->edit(newDir);
-    else detailTree->edit(newDir);
-}
-
-//---------------------------------------------------------------------------
-void MainWindow::newFile()
-{
-    QModelIndex fileIndex;
-
-    if(!QFileInfo(pathEdit->itemText(0)).isWritable())
-    {
-        status->showMessage(tr("Read only...cannot create file"));
-        return;
-    }
-
-    fileIndex = modelView->mapFromSource(modelList->insertFile(modelList->index(pathEdit->itemText(0))));
-    listSelectionModel->setCurrentIndex(fileIndex,QItemSelectionModel::ClearAndSelect);
-
-    if(stackWidget->currentIndex() == 0) list->edit(fileIndex);
-    else detailTree->edit(fileIndex);
-}
-
-//---------------------------------------------------------------------------
-void MainWindow::deleteFile()
-{
-    QModelIndexList selList;
-    bool yesToAll = false;
-
-    if(focusWidget() == tree)
-        selList << modelList->index(pathEdit->itemText(0));
-    else
-    {
-        QModelIndexList proxyList;
-        if(listSelectionModel->selectedRows(0).count()) proxyList = listSelectionModel->selectedRows(0);
-        else proxyList = listSelectionModel->selectedIndexes();
-
-        foreach(QModelIndex proxyItem, proxyList)
-            selList.append(modelView->mapToSource(proxyItem));
-    }
-
-    bool ok = false;
-    bool confirm;
-
-    if(settings->value("confirmDelete").isNull())					//not defined yet
-    {
-        if(QMessageBox::question(this,tr("Delete confirmation"),tr("Do you want to confirm all delete operations?"),QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) confirm = 1;
-        else confirm = 0;
-        settings->setValue("confirmDelete",confirm);
-    }
-    else confirm = settings->value("confirmDelete").toBool();
-
-
-    for(int i = 0; i < selList.count(); ++i)
-    {
-        QFileInfo file(modelList->filePath(selList.at(i)));
-        if(file.isWritable())
-        {
-            if(file.isSymLink()) ok = QFile::remove(file.filePath());
-            else
-            {
-                if(yesToAll == false)
-                {
-                    if(confirm)
-                    {
-                        int ret = QMessageBox::information(this,tr("Careful"),tr("Are you sure you want to delete <p><b>\"") + file.filePath() + "</b>?",QMessageBox::Yes | QMessageBox::No | QMessageBox::YesToAll);
-                        if(ret == QMessageBox::YesToAll) yesToAll = true;
-                        if(ret == QMessageBox::No) return;
-                    }
-                }
-                ok = modelList->remove(selList.at(i));
-            }
-        }
-        else if(file.isSymLink()) ok = QFile::remove(file.filePath());
-    }
-
-    if(!ok) QMessageBox::information(this,tr("Failed"),tr("Could not delete some items...do you have the right permissions?"));
-
+/**
+ * @brief Doubleclick on icon/launcher
+ * @param current
+ */
+void MainWindow::listDoubleClicked(QModelIndex current) {
+  Qt::KeyboardModifiers mods = QApplication::keyboardModifiers();
+  if (mods == Qt::ControlModifier || mods == Qt::ShiftModifier) {
     return;
-}
-//---------------------------------------------------------------------------
-
-void MainWindow::toggleIcons()
-{
-    if(list->rootIndex() != modelList->index(pathEdit->currentText()))
-            list->setRootIndex(modelView->mapFromSource(modelList->index(pathEdit->currentText())));
-
-    if(iconAct->isChecked())
-    {
-        currentView = 1;
-        list->setViewMode(QListView::IconMode);
-        list->setGridSize(QSize(zoom+32,zoom+32));
-        list->setIconSize(QSize(zoom,zoom));
-        list->setFlow(QListView::LeftToRight);
-
-        modelList->setMode(thumbsAct->isChecked());
-
-        stackWidget->setCurrentIndex(0);
-        detailAct->setChecked(0);
-        detailTree->setMouseTracking(false);
-
-        list->setMouseTracking(true);
-
-        if(tabs->count()) tabs->setType(1);
-    }
-    else
-    {
-        currentView = 0;
-        list->setViewMode(QListView::ListMode);
-        list->setGridSize(QSize());
-        list->setIconSize(QSize(zoomList,zoomList));
-        list->setFlow(QListView::TopToBottom);
-
-        modelList->setMode(thumbsAct->isChecked());
-        list->setMouseTracking(false);
-
-        if(tabs->count()) tabs->setType(0);
-    }
-
-    list->setDragDropMode(QAbstractItemView::DragDrop);
-    list->setDefaultDropAction(Qt::MoveAction);
-}
-//---------------------------------------------------------------------------
-
-/**
- * @brief Sets sort column
- * @param columnAct
- */
-void MainWindow::setSortColumn(QAction *columnAct) {
-
-  if (list->rootIndex() != modelList->index(pathEdit->currentText())) {
-    list->setRootIndex(modelView->mapFromSource(modelList->index(pathEdit->currentText())));
   }
-
-  columnAct->setChecked(true);
-
-  if (columnAct == sortNameAct) {
-    currentSortColumn =  0;
-  } else if (columnAct == sortDateAct) {
-    currentSortColumn =  3;
-  } else if (columnAct == sortSizeAct) {
-    currentSortColumn = 1;
-  }
-  settings->setValue("sortBy", currentSortColumn);
-}
-//---------------------------------------------------------------------------
-
-/**
- * @brief Sets sort column
- * @param action
- */
-void MainWindow::toggleSortBy(QAction *action) {
-  setSortColumn(action);
-  modelView->sort(currentSortColumn, currentSortOrder);
-}
-//---------------------------------------------------------------------------
-
-/**
- * @brief Sets sort order
- * @param order
- */
-void MainWindow::setSortOrder(Qt::SortOrder order) {
-
-  // Set root index
-  if (list->rootIndex() != modelList->index(pathEdit->currentText())) {
-    list->setRootIndex(modelView->mapFromSource(modelList->index(pathEdit->currentText())));
-  }
-
-  // Change sort order
-  currentSortOrder = order;
-  sortAscAct->setChecked(!((bool) currentSortOrder));
-  settings->setValue("sortOrder", currentSortOrder);
-}
-//---------------------------------------------------------------------------
-
-/**
- * @brief Changes sort order
- */
-void MainWindow::toggleSortOrder() {
-  setSortOrder(currentSortOrder == Qt::AscendingOrder ? Qt::DescendingOrder
-                                                      : Qt::AscendingOrder);
-  modelView->sort(currentSortColumn, currentSortOrder);
-}
-//---------------------------------------------------------------------------
-
-void MainWindow::toggleThumbs()
-{
-    if(currentView != 2) toggleIcons();
-    else toggleDetails();
-}
-//---------------------------------------------------------------------------
-
-void MainWindow::toggleDetails() {
-  if (detailAct->isChecked() == false) {
-    toggleIcons();
-    stackWidget->setCurrentIndex(0);
-    detailTree->setMouseTracking(false);
+  if (modelList->isDir(modelView->mapToSource(current))) {
+    QModelIndex i = modelView->mapToSource(current);
+    tree->setCurrentIndex(modelTree->mapFromSource(i));
   } else {
-    currentView = 2;
-    if (detailTree->rootIndex() != modelList->index(pathEdit->currentText())) {
-      detailTree->setRootIndex(modelView->mapFromSource(
-                                 modelList->index(pathEdit->currentText())));
-    }
-    detailTree->setMouseTracking(true);
-    stackWidget->setCurrentIndex(1);
-    modelList->setMode(thumbsAct->isChecked());
-    iconAct->setChecked(0);
-    if (tabs->count()) {
-      tabs->setType(2);
-    }
+    executeFile(current, 0);
   }
 }
 //---------------------------------------------------------------------------
 
-void MainWindow::toggleHidden() {
-
-  if (hiddenAct->isChecked() == false) {
-    if (curIndex.isHidden()) {
-      listSelectionModel->clear();
-    }
-    modelView->setFilterRegExp("no");
-    modelTree->setFilterRegExp("no");
-  } else {
-    modelView->setFilterRegExp("");
-    modelTree->setFilterRegExp("");
-  }
-
-  modelView->invalidate();
-  dirLoaded();
+/**
+ * @brief Reaction for change of path edit (location edit)
+ * @param path
+ */
+void MainWindow::pathEditChanged(QString path) {
+  QString info = path;
+  if (!QFileInfo(path).exists()) return;
+  info.replace("~",QDir::homePath());
+  tree->setCurrentIndex(modelTree->mapFromSource(modelList->index(info)));
 }
 //---------------------------------------------------------------------------
 
+/**
+ * @brief Reaction for change of clippboard content
+ */
 void MainWindow::clipboardChanged() {
   if (QApplication::clipboard()->mimeData()->hasUrls()) {
     pasteAct->setEnabled(true);
@@ -1115,84 +795,25 @@ void MainWindow::clipboardChanged() {
 }
 //---------------------------------------------------------------------------
 
-void MainWindow::cutFile()
-{
-    QModelIndexList selList;
-    QStringList fileList;
-
-    if(focusWidget() == tree) selList << modelView->mapFromSource(modelList->index(pathEdit->itemText(0)));
-    else
-    if(listSelectionModel->selectedRows(0).count()) selList = listSelectionModel->selectedRows(0);
-    else selList = listSelectionModel->selectedIndexes();
-
-
-    foreach(QModelIndex item, selList)
-        fileList.append(modelList->filePath(modelView->mapToSource(item)));
-
-    clearCutItems();
-    modelList->addCutItems(fileList);
-
-    //save a temp file to allow pasting in a different instance
-    QFile tempFile(QDir::tempPath() + "/qtfm.temp");
-    tempFile.open(QIODevice::WriteOnly);
-    QDataStream out(&tempFile);
-    out << fileList;
-    tempFile.close();
-
-    QApplication::clipboard()->setMimeData(modelView->mimeData(selList));
-
-    modelTree->invalidate();
-    listSelectionModel->clear();
-}
-
-//---------------------------------------------------------------------------
-void MainWindow::copyFile()
-{
-    QModelIndexList selList;
-    if(listSelectionModel->selectedRows(0).count()) selList = listSelectionModel->selectedRows(0);
-    else selList = listSelectionModel->selectedIndexes();
-
-    if(selList.count() == 0)
-    if(focusWidget() == tree) selList << modelView->mapFromSource(modelList->index(pathEdit->itemText(0)));
-    else return;
-
-    clearCutItems();
-
-    QStringList text;
-    foreach(QModelIndex item,selList)
-        text.append(modelList->filePath(modelView->mapToSource(item)));
-
-    QApplication::clipboard()->setText(text.join("\n"),QClipboard::Selection);
-    QApplication::clipboard()->setMimeData(modelView->mimeData(selList));
-
-    cutAct->setData(0);
-}
-
-//---------------------------------------------------------------------------
-
 /**
  * @brief Pastes from clipboard
  */
-void MainWindow::pasteClipboard()
-{
-    QString newPath;
-    QStringList cutList;
+void MainWindow::pasteClipboard() {
+  QString newPath;
+  QStringList cutList;
 
-    if(curIndex.isDir()) newPath = curIndex.filePath();
-    else newPath = pathEdit->itemText(0);
+  if (curIndex.isDir()) newPath = curIndex.filePath();
+  else newPath = pathEdit->itemText(0);
 
-    //check list of files that are to be cut
-    QFile tempFile(QDir::tempPath() + "/qtfm.temp");
-    if(tempFile.exists())
-    {
-        QModelIndexList list;
-        tempFile.open(QIODevice::ReadOnly);
-        QDataStream out(&tempFile);
-        out >> cutList;
-        tempFile.close();
-    }
-
-    pasteLauncher(QApplication::clipboard()->mimeData(), newPath, cutList);
+  // Check list of files that are to be cut
+  QFile tempFile(QDir::tempPath() + "/qtfm.temp");
+  if (tempFile.exists()) {
+    tempFile.open(QIODevice::ReadOnly);
+    QDataStream out(&tempFile);
+    out >> cutList;
+    tempFile.close();
+  }
+  pasteLauncher(QApplication::clipboard()->mimeData(), newPath, cutList);
 }
 //---------------------------------------------------------------------------
 
@@ -1212,10 +833,10 @@ void MainWindow::dragLauncher(const QMimeData *data, const QString &newPath,
   if (dragMode == myModel::DM_UNKNOWN) {
     QMessageBox box;
     box.setWindowTitle(tr("What do you want to do?"));
-    QPushButton *move = box.addButton(tr("Move here"), QMessageBox::ActionRole);
-    QPushButton *copy = box.addButton(tr("Copy here"), QMessageBox::ActionRole);
-    QPushButton *link = box.addButton(tr("Link here"), QMessageBox::ActionRole);
-    QPushButton *canc = box.addButton(QMessageBox::Cancel);
+    QAbstractButton *move = box.addButton(tr("Move here"), QMessageBox::ActionRole);
+    QAbstractButton *copy = box.addButton(tr("Copy here"), QMessageBox::ActionRole);
+    QAbstractButton *link = box.addButton(tr("Link here"), QMessageBox::ActionRole);
+    QAbstractButton *canc = box.addButton(QMessageBox::Cancel);
     box.exec();
     if (box.clickedButton() == move) {
       dragMode = myModel::DM_MOVE;
@@ -1401,287 +1022,6 @@ void MainWindow::progressFinished(int ret,QStringList newFiles)
 
 //---------------------------------------------------------------------------
 
-/**
- * @brief Pastes list of files/dirs into new path
- * @param files list of files
- * @param newPath new (destination) path
- * @param cutList list of files that are going to be removed from source path
- * @return true if operation was successfull
- */
-bool MainWindow::pasteFiles(const QList<QUrl> &files, const QString &newPath,
-                            const QStringList &cutList) {
-
-  // Temporary variables
-  bool ok = true;
-  QStringList newFiles;
-
-  // Quit if folder not writable
-  if (!QFileInfo(newPath).isWritable()
-      || newPath == QDir(files.at(0).toLocalFile()).path()) {
-    emit copyProgressFinished(1, newFiles);
-    return 0;
-  }
-
-  // Get total size in bytes
-  qint64 total = FileUtils::totalSize(files);
-
-  // Check available space on destination before we start
-  struct statfs info;
-  statfs(newPath.toLocal8Bit(), &info);
-  if ((qint64) info.f_bavail * info.f_bsize < total) {
-
-    // If it is a cut/move on the same device it doesn't matter
-    if (cutList.count()) {
-      qint64 driveSize = (qint64) info.f_bavail*info.f_bsize;
-      statfs(files.at(0).path().toLocal8Bit(),&info);
-
-      // Same device?
-      if ((qint64) info.f_bavail*info.f_bsize != driveSize) {
-        emit copyProgressFinished(2, newFiles);
-        return 0;
-      }
-    } else {
-      emit copyProgressFinished(2, newFiles);
-      return 0;
-    }
-  }
-
-  // Main loop
-  for (int i = 0; i < files.count(); ++i) {
-
-    // Canceled ?
-    if (progress->result() == 1) {
-      emit copyProgressFinished(0, newFiles);
-      return 1;
-    }
-
-    // Destination file name and url
-    QFileInfo temp(files.at(i).toLocalFile());
-    QString destName = temp.fileName();
-    QString destUrl = newPath + QDir::separator() + destName;
-
-    // Only do 'Copy(x) of' if same folder
-    if (temp.path() == newPath) {
-      int num = 1;
-      while (QFile(destUrl).exists()) {
-        destName = QString("Copy (%1) of %2").arg(num).arg(temp.fileName());
-        destUrl = newPath + QDir::separator() + destName;
-        num++;
-      }
-    }
-
-    // If destination file does not exist and is directory
-    QFileInfo dName(destUrl);
-    if (!dName.exists() || dName.isDir()) {
-
-      // Keep a list of new files so we can select them later
-      newFiles.append(destUrl);
-
-      // Cut action
-      if (cutList.contains(temp.filePath())) {
-
-        // Files or directories
-        if (temp.isFile()) {
-
-          // NOTE: Rename will fail if across different filesystem
-          QFSFileEngine file(temp.filePath());
-          if (!file.rename(destUrl))	{
-            ok = cutCopyFile(temp.filePath(), destUrl, total, true);
-          }
-        } else {
-          ok = QFile(temp.filePath()).rename(destUrl);
-
-          // File exists or move folder between different filesystems, so use
-          // copy/remove method
-          if (!ok) {
-            if (temp.isDir()) {
-              ok = true;
-              copyFolder(temp.filePath(), destUrl, total, true);
-              modelList->clearCutItems();
-            }
-            // File already exists, don't do anything
-          }
-        }
-      } else {
-        if (temp.isDir()) {
-          copyFolder(temp.filePath(),destUrl,total,false);
-        } else {
-          ok = cutCopyFile(temp.filePath(), destUrl, total, false);
-        }
-      }
-    }
-  }
-
-  // Finished
-  emit copyProgressFinished(0, newFiles);
-  return 1;
-}
-//---------------------------------------------------------------------------
-
-/**
- * @brief Copies source directory to destination directory
- * @param srcFolder location of source directory
- * @param dstFolder location of destination directory
- * @param total total copy size
- * @param cut true/false if source directory is going to be moved/copied
- * @return true if copy was successfull
- */
-bool MainWindow::copyFolder(const QString &srcFolder, const QString &dstFolder,
-                            qint64 total, bool cut) {
-
-  // Temporary variables
-  QDir srcDir(srcFolder);
-  QDir dstDir(QFileInfo(dstFolder).path());
-  QStringList files;
-  bool ok = true;
-
-  // Name of destination directory
-  QString folderName = QFileInfo(dstFolder).fileName();
-
-  // Id destination location does not exist, create it
-  if (!QFileInfo(dstFolder).exists()) {
-    dstDir.mkdir(folderName);
-  }
-  dstDir = QDir(dstFolder);
-
-  // Get files in source directory
-  files = srcDir.entryList(QDir::Files | QDir::NoDotAndDotDot | QDir::Hidden);
-
-  // Copy each file
-  for (int i = 0; i < files.count(); i++) {
-    QString srcName = srcDir.path() + QDir::separator() + files[i];
-    QString dstName = dstDir.path() + QDir::separator() + files[i];
-
-    // Don't remove source folder if all files not cut
-    if (!cutCopyFile(srcName, dstName, total, cut)) ok = false;
-
-    // Cancelled
-    if (progress->result() == 1) return 0;
-  }
-
-  // Get directories in source directory
-  files.clear();
-  files = srcDir.entryList(QDir::AllDirs | QDir::NoDotAndDotDot | QDir::Hidden);
-
-  // Copy each directory
-  for (int i = 0; i < files.count(); i++) {
-    if (progress->result() == 1) {
-      return 0;
-    }
-    QString srcName = srcDir.path() + QDir::separator() + files[i];
-    QString dstName = dstDir.path() + QDir::separator() + files[i];
-    copyFolder(srcName, dstName, total, cut);
-  }
-
-  // Remove source folder if all files moved ok
-  if (cut && ok) {
-    srcDir.rmdir(srcFolder);
-  }
-  return ok;
-}
-//---------------------------------------------------------------------------
-
-/**
- * @brief Copies or moves file
- * @param src location of source file
- * @param dst location of destination file
- * @param totalSize total copy size
- * @param cut true/false if source file is going to be moved/copied
- * @return true if copy was successfull
- */
-bool MainWindow::cutCopyFile(const QString &src, QString dst, qint64 totalSize,
-                             bool cut) {
-
-  // Create files with given locations
-  QFile srcFile(src);
-  QFile dstFile(dst);
-
-  // Destination file already exists, exit
-  if (dstFile.exists()) return 1;
-
-  // If destination location is too long make it shorter
-  if (dst.length() > 50) dst = "/.../" + dst.split(QDir::separator()).last();
-
-  // Open source and destination files
-  srcFile.open(QFile::ReadOnly);
-  dstFile.open(QFile::WriteOnly);
-
-  // Determine buffer size, calculate size of file and number of steps
-  char block[4096];
-  qint64 total = srcFile.size();
-  qint64 steps = total >> 7; // shift right 7, same as divide 128, much faster
-  qint64 interTotal = 0;
-
-  // Copy blocks
-  while (!srcFile.atEnd()) {
-    if (progress->result() == 1) break; // cancelled
-    qint64 inBytes = srcFile.read(block, sizeof(block));
-    dstFile.write(block, inBytes);
-    interTotal += inBytes;
-    if (interTotal > steps) {
-      emit updateCopyProgress(interTotal, totalSize, dst);
-      interTotal = 0;
-    }
-  }
-
-  // Update copy progress
-  emit updateCopyProgress(interTotal, totalSize, dst);
-
-  dstFile.close();
-  srcFile.close();
-
-  if (dstFile.size() != total) return 0;
-  if (cut) srcFile.remove();  // if file is cut remove the source
-  return 1;
-}
-//---------------------------------------------------------------------------
-
-/**
- * @brief Creates symbolic links to files
- * @param files
- * @param newPath
- * @return true if link creation was successfull
- */
-bool MainWindow::linkFiles(const QList<QUrl> &files, const QString &newPath) {
-
-  // Quit if folder not writable
-  if (!QFileInfo(newPath).isWritable()
-      || newPath == QDir(files.at(0).toLocalFile()).path()) {
-    return false;
-  }
-
-  // TODO: even if symlinks are small we have to make sure that we have space
-  // available for links
-
-  // Main loop
-  for (int i = 0; i < files.count(); ++i) {
-
-    // Choose destination file name and url
-    QFile file(files.at(i).toLocalFile());
-    QFileInfo temp(file);
-    QString destName = temp.fileName();
-    QString destUrl = newPath + QDir::separator() + destName;
-
-    // Only do 'Link(x) of' if same folder
-    if (temp.path() == newPath) {
-      int num = 1;
-      while (QFile(destUrl).exists()) {
-        destName = QString("Link (%1) of %2").arg(num).arg(temp.fileName());
-        destUrl = newPath + QDir::separator() + destName;
-        num++;
-      }
-    }
-
-    // If file does not exists then create link
-    QFileInfo dName(destUrl);
-    if (!dName.exists()) {
-      file.link(destUrl);
-    }
-  }
-  return true;
-}
-//---------------------------------------------------------------------------
-
 void MainWindow::folderPropertiesLauncher()
 {
     QModelIndexList selList;
@@ -1697,92 +1037,10 @@ void MainWindow::folderPropertiesLauncher()
     foreach(QModelIndex item, selList)
         paths.append(modelList->filePath(modelView->mapToSource(item)));
 
-    properties = new propertiesDialog(paths, modelList);
+    properties = new PropertiesDialog(paths, modelList);
     connect(properties,SIGNAL(propertiesUpdated()),this,SLOT(clearCutItems()));
 }
 
-//---------------------------------------------------------------------------
-void MainWindow::renameFile()
-{
-    if(focusWidget() == tree)
-        tree->edit(treeSelectionModel->currentIndex());
-    else if(focusWidget() == bookmarksList)
-            bookmarksList->edit(bookmarksList->currentIndex());
-    else if(focusWidget() == list)
-            list->edit(listSelectionModel->currentIndex());
-    else if(focusWidget() == detailTree)
-            detailTree->edit(listSelectionModel->currentIndex());
-}
-
-//---------------------------------------------------------------------------
-void MainWindow::toggleLockLayout()
-{
-    if(lockLayoutAct->isChecked())
-    {
-        QFrame *newTitle = new QFrame();
-        newTitle->setFrameShape(QFrame::StyledPanel);
-        newTitle->setMinimumSize(0,1);
-        dockTree->setTitleBarWidget(newTitle);
-
-        newTitle = new QFrame();
-        newTitle->setFrameShape(QFrame::StyledPanel);
-        newTitle->setMinimumSize(0,1);
-        dockBookmarks->setTitleBarWidget(newTitle);
-
-        menuToolBar->setMovable(0);
-        editToolBar->setMovable(0);
-        viewToolBar->setMovable(0);
-        navToolBar->setMovable(0);
-        addressToolBar->setMovable(0);
-
-            lockLayoutAct->setText(tr("Unlock layout"));
-    }
-    else
-    {
-        dockTree->setTitleBarWidget(0);
-        dockBookmarks->setTitleBarWidget(0);
-
-        menuToolBar->setMovable(1);
-        editToolBar->setMovable(1);
-        viewToolBar->setMovable(1);
-        navToolBar->setMovable(1);
-        addressToolBar->setMovable(1);
-
-        lockLayoutAct->setText(tr("Lock layout"));
-    }
-}
-//---------------------------------------------------------------------------
-
-/**
- * @brief Displays settings dialog
- */
-void MainWindow::showEditDialog() {
-
-  // Deletes current list of custom actions
-  customActManager->freeActions();
-
-  // Loads current icon theme
-  QString oldTheme = settings->value("forceTheme").toString();
-
-  // Creates settings dialog
-  SettingsDialog *dlg = new SettingsDialog(actionList, settings, this);
-  if (dlg->exec()) {
-
-    // Reload settings
-    loadSettings();
-
-    // If icon theme has changed, use new theme and clear cache
-    QString newTheme = settings->value("forceTheme").toString();
-    if (oldTheme.compare(newTheme) != 0) {
-      modelList->clearIconCache();
-      QIcon::setThemeName(newTheme);
-    }
-  }
-
-  // Reads custom actions
-  customActManager->readActions();
-  delete dlg;
-}
 //---------------------------------------------------------------------------
 
 /**
@@ -2052,8 +1310,8 @@ QMenu* MainWindow::createOpenWithMenu() {
   connect(selectAppAct, SIGNAL(triggered()), this, SLOT(selectApp()));
 
   // Load default applications for current mime
-  QString mime = FileUtils::getMimeType(curIndex.filePath());
-  Properties defaults = FileUtils::loadDefaults();
+  QString mime = mimeUtils->getMimeType(curIndex.filePath());
+  Properties defaults = mimeUtils->loadDefaults();
   QStringList appNames = defaults.value(mime).toString().split(";");
 
   // Create actions for opening
@@ -2101,7 +1359,7 @@ void MainWindow::selectApp() {
     if (dialog->getCurrentLauncher().compare("") != 0) {
       QString appName = dialog->getCurrentLauncher() + ".desktop";
       DesktopFile df = DesktopFile("/usr/share/applications/" + appName);
-      openInApp(df.getExec());
+      mimeUtils->openInApp(df.getExec(), curIndex, this);
     }
   }
 }
@@ -2113,29 +1371,8 @@ void MainWindow::selectApp() {
 void MainWindow::openInApp() {
   QAction* action = dynamic_cast<QAction*>(sender());
   if (action) {
-    openInApp(action->data().toString());
+    mimeUtils->openInApp(action->data().toString(), curIndex, this);
   }
-}
-//---------------------------------------------------------------------------
-
-/**
- * @brief Opens file in application
- * @param exec
- */
-void MainWindow::openInApp(QString exec) {
-
-  // Create execute command
-  if (exec.toLower().contains("%f")) {
-    exec.replace(" %f", "", Qt::CaseInsensitive);
-  } else if (exec.toLower().contains("%u")) {
-    exec.replace(" %u", "", Qt::CaseInsensitive);
-  }
-
-  // Start application
-  QProcess *myProcess = new QProcess(this);
-  myProcess->startDetached(exec, QStringList() << curIndex.filePath());
-  myProcess->waitForFinished(1000);
-  //myProcess->terminate();
 }
 //---------------------------------------------------------------------------
 

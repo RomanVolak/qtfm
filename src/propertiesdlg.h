@@ -24,71 +24,76 @@
 
 
 #include <QtGui>
+#include <QLabel>
 #include <QDialog>
+#include <QToolButton>
+#include <QCheckBox>
+#include <QDialogButtonBox>
+#include <QLineEdit>
 #include "mymodel.h"
 
-class propertiesDialog: public QDialog
-{
-    Q_OBJECT
-
+/**
+ * @class PropertiesDialog
+ * @brief The PropertiesDialog class
+ * @author Wittefella
+ * @date unknown
+ */
+class PropertiesDialog: public QDialog {
+  Q_OBJECT
 public:
-    propertiesDialog(QStringList, myModel *);
-
+  PropertiesDialog(QStringList, myModel *);
 public slots:
-    void accept();
-    void reject();
-    void update();
-    void checkboxesChanged();
-    void changeIcon();
-    void numericChanged(QString);
-    void finished();
-
-
+  void accept();
+  void reject();
+  void update();
+  void checkboxesChanged();
+  void changeIcon();
+  void numericChanged(QString);
+  void finished();
 signals:
-    void finishedSignal();
-    void updateSignal();
-    void propertiesUpdated();
-
+  void finishedSignal();
+  void updateSignal();
+  void propertiesUpdated();
 private:
-    void folderProperties(QStringList paths);
-    void recurseProperties(QString path);
+  void folderProperties(QStringList paths);
+  void recurseProperties(QString path);
 
-    QToolButton *iconButton;
-    QLabel *path;
-    QLabel *sizeInfo;
-    QLabel *containsInfo;
-    QLabel *modifiedInfo;
-    QLabel *driveInfo;
+  QToolButton *iconButton;
+  QLabel *path;
+  QLabel *sizeInfo;
+  QLabel *containsInfo;
+  QLabel *modifiedInfo;
+  QLabel *driveInfo;
 
-    QCheckBox * ownerRead;
-    QCheckBox * ownerWrite;
-    QCheckBox * ownerExec;
+  QCheckBox * ownerRead;
+  QCheckBox * ownerWrite;
+  QCheckBox * ownerExec;
 
-    QCheckBox * groupRead;
-    QCheckBox * groupWrite;
-    QCheckBox * groupExec;
+  QCheckBox * groupRead;
+  QCheckBox * groupWrite;
+  QCheckBox * groupExec;
 
-    QCheckBox * otherRead;
-    QCheckBox * otherWrite;
-    QCheckBox * otherExec;
+  QCheckBox * otherRead;
+  QCheckBox * otherWrite;
+  QCheckBox * otherExec;
 
-    QLineEdit * permissionsNumeric;
+  QLineEdit * permissionsNumeric;
 
-    QDialogButtonBox *buttons;
-    QFuture<void> thread;
+  QDialogButtonBox *buttons;
+  QFuture<void> thread;
 
-    QStringList fileList;
-    QString pathName;
-    QString permString;
-    bool iconChanged;
-    myModel * model;
-    QHash<QString,QIcon> *folderIcons;
-    QHash<QString,QIcon> *fileIcons;
+  QStringList fileList;
+  QString pathName;
+  QString permString;
+  bool iconChanged;
+  myModel * model;
+  QHash<QString,QIcon> *folderIcons;
+  QHash<QString,QIcon> *fileIcons;
 
-    int type;           // 1=folder, 2=file, 3=multiple
-    qint64 files;
-    qint64 folders;
-    qint64 totalSize;
+  int type;           // 1=folder, 2=file, 3=multiple
+  qint64 files;
+  qint64 folders;
+  qint64 totalSize;
 };
 
 #endif // PROPERTIESDLG_H

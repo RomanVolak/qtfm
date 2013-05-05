@@ -24,6 +24,7 @@
 
 #include <QtGui>
 #include "mymodelitem.h"
+#include "mimeutils.h"
 
 QString formatSize(qint64);
 
@@ -47,7 +48,7 @@ public:
     DM_LINK
   };
 
-  myModel(bool realMime);
+  myModel(bool realMime, MimeUtils* mimeUtils);
   ~myModel();
   void loadMimeTypes() const;
   void cacheInfo();
@@ -81,7 +82,8 @@ public:
   QByteArray getThumb(QString item);
   QFileInfo fileInfo(const QModelIndex &index);
   Qt::DropActions supportedDropActions () const;
-  QMimeData * mimeData(const QModelIndexList & indexes) const;
+  QMimeData* mimeData(const QModelIndexList & indexes) const;
+  MimeUtils* getMimeUtils() const;
   QHash<QString,QIcon> *mimeIcons;
   QHash<QString,QIcon> *folderIcons;
   QCache<QString,QIcon> *icons;
@@ -117,6 +119,7 @@ private:
   QHash<QString,QByteArray> *thumbs;
 
   myModelItem* rootItem;
+  MimeUtils* mimeUtilsPtr;
   QString currentRootPath;
   QFileIconProvider* iconFactory;
 

@@ -13,9 +13,13 @@
  */
 class Properties {
 public:
-  explicit Properties(const QString &fileName = "");
+  Properties(const QString &fileName = "", const QString &group = "");
   QVariant value(const QString &key, const QVariant &defaultValue = QVariant());
-  bool load(const QString &fileName);
+  bool load(const QString &fileName, const QString &group = "");
+  bool save(const QString &fileName, const QString &group = "");
+  void set(const QString &key, const QVariant &value);
+  bool contains(const QString &key) const;
+  QStringList getKeys() const;
 protected:
   QMap<QString, QVariant> data;
 };

@@ -43,6 +43,7 @@
 #include "icondlg.h"
 #include "tabbar.h"
 #include "fileutils.h"
+#include "mimeutils.h"
 #include "customactionsmanager.h"
 
 QT_BEGIN_NAMESPACE
@@ -144,6 +145,8 @@ public slots:
     void addressChanged(int,int);
     void loadSettings();
 
+    void showAboutBox();
+
 signals:
     void updateCopyProgress(qint64, qint64, QString);
     void copyProgressFinished(int,QStringList);
@@ -151,7 +154,6 @@ signals:
 private slots:
     void readShortcuts();
     void selectApp();
-    void openInApp(QString exec);
     void openInApp();
 private:
     void createActions();
@@ -178,8 +180,10 @@ private:
     bool isDaemon;
     QLocalServer daemon;
 
+    MimeUtils *mimeUtils;
+
     myProgressDialog * progress;
-    propertiesDialog * properties;
+    PropertiesDialog * properties;
     QSettings *settings;
     QDockWidget *dockTree;
     QDockWidget *dockBookmarks;
@@ -266,6 +270,7 @@ private:
     QAction *openTabAct;
     QAction *closeTabAct;
     QAction *tabsOnTopAct;
+    QAction *aboutAct;
 };
 
 //---------------------------------------------------------------------------------

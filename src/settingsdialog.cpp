@@ -4,19 +4,28 @@
 #include "applicationdialog.h"
 #include "properties.h"
 
+#include <QFormLayout>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QHeaderView>
+#include <QMessageBox>
+#include <QAction>
+
 /**
  * @brief Creates settings dialog
  * @param actionList
  * @param settings
+ * @param mimeUtils
  * @param parent
  */
 SettingsDialog::SettingsDialog(QList<QAction *> *actionList,
-                               QSettings *settings,
+                               QSettings *settings, MimeUtils *mimeUtils,
                                QWidget *parent) : QDialog(parent) {
 
   // Store pointer to custom action manager
   this->actionListPtr = actionList;
   this->settingsPtr = settings;
+  this->mimeUtilsPtr = mimeUtils;
 
   // Main widgets of this dialog
   selector = new QListWidget(this);
@@ -111,10 +120,19 @@ QWidget *SettingsDialog::createGeneralSettings() {
   editTerm = new QLineEdit(grpTerm);
   layoutTerm->addRow(tr("Command: "), editTerm);
 
+  // Default mime apps
+  QGroupBox* grpDMime = new QGroupBox(tr("Default mime applications"), widget);
+  QFormLayout* layoutDMime = new QFormLayout(grpDMime);
+  cmbDefaultMimeApps = new QComboBox(grpDMime);
+  cmbDefaultMimeApps->addItem("/.local/share/applications/mimeapps.list");
+  cmbDefaultMimeApps->addItem("/.local/share/applications/defaults.list");
+  layoutDMime->addRow(tr("Configuration file: "), cmbDefaultMimeApps);
+
   // Layout of widget
   layoutWidget->addWidget(grpAppear);
   layoutWidget->addWidget(grpConfirm);
   layoutWidget->addWidget(grpTerm);
+  layoutWidget->addWidget(grpDMime);
   layoutWidget->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Fixed,
                                               QSizePolicy::MinimumExpanding));
   return widget;
@@ -485,7 +503,17 @@ void SettingsDialog::readSettings() {
   checkDelete->setChecked(settingsPtr->value("confirmDelete", true).toBool());
   editTerm->setText(settingsPtr->value("term").toString());
 
-   // Load icon themes
+  // Load default mime appis location
+  QString tmp = "/.local/share/applications/mimeapps.list";
+  tmp = settingsPtr->value("defMimeAppsFile", tmp).toString();
+#if QT_VERSION >= 0x050000
+  cmbDefaultMimeApps->setCurrentText(tmp);
+#else
+  cmbDefaultMimeApps->setEditText(tmp);
+#endif
+  mimeUtilsPtr->setDefaultsFileName(cmbDefaultMimeApps->currentText());
+
+  // Load icon themes
   QString currentTheme = settingsPtr->value("forceTheme").toString();
   QDirIterator it("/usr/share/icons", QDir::Dirs | QDir::NoDotAndDotDot);
   QStringList iconThemes;
@@ -505,7 +533,7 @@ void SettingsDialog::readSettings() {
     bool setChecked = 0;
     QString cmd = temp.at(3);
     if (cmd.at(0) == '|') {
-      cmd.remove(0,1);
+      cmd.remove(0, 1);
       setChecked = 1;
     }
     QStringList itemData;
@@ -621,13 +649,13 @@ void SettingsDialog::loadMimes(int section) {
   }
 
   // Load list of mimes
-  QStringList mimes = FileUtils::getMimeTypes();
+  QStringList mimes = mimeUtilsPtr->getMimeTypes();
 
   // Init process
   progressMime->setRange(1, mimes.size());
 
   // Load list of default applications
-  Properties defaults = FileUtils::loadDefaults();
+  Properties defaults = mimeUtilsPtr->loadDefaults();
 
   // Default icon
   QIcon defaultIcon = QIcon::fromTheme("unknown");
@@ -702,6 +730,7 @@ bool SettingsDialog::saveSettings() {
   settingsPtr->setValue("confirmDelete", checkDelete->isChecked());
   settingsPtr->setValue("term", editTerm->text());
   settingsPtr->setValue("forceTheme", cmbIconTheme->currentText());
+  settingsPtr->setValue("defMimeAppsFile", cmbDefaultMimeApps->currentText());
 
   // Custom actions
   // ------------------------------------------------------------------------

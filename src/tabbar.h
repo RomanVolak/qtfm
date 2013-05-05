@@ -23,6 +23,7 @@
 #define TABBAR_H
 
 #include <QtGui>
+#include <QTabBar>
 
 class tabBar : public QTabBar
 {

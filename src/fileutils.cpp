@@ -1,7 +1,6 @@
 #include "fileutils.h"
 #include <QDirIterator>
 #include <sys/vfs.h>
-#include <magic.h>
 
 /**
  * @brief Recursive removes file or directory
@@ -94,21 +93,6 @@ qint64 FileUtils::totalSize(const QList<QUrl> &files) {
 //---------------------------------------------------------------------------
 
 /**
- * @brief Returns mime type of given file
- * @note This operation is slow, prevent its mass application
- * @param path path to file
- * @return mime type
- */
-QString FileUtils::getMimeType(const QString &path) {
-  magic_t cookie = magic_open(MAGIC_MIME);
-  magic_load(cookie, 0);
-  QString temp = magic_file(cookie, path.toLocal8Bit());
-  magic_close(cookie);
-  return temp.left(temp.indexOf(";"));
-}
-//---------------------------------------------------------------------------
-
-/**
  * @brief Returns names of available applications
  * @return application name list
  */
@@ -143,34 +127,6 @@ QList<DesktopFile> FileUtils::getApplications() {
 //---------------------------------------------------------------------------
 
 /**
- * @brief Returns list of mime types
- * @return list of available mimetypes
- */
-QStringList FileUtils::getMimeTypes() {
-
-  // Check whether file with mime descriptions exists
-  QFile file("/usr/share/mime/types");
-  if (!file.exists()) {
-    return QStringList();
-  }
-
-  // Try to open file
-  if (!file.open(QFile::ReadOnly)) {
-    return QStringList();
-  }
-
-  // Read mime types
-  QStringList result;
-  QTextStream stream(&file);
-  while (!stream.atEnd()) {
-    result.append(stream.readLine());
-  }
-  file.close();
-  return result;
-}
-//---------------------------------------------------------------------------
-
-/**
  * @brief Returns real suffix for given file
  * @param name
  * @return suffix
@@ -188,22 +144,6 @@ QString FileUtils::getRealSuffix(const QString &name) {
     tmp.removeLast();
   }
   return "";
-}
-//---------------------------------------------------------------------------
-
-/**
- * @brief Loads default applications for mimes
- * @return properties
- */
-Properties FileUtils::loadDefaults() {
-  QString xdgDefaults;
-  QString path = QDir::homePath() + "/.local/share/applications/mimeapps.list";
-  if (QFileInfo(path).exists()) {
-    xdgDefaults = path;
-  } else {
-    xdgDefaults = QDir::homePath() + "/.local/share/applications/defaults.list";
-  }
-  return Properties(xdgDefaults);
 }
 //---------------------------------------------------------------------------
 

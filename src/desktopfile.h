@@ -19,6 +19,7 @@ public:
   QString getIcon() const;
   QString getType() const;
   QStringList getCategories() const;
+  QStringList getMimeType() const;
 private:
   QString fileName;
   QString name;
@@ -26,6 +27,7 @@ private:
   QString icon;
   QString type;
   QStringList categories;
+  QStringList mimeType;
 };
 
 #endif // DESKTOPFILE_H

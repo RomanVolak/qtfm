@@ -23,6 +23,8 @@
 #define BOOKMARKS_CPP
 
 #include <QtGui>
+#include <QStatusBar>
+#include <QApplication>
 #include "bookmarkmodel.h"
 #include "icondlg.h"
 #include "mainwindow.h"

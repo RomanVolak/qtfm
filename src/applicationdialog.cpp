@@ -1,6 +1,11 @@
 #include "applicationdialog.h"
 #include "fileutils.h"
+
 #include <QVBoxLayout>
+#include <QDialogButtonBox>
+#include <QLineEdit>
+#include <QFormLayout>
+#include <QCompleter>
 
 /**
  * @brief Constructor

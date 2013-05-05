@@ -1,8 +1,12 @@
-5.?
+5.8 5-May 2013
+- added support for Qt5 (application can be compiled with both Qt4 or Qt5)
 - added *.desktop file based application selector
 - added support for changing icon theme from settings
 - added process dialog for custom actions. If custom action is executed, then dialog with action output popups. When action is finished, dialog is closed. This feature can be turned on/off in settings
 - added mime type based default application configuration into the settings dialog
+- added default mime app configuration file selection to settings (mimeapps.list/defaults.list)
+- added default mime apps autogeneration from *.desktop files
+- added about box
 - modified icon view more mime types are recognized now
 - modified more compact settings dialog
 

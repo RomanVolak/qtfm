@@ -25,6 +25,8 @@
 
 #include <QtGui>
 #include <QDialog>
+#include <QLabel>
+#include <QProgressBar>
 
 class myProgressDialog : public QDialog
 {

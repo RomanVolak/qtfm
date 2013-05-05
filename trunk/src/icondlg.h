@@ -24,7 +24,10 @@
 
 #include <QtGui>
 #include <QDialog>
-
+#include <QListWidget>
+#include <QVBoxLayout>
+#include <QCompleter>
+#include <QDialogButtonBox>
 
 class icondlg : public QDialog
 {

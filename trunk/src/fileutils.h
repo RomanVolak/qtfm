@@ -23,8 +23,6 @@ public:
   static qint64 totalSize(const QList<QUrl> &files);
   static QStringList getApplicationNames();
   static QList<DesktopFile> getApplications();
-  static QStringList getMimeTypes();
-  static QString getMimeType(const QString &path);
   static QString getRealSuffix(const QString &name);
   static QIcon searchGenericIcon(const QString &category,
        const QIcon &defaultIcon = QIcon::fromTheme("unknown"));
@@ -32,7 +30,6 @@ public:
       const QIcon &defaultIcon = QIcon::fromTheme("unknown"));
   static QIcon searchAppIcon(const DesktopFile &app,
       const QIcon &defaultIcon = QIcon::fromTheme("application-x-executable"));
-  static Properties loadDefaults();
 };
 
 #endif // FILEUTILS_H

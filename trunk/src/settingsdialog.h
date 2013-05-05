@@ -1,6 +1,8 @@
 #ifndef SETTINGSDIALOG_H
 #define SETTINGSDIALOG_H
 
+#include "mimeutils.h"
+
 #include <QDialog>
 #include <QListWidget>
 #include <QStackedWidget>
@@ -21,8 +23,8 @@
 class SettingsDialog : public QDialog {
   Q_OBJECT
 public:
-  explicit SettingsDialog(QList<QAction*> *actionList, QSettings* settings,
-                          QWidget *parent = 0);
+  SettingsDialog(QList<QAction*> *actionList, QSettings* settings,
+                 MimeUtils *mimeUtils, QWidget *parent = 0);
 public slots:
   void accept();
   void loadMimes(int section);
@@ -48,6 +50,8 @@ protected:
   QWidget* createMimeProgress();
   QWidget* createMimeSettings();
 
+  MimeUtils* mimeUtilsPtr;
+
   QSettings* settingsPtr;
   QList<QAction*> *actionListPtr;
 
@@ -60,6 +64,7 @@ protected:
   QCheckBox* checkDelete;
   QLineEdit* editTerm;
   QComboBox* cmbIconTheme;
+  QComboBox* cmbDefaultMimeApps;
 
   QTreeWidget *actionsWidget;
   QToolButton *addButton;

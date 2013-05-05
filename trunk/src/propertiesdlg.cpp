@@ -20,238 +20,244 @@
 ****************************************************************************/
 
 #include <QtGui>
+#include <QGroupBox>
+#include <QPushButton>
+
+#if QT_VERSION >= 0x050000
+  #include <QtConcurrent/QtConcurrent>
+#else
+#endif
+
 #include "propertiesdlg.h"
 #include "icondlg.h"
 #include "mainwindow.h"
 #include <sys/vfs.h>
 #include <sys/stat.h>
 
-//---------------------------------------------------------------------------
-propertiesDialog::propertiesDialog(QStringList paths, myModel *modelList)
-{
-    setWindowTitle(tr("Properties"));
-    fileList = paths;
-    pathName = paths.at(0);
-    model = modelList;
-    QFileInfo file(pathName);
+/**
+ * @brief Creates properties dialog
+ * @param paths
+ * @param modelList
+ */
+PropertiesDialog::PropertiesDialog(QStringList paths, myModel *modelList) {
+  setWindowTitle(tr("Properties"));
+  fileList = paths;
+  pathName = paths.at(0);
+  model = modelList;
+  QFileInfo file(pathName);
 
-    folderIcons = 0;
-    fileIcons = 0;
-    iconChanged = 0;
+  folderIcons = 0;
+  fileIcons = 0;
+  iconChanged = 0;
 
-    files = 0;
-    folders = 0;
-    totalSize = 0;
+  files = 0;
+  folders = 0;
+  totalSize = 0;
 
-    QVBoxLayout *layout = new QVBoxLayout(this);
-    QGroupBox *fileFrame = new QGroupBox(this);
-    QGroupBox *driveFrame = new QGroupBox(this);
-    QGroupBox * permissions;
+  QVBoxLayout *layout = new QVBoxLayout(this);
+  QGroupBox *fileFrame = new QGroupBox(this);
+  QGroupBox *driveFrame = new QGroupBox(this);
+  QGroupBox * permissions;
 
-    path = new QLabel;
-    path->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
-    sizeInfo = new QLabel;
-    containsInfo = new QLabel;
-    modifiedInfo = new QLabel(file.lastModified().toString());
-    permissionsNumeric = new QLineEdit;
+  path = new QLabel;
+  path->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+  sizeInfo = new QLabel;
+  containsInfo = new QLabel;
+  modifiedInfo = new QLabel(file.lastModified().toString());
+  permissionsNumeric = new QLineEdit;
 
-    QGridLayout *layoutPath = new QGridLayout(fileFrame);
-    layoutPath->addWidget(path,0,1);
-    layoutPath->setRowMinimumHeight(0,30);
+  QGridLayout *layoutPath = new QGridLayout(fileFrame);
+  layoutPath->addWidget(path,0,1);
+  layoutPath->setRowMinimumHeight(0,30);
 
-    layoutPath->addWidget(new QLabel(tr("Size:")),2,0);
-    layoutPath->addWidget(sizeInfo,2,1,Qt::AlignRight);
-    layoutPath->addWidget(containsInfo,3,1,Qt::AlignRight);
+  layoutPath->addWidget(new QLabel(tr("Size:")),2,0);
+  layoutPath->addWidget(sizeInfo,2,1,Qt::AlignRight);
+  layoutPath->addWidget(containsInfo,3,1,Qt::AlignRight);
 
-    if(paths.count() == 1)
-    {
-        if(file.isDir())
-        {
-            type = 1;
-            folderIcons = modelList->folderIcons;
+  if (paths.count() == 1) {
+    if (file.isDir()) {
+      type = 1;
+      folderIcons = modelList->folderIcons;
 
-            iconButton = new QToolButton;
-            if(folderIcons->contains(file.fileName())) iconButton->setIcon(folderIcons->value(file.fileName()));
-            else iconButton->setIcon(QIcon::fromTheme("folder"));
+      iconButton = new QToolButton;
+      if (folderIcons->contains(file.fileName())) {
+        iconButton->setIcon(folderIcons->value(file.fileName()));
+      } else {
+        iconButton->setIcon(QIcon::fromTheme("folder"));
+      }
 
-            iconButton->setIconSize(QSize(24,24));
-            iconButton->setAutoRaise(1);
-            connect(iconButton,SIGNAL(clicked()),this,SLOT(changeIcon()));
+      iconButton->setIconSize(QSize(24,24));
+      iconButton->setAutoRaise(1);
+      connect(iconButton, SIGNAL(clicked()), this, SLOT(changeIcon()));
+      layoutPath->addWidget(iconButton,0,0);
+      layoutPath->addWidget(new QLabel(tr("Contains:")),3,0);
+    } else {
+      type = 2;
+      fileIcons = modelList->mimeIcons;
 
-            layoutPath->addWidget(iconButton,0,0);
-            layoutPath->addWidget(new QLabel(tr("Contains:")),3,0);
+      QLabel *iconLabel = new QLabel();
+      QIcon theIcon;
+
+      if (file.suffix().isEmpty()) {
+        if (file.isExecutable()) {
+          theIcon = fileIcons->value("exec");
+        } else {
+          theIcon = fileIcons->value("none");
         }
-        else
-        {
-            type = 2;
-            fileIcons = modelList->mimeIcons;
+      } else {
+        theIcon = fileIcons->value(file.suffix());
+      }
 
-            QLabel *iconLabel = new QLabel();
-            QIcon theIcon;
-
-            if(file.suffix().isEmpty())
-            {
-                if(file.isExecutable()) theIcon = fileIcons->value("exec");
-                else theIcon = fileIcons->value("none");
-            }
-            else
-                theIcon = fileIcons->value(file.suffix());
-
-            iconLabel->setPixmap(theIcon.pixmap(24,24));
-
-            layoutPath->addWidget(iconLabel,0,0);
-            layoutPath->addWidget(new QLabel(tr("Filetype:")),3,0);
-            containsInfo->setText(FileUtils::getMimeType(pathName));
-        }
-
-        path->setWordWrap(1);
-        path->setMinimumWidth(140);
-        path->setText("<b>" + pathName);
-        layoutPath->addWidget(new QLabel(tr("Modified:")),4,0);
-        layoutPath->addWidget(modifiedInfo,4,1,Qt::AlignRight);
-    }
-    else
-    {
-        type = 3;
-
-        //calculate selected files and folders count
-        foreach(QString selectedPaths, paths)
-        {
-            if (QFileInfo(selectedPaths).isDir()) folders++;
-            else files++;
-        }
-
-        if((files) && (folders))
-            path->setText(QString(tr("<b>%1 files, %2 folders")).arg(files).arg(folders));
-        else if((!files) && (folders)) //no files, folders only
-            path->setText(QString(tr("<b>%1 folders")).arg(folders));
-        else if((files) && (!folders)) //no folders, files only
-            path->setText(QString(tr("<b>%1 files")).arg(files));
-
-        QLabel *iconLabel = new QLabel();
-        iconLabel->setPixmap(QIcon::fromTheme("folder-new").pixmap(24,24));
-        layoutPath->addWidget(iconLabel,0,0);
-        layoutPath->addWidget(new QLabel(tr("Total:")),3,0);
+      iconLabel->setPixmap(theIcon.pixmap(24,24));
+      layoutPath->addWidget(iconLabel,0,0);
+      layoutPath->addWidget(new QLabel(tr("Filetype:")),3,0);
+      containsInfo->setText(modelList->getMimeUtils()->getMimeType(pathName));
     }
 
+    path->setWordWrap(1);
+    path->setMinimumWidth(140);
+    path->setText("<b>" + pathName);
+    layoutPath->addWidget(new QLabel(tr("Modified:")),4,0);
+    layoutPath->addWidget(modifiedInfo,4,1,Qt::AlignRight);
+  } else {
+    type = 3;
 
-    //permissions
-    if(files == 0 || folders == 0)
-    {
-        permissions = new QGroupBox(this);
-        QGridLayout *layoutPermissions = new QGridLayout(permissions);
-
-        ownerRead = new QCheckBox;
-        ownerWrite = new QCheckBox;
-        ownerExec = new QCheckBox;
-
-        groupRead = new QCheckBox;
-        groupWrite = new QCheckBox;
-        groupExec = new QCheckBox;
-
-        otherRead = new QCheckBox;
-        otherWrite = new QCheckBox;
-        otherExec = new QCheckBox;
-
-        connect(ownerRead,SIGNAL(clicked(bool)),this,SLOT(checkboxesChanged()));
-        connect(ownerWrite,SIGNAL(clicked(bool)),this,SLOT(checkboxesChanged()));
-        connect(ownerExec,SIGNAL(clicked(bool)),this,SLOT(checkboxesChanged()));
-
-        connect(groupRead,SIGNAL(clicked(bool)),this,SLOT(checkboxesChanged()));
-        connect(groupWrite,SIGNAL(clicked(bool)),this,SLOT(checkboxesChanged()));
-        connect(groupExec,SIGNAL(clicked(bool)),this,SLOT(checkboxesChanged()));
-
-        connect(otherRead,SIGNAL(clicked(bool)),this,SLOT(checkboxesChanged()));
-        connect(otherWrite,SIGNAL(clicked(bool)),this,SLOT(checkboxesChanged()));
-        connect(otherExec,SIGNAL(clicked(bool)),this,SLOT(checkboxesChanged()));
-
-        layoutPermissions->addWidget(new QLabel(tr("Read")),1,0);
-        layoutPermissions->addWidget(new QLabel(tr("Write")),2,0);
-        layoutPermissions->addWidget(new QLabel(tr("Execute")),3,0);
-
-        layoutPermissions->addWidget(new QLabel(" "),0,1);     //blank column
-        layoutPermissions->setColumnStretch(1,1);
-
-        layoutPermissions->addWidget(new QLabel(tr("Owner")),0,2);
-        layoutPermissions->addWidget(new QLabel(tr("Group")),0,3);
-        layoutPermissions->addWidget(new QLabel(tr("Other")),0,4);
-
-        layoutPermissions->addWidget(ownerRead,1,2);
-        layoutPermissions->addWidget(ownerWrite,2,2);
-        layoutPermissions->addWidget(ownerExec,3,2);
-
-        layoutPermissions->addWidget(groupRead,1,3);
-        layoutPermissions->addWidget(groupWrite,2,3);
-        layoutPermissions->addWidget(groupExec,3,3);
-
-        layoutPermissions->addWidget(otherRead,1,4);
-        layoutPermissions->addWidget(otherWrite,2,4);
-        layoutPermissions->addWidget(otherExec,3,4);
-
-        layoutPermissions->setVerticalSpacing(2);
-
-        connect(permissionsNumeric,SIGNAL(textChanged(QString)),this,SLOT(numericChanged(QString)));
-        layoutPermissions->addWidget(new QLabel(tr("Numeric")),4,0,1,1);
-        layoutPermissions->addWidget(permissionsNumeric,4,2,1,3);
-
-        struct stat perms;
-        stat(pathName.toLocal8Bit(), &perms);
-        permString = QString("%1%2%3").arg(((perms.st_mode & S_IRWXU) >> 6))
-                                    .arg(((perms.st_mode & S_IRWXG) >> 3))
-                                    .arg((perms.st_mode & S_IRWXO));
-
-        permissionsNumeric->setText(permString);
-
-        QRegExp input("^[0-7]*$");
-        QValidator *permNumericValidator = new QRegExpValidator(input, this);
-        permissionsNumeric->setValidator(permNumericValidator);
-        permissionsNumeric->setMaxLength(3);
-
-        int ret = chmod(pathName.toLocal8Bit(),permString.toInt(0,8));
-        if(ret) permissions->setDisabled(1);
+    // Calculate selected files and folders count
+    foreach (QString selectedPaths, paths) {
+      if (QFileInfo(selectedPaths).isDir()) folders++;
+      else files++;
     }
 
+    if ((files) && (folders)) {
+      path->setText(QString(tr("<b>%1 files, %2 folders")).arg(files).arg(folders));
+    } else if ((!files) && (folders)) {
+      // no files, folders only
+      path->setText(QString(tr("<b>%1 folders")).arg(folders));
+    } else if ((files) && (!folders)) {
+      //no folders, files only
+      path->setText(QString(tr("<b>%1 files")).arg(files));
+    }
+    QLabel *iconLabel = new QLabel();
+    iconLabel->setPixmap(QIcon::fromTheme("folder-new").pixmap(24,24));
+    layoutPath->addWidget(iconLabel,0,0);
+    layoutPath->addWidget(new QLabel(tr("Total:")),3,0);
+  }
 
-    //drive info frame
-    QLabel *driveIcon = new QLabel(this);
-    driveIcon->setPixmap(QIcon::fromTheme("drive-harddisk").pixmap(24,24));
-    driveInfo = new QLabel();
+  // Permissions
+  if (files == 0 || folders == 0) {
+    permissions = new QGroupBox(this);
+    QGridLayout *layoutPermissions = new QGridLayout(permissions);
 
-    QGridLayout *layoutDrive = new QGridLayout(driveFrame);
-    layoutDrive->addWidget(driveIcon,0,0);
-    layoutDrive->addWidget(driveInfo,0,1,Qt::AlignRight);
-    driveInfo->setText(getDriveInfo(pathName));
+    ownerRead = new QCheckBox;
+    ownerWrite = new QCheckBox;
+    ownerExec = new QCheckBox;
 
-    //buttons
-    buttons = new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel);
-    buttons->button(QDialogButtonBox::Ok)->setEnabled(0);
-    connect(buttons, SIGNAL(accepted()), this, SLOT(accept()));
-    connect(buttons, SIGNAL(rejected()), this, SLOT(reject()));
+    groupRead = new QCheckBox;
+    groupWrite = new QCheckBox;
+    groupExec = new QCheckBox;
 
-    //main layout
-    layout->addWidget(fileFrame);
+    otherRead = new QCheckBox;
+    otherWrite = new QCheckBox;
+    otherExec = new QCheckBox;
 
-    if(files == 0 || folders == 0) layout->addWidget(permissions);
+    connect(ownerRead,SIGNAL(clicked(bool)),this,SLOT(checkboxesChanged()));
+    connect(ownerWrite,SIGNAL(clicked(bool)),this,SLOT(checkboxesChanged()));
+    connect(ownerExec,SIGNAL(clicked(bool)),this,SLOT(checkboxesChanged()));
 
-    layout->addWidget(driveFrame);
-    layout->addWidget(buttons);
-    setLayout(layout);
+    connect(groupRead,SIGNAL(clicked(bool)),this,SLOT(checkboxesChanged()));
+    connect(groupWrite,SIGNAL(clicked(bool)),this,SLOT(checkboxesChanged()));
+    connect(groupExec,SIGNAL(clicked(bool)),this,SLOT(checkboxesChanged()));
 
-    layout->setMargin(6);
-    layout->setSpacing(4);
+    connect(otherRead,SIGNAL(clicked(bool)),this,SLOT(checkboxesChanged()));
+    connect(otherWrite,SIGNAL(clicked(bool)),this,SLOT(checkboxesChanged()));
+    connect(otherExec,SIGNAL(clicked(bool)),this,SLOT(checkboxesChanged()));
 
-    connect(this,SIGNAL(updateSignal()),this,SLOT(update()));
-    connect(this,SIGNAL(finishedSignal()),this,SLOT(finished()));
+    layoutPermissions->addWidget(new QLabel(tr("Read")),1,0);
+    layoutPermissions->addWidget(new QLabel(tr("Write")),2,0);
+    layoutPermissions->addWidget(new QLabel(tr("Execute")),3,0);
 
-    show();
-    setMinimumSize(size());
+    layoutPermissions->addWidget(new QLabel(" "),0,1);     //blank column
+    layoutPermissions->setColumnStretch(1,1);
 
-    this->setAttribute(Qt::WA_DeleteOnClose,1);
-    thread = QtConcurrent::run(this,&propertiesDialog::folderProperties, paths);
+    layoutPermissions->addWidget(new QLabel(tr("Owner")),0,2);
+    layoutPermissions->addWidget(new QLabel(tr("Group")),0,3);
+    layoutPermissions->addWidget(new QLabel(tr("Other")),0,4);
+
+    layoutPermissions->addWidget(ownerRead,1,2);
+    layoutPermissions->addWidget(ownerWrite,2,2);
+    layoutPermissions->addWidget(ownerExec,3,2);
+
+    layoutPermissions->addWidget(groupRead,1,3);
+    layoutPermissions->addWidget(groupWrite,2,3);
+    layoutPermissions->addWidget(groupExec,3,3);
+
+    layoutPermissions->addWidget(otherRead,1,4);
+    layoutPermissions->addWidget(otherWrite,2,4);
+    layoutPermissions->addWidget(otherExec,3,4);
+    layoutPermissions->setVerticalSpacing(2);
+
+    connect(permissionsNumeric, SIGNAL(textChanged(QString)), this,
+            SLOT(numericChanged(QString)));
+    layoutPermissions->addWidget(new QLabel(tr("Numeric")), 4, 0, 1, 1);
+    layoutPermissions->addWidget(permissionsNumeric, 4, 2, 1, 3);
+
+    struct stat perms;
+    stat(pathName.toLocal8Bit(), &perms);
+    permString = QString("%1%2%3").arg(((perms.st_mode & S_IRWXU) >> 6))
+                 .arg(((perms.st_mode & S_IRWXG) >> 3))
+                 .arg((perms.st_mode & S_IRWXO));
+
+    permissionsNumeric->setText(permString);
+
+    QRegExp input("^[0-7]*$");
+    QValidator *permNumericValidator = new QRegExpValidator(input, this);
+    permissionsNumeric->setValidator(permNumericValidator);
+    permissionsNumeric->setMaxLength(3);
+
+    int ret = chmod(pathName.toLocal8Bit(),permString.toInt(0,8));
+    if(ret) permissions->setDisabled(1);
+  }
+
+  // Drive info frame
+  QLabel *driveIcon = new QLabel(this);
+  driveIcon->setPixmap(QIcon::fromTheme("drive-harddisk").pixmap(24,24));
+  driveInfo = new QLabel();
+
+  QGridLayout *layoutDrive = new QGridLayout(driveFrame);
+  layoutDrive->addWidget(driveIcon,0,0);
+  layoutDrive->addWidget(driveInfo,0,1,Qt::AlignRight);
+  driveInfo->setText(getDriveInfo(pathName));
+
+  // Buttons
+  buttons = new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel);
+  buttons->button(QDialogButtonBox::Ok)->setEnabled(0);
+  connect(buttons, SIGNAL(accepted()), this, SLOT(accept()));
+  connect(buttons, SIGNAL(rejected()), this, SLOT(reject()));
+
+  // Main layout
+  layout->addWidget(fileFrame);
+
+  if (files == 0 || folders == 0) layout->addWidget(permissions);
+
+  layout->addWidget(driveFrame);
+  layout->addWidget(buttons);
+  setLayout(layout);
+
+  layout->setMargin(6);
+  layout->setSpacing(4);
+
+  connect(this, SIGNAL(updateSignal()), this, SLOT(update()));
+  connect(this, SIGNAL(finishedSignal()), this, SLOT(finished()));
+
+  show();
+  setMinimumSize(size());
+
+  this->setAttribute(Qt::WA_DeleteOnClose,1);
+  thread = QtConcurrent::run(this, &PropertiesDialog::folderProperties, paths);
 }
-
 //---------------------------------------------------------------------------
-void propertiesDialog::folderProperties(QStringList paths)
+
+void PropertiesDialog::folderProperties(QStringList paths)
 {
     foreach(QString path, paths)
         recurseProperties(path);
@@ -261,7 +267,7 @@ void propertiesDialog::folderProperties(QStringList paths)
 }
 
 //---------------------------------------------------------------------------
-void propertiesDialog::recurseProperties(QString path)
+void PropertiesDialog::recurseProperties(QString path)
 {
     QDirIterator it(path,QDir::AllEntries | QDir::System | QDir::NoDotAndDotDot | QDir::NoSymLinks | QDir::Hidden, QDirIterator::Subdirectories);
     if(it.hasNext())
@@ -286,21 +292,21 @@ void propertiesDialog::recurseProperties(QString path)
 }
 
 //---------------------------------------------------------------------------
-void propertiesDialog::update()
+void PropertiesDialog::update()
 {
     sizeInfo->setText(formatSize(totalSize));
     if(type != 2) containsInfo->setText(QString(tr("%1 Files, %2 folders")).arg(files).arg(folders));
 }
 
 //---------------------------------------------------------------------------
-void propertiesDialog::finished()
+void PropertiesDialog::finished()
 {
     buttons->button(QDialogButtonBox::Ok)->setEnabled(1);
     this->activateWindow();
 }
 
 //---------------------------------------------------------------------------
-void propertiesDialog::accept()
+void PropertiesDialog::accept()
 {
     this->setResult(1);
     thread.waitForFinished();
@@ -323,7 +329,7 @@ void propertiesDialog::accept()
 }
 
 //---------------------------------------------------------------------------
-void propertiesDialog::reject()
+void PropertiesDialog::reject()
 {
     this->setResult(1);
     thread.waitForFinished();
@@ -331,7 +337,7 @@ void propertiesDialog::reject()
 }
 
 //---------------------------------------------------------------------------
-void propertiesDialog::checkboxesChanged()
+void PropertiesDialog::checkboxesChanged()
 {
     permissionsNumeric->setText(QString("%1%2%3").arg(ownerRead->isChecked()*4 + ownerWrite->isChecked()*2 + ownerExec->isChecked())
                                 .arg(groupRead->isChecked()*4 + groupWrite->isChecked()*2 + groupExec->isChecked())
@@ -339,7 +345,7 @@ void propertiesDialog::checkboxesChanged()
 }
 
 //---------------------------------------------------------------------------
-void propertiesDialog::numericChanged(QString text)
+void PropertiesDialog::numericChanged(QString text)
 {
     if(text.count() != 3) return;
 
@@ -360,7 +366,7 @@ void propertiesDialog::numericChanged(QString text)
 }
 
 //---------------------------------------------------------------------------
-void propertiesDialog::changeIcon()
+void PropertiesDialog::changeIcon()
 {
     icondlg *icons = new icondlg;
     if(icons->exec() == 1)

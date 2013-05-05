@@ -24,12 +24,17 @@
 #include <sys/inotify.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
+#include <QApplication>
 
 /**
  * @brief Creates file system model
  * @param realMime
+ * @param mimeUtils
  */
-myModel::myModel(bool realMime) {
+myModel::myModel(bool realMime, MimeUtils *mimeUtils) {
+
+  // Stores mime utils
+  mimeUtilsPtr = mimeUtils;
 
   // Initialization
   mimeGeneric = new QHash<QString,QString>;
@@ -58,7 +63,7 @@ myModel::myModel(bool realMime) {
   rootItem = new myModelItem(QFileInfo("/"), new myModelItem(QFileInfo(), 0));
   currentRootPath = "/";
   QDir root("/");
-  QFileInfoList drives = root.entryInfoList(QDir::AllEntries | QDir::Files
+  QFileInfoList drives = root.entryInfoList( QDir::AllEntries | QDir::Files
                                             | QDir::Hidden | QDir::System
                                             | QDir::NoDotAndDotDot);
 
@@ -116,6 +121,15 @@ void myModel::setRealMimeTypes(bool realMimeTypes) {
  */
 bool myModel::isRealMimeTypes() const {
   return realMimeTypes;
+}
+//---------------------------------------------------------------------------
+
+/**
+ * @brief Returns mime utils
+ * @return mime utils
+ */
+MimeUtils* myModel::getMimeUtils() const {
+  return mimeUtilsPtr;
 }
 //---------------------------------------------------------------------------
 
@@ -216,7 +230,7 @@ QString myModel::getMimeType(const QModelIndex &index)
 
     if(item->mMimeType.isNull())
     {
-        if(realMimeTypes) item->mMimeType = FileUtils::getMimeType(item->absoluteFilePath());
+        if(realMimeTypes) item->mMimeType = mimeUtilsPtr->getMimeType(item->absoluteFilePath());
         else
         {
             if(item->fileInfo().isDir()) item->mMimeType = "folder";
@@ -740,7 +754,7 @@ QVariant myModel::data(const QModelIndex & index, int role) const {
       case 2 :
         if (item->mMimeType.isNull()) {
           if (realMimeTypes) {
-            item->mMimeType = FileUtils::getMimeType(item->absoluteFilePath());
+            item->mMimeType = mimeUtilsPtr->getMimeType(item->absoluteFilePath());
           } else {
             item->mMimeType = item->fileInfo().isDir() ? "folder" :
                               item->fileInfo().suffix();
@@ -755,6 +769,18 @@ QVariant myModel::data(const QModelIndex & index, int role) const {
       case 4 : {
         if (item->mPermissions.isNull()) {
           QString str;
+#if QT_VERSION >= 0x050000
+          QFile::Permissions perms = item->fileInfo().permissions();
+          str.append(perms.testFlag(QFileDevice::ReadOwner) ? "r" : "-" );
+          str.append(perms.testFlag(QFileDevice::WriteOwner) ? "w" : "-" );
+          str.append(perms.testFlag(QFileDevice::ExeOwner) ? "x" : "-" );
+          str.append(perms.testFlag(QFileDevice::ReadGroup) ? "r" : "-" );
+          str.append(perms.testFlag(QFileDevice::WriteGroup) ? "w" : "-" );
+          str.append(perms.testFlag(QFileDevice::ExeGroup) ? "x" : "-" );
+          str.append(perms.testFlag(QFileDevice::ReadOther) ? "r" : "-" );
+          str.append(perms.testFlag(QFileDevice::WriteOther) ? "w" : "-" );
+          str.append(perms.testFlag(QFileDevice::ExeOther) ? "x" : "-" );
+#else
           QFlags<QFile::Permissions> perms = item->fileInfo().permissions();
           str.append(perms.testFlag(QFile::ReadOwner) ? "r" : "-" );
           str.append(perms.testFlag(QFile::WriteOwner) ? "w" : "-" );
@@ -765,8 +791,9 @@ QVariant myModel::data(const QModelIndex & index, int role) const {
           str.append(perms.testFlag(QFile::ReadOther) ? "r" : "-" );
           str.append(perms.testFlag(QFile::WriteOther) ? "w" : "-" );
           str.append(perms.testFlag(QFile::ExeOther) ? "x" : "-" );
-          str.append(" " + item->fileInfo().owner() + " "
-                     + item->fileInfo().group());
+#endif
+          str.append(" " + item->fileInfo().owner() + " " +
+                     item->fileInfo().group());
           item->mPermissions = str;
         }
         return item->mPermissions;
@@ -844,7 +871,7 @@ QVariant myModel::findIcon(myModelItem *item) const {
     // NOTE: the icon cannot be cached because this file has not any suffix,
     // however operation 'getMimeType' could cause slowdown
     if (!type.isExecutable()) {
-      QString mime = FileUtils::getMimeType(type.absoluteFilePath());
+      QString mime = mimeUtilsPtr->getMimeType(type.absoluteFilePath());
       return FileUtils::searchMimeIcon(mime);
     }
 
@@ -866,7 +893,7 @@ QVariant myModel::findIcon(myModelItem *item) const {
     // from '/usr/share/mime/globs', its mime has to be detected manually
     QString mimeType = mimeGlob->value(suffix.toLower(), "");
     if (mimeType.isEmpty()) {
-      mimeType = FileUtils::getMimeType(type.absoluteFilePath());
+      mimeType = mimeUtilsPtr->getMimeType(type.absoluteFilePath());
       mimeGlob->insert(suffix.toLower(), mimeType);
     }
 
@@ -888,7 +915,7 @@ QVariant myModel::findIcon(myModelItem *item) const {
 QVariant myModel::findMimeIcon(myModelItem *item) const {
 
   // Retrieve mime and search cache for it
-  QString mime = FileUtils::getMimeType(item->absoluteFilePath());
+  QString mime = mimeUtilsPtr->getMimeType(item->absoluteFilePath());
   if (mimeIcons->contains(mime)) {
     return mimeIcons->value(mime);
   }

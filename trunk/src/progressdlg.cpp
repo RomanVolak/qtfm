@@ -20,6 +20,7 @@
 ****************************************************************************/
 
 #include <QtGui>
+#include <QPushButton>
 #include "progressdlg.h"
 #include "mainwindow.h"
 

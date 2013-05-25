@@ -770,7 +770,6 @@ bool SettingsDialog::saveSettings() {
 
   // Mime types
   // ------------------------------------------------------------------------
-  //QProcess *p = new QProcess(this);
   for (int i = 0; i < mimesWidget->topLevelItemCount(); ++i) {
     QTreeWidgetItem* cathegory = mimesWidget->topLevelItem(i);
     QString cathegoryName = cathegory->text(0) + "/";
@@ -782,13 +781,11 @@ bool SettingsDialog::saveSettings() {
         for (int i = 0; i < temps.size(); i++) {
           temps[i] = temps[i] + ".desktop";
         }
-        //QString appName = temps.join(";");
         mimeUtilsPtr->setDefault(mime, temps);
-        //p->start("xdg-mime", QStringList() << "default" << appName << mime);
-        //p->waitForFinished();
       }
     }
   }
+  mimeUtilsPtr->saveDefaults();
 
   // Check for shortcuts duplicity
   // ------------------------------------------------------------------------

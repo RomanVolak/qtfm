@@ -1,6 +1,7 @@
 #include "aboutdialog.h"
 
 #include <QTableWidget>
+#include <QPushButton>
 #include <QLabel>
 
 /**
@@ -25,7 +26,7 @@ AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent) {
   QVBoxLayout* layout = new QVBoxLayout(this);
   QTabWidget* tabWidget = new QTabWidget(this);
   QLabel* info = new QLabel(this);
-  info->setText("<strong>QtFM</strong><br/>version: 5.8");
+  info->setText("<strong>QtFM</strong><br/>version: 5.9");
 
   QWidget* authorsTab = new QWidget(tabWidget);
   tabWidget->addTab(authorsTab, tr("Authors"));
@@ -45,7 +46,15 @@ AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent) {
   thanksLayout->addItem(new QSpacerItem(0, 0, QSizePolicy::MinimumExpanding), 0, 0);
   thanksLayout->addItem(new QSpacerItem(0, 0, QSizePolicy::MinimumExpanding), 0, 2);
 
+  QHBoxLayout* btnLayout = new QHBoxLayout();
+  QPushButton* btnClose = new QPushButton(tr("Close"), this);
+  btnLayout->addItem(new QSpacerItem(0, 0, QSizePolicy::MinimumExpanding));
+  btnLayout->addWidget(btnClose);
+
   layout->addWidget(info);
   layout->addWidget(tabWidget);
+  layout->addLayout(btnLayout);
+
+  connect(btnClose, SIGNAL(clicked()), SLOT(close()));
 }
 //---------------------------------------------------------------------------

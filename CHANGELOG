@@ -1,3 +1,9 @@
+5.9 25-May 2013
+- fixed mime type handling
+- fixed problem with opening qpdfview
+- fixed application speed up, saving of properties much faster
+- fixed missing button in about dialog
+
 5.8 5-May 2013
 - added support for Qt5 (application can be compiled with both Qt4 or Qt5)
 - added *.desktop file based application selector

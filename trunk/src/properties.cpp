@@ -17,6 +17,16 @@ Properties::Properties(const QString &fileName, const QString &group) {
 //---------------------------------------------------------------------------
 
 /**
+ * @brief Creates properties
+ * @param other properies
+ */
+Properties::Properties(const Properties &other) {
+  this->data = other.data;
+}
+//---------------------------------------------------------------------------
+
+
+/**
  * @brief Loads property file
  * @param fileName
  * @param group

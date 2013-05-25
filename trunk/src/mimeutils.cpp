@@ -12,6 +12,8 @@
  */
 MimeUtils::MimeUtils(QObject *parent) : QObject(parent) {
   defaultsFileName = "/.local/share/applications/mimeapps.list";
+  defaults = new Properties();
+  loadDefaults();
 }
 //---------------------------------------------------------------------------
 
@@ -19,8 +21,17 @@ MimeUtils::MimeUtils(QObject *parent) : QObject(parent) {
  * @brief Loads list of default applications for mimes
  * @return properties with default applications
  */
-Properties MimeUtils::loadDefaults() const {
-  return Properties(QDir::homePath() + defaultsFileName);
+void MimeUtils::loadDefaults() {
+  defaults->load(QDir::homePath() + defaultsFileName, "Default Applications");
+  defaultsChanged = false;
+}
+//---------------------------------------------------------------------------
+
+/**
+ * @brief Destructor
+ */
+MimeUtils::~MimeUtils() {
+  delete defaults;
 }
 //---------------------------------------------------------------------------
 
@@ -74,12 +85,10 @@ QStringList MimeUtils::getMimeTypes() const {
  */
 void MimeUtils::openInApp(const QFileInfo &file, QObject *processOwner) {
   QString mime = getMimeType(file.filePath());
-  QString app = loadDefaults().value(mime).toString().split(";").first();
+  QString app = defaults->value(mime).toString().split(";").first();
   if (!app.isEmpty()) {
-    //qDebug() << mime;
-    //qDebug() << file.filePath();
-    //qDebug() << app;
-    openInApp(app.remove(".desktop"), file, processOwner);
+    DesktopFile df = DesktopFile("/usr/share/applications/" + app);
+    openInApp(df.getExec(), file, processOwner);
   } else {
     QString title = tr("No default application");
     QString msg = tr("No default application for mime: %1!").arg(mime);
@@ -96,6 +105,12 @@ void MimeUtils::openInApp(const QFileInfo &file, QObject *processOwner) {
  */
 void MimeUtils::openInApp(QString exe, const QFileInfo &file,
                           QObject *processOwner) {
+
+  // This is not the right the solution, but qpdfview won't start otherwise
+  // TODO: Repair it correctly
+  if (exe.contains("qpdfview")) {
+    exe = "qpdfview";
+  }
 
   // Separate application name from its arguments
   QStringList split = exe.split(" ");
@@ -132,6 +147,7 @@ void MimeUtils::openInApp(QString exe, const QFileInfo &file,
  */
 void MimeUtils::setDefaultsFileName(const QString &fileName) {
   this->defaultsFileName = fileName;
+  loadDefaults();
 }
 //---------------------------------------------------------------------------
 
@@ -149,14 +165,9 @@ QString MimeUtils::getDefaultsFileName() const {
  */
 void MimeUtils::generateDefaults() {
 
-  // Load list of applications and list of default mime-applications
-  // associations
+  // Load list of applications
   QList<DesktopFile> apps = FileUtils::getApplications();
-  Properties defaults = loadDefaults();
   QStringList names;
-
-  // Indicates change of defaults
-  bool defaultsChanged = false;
 
   // Find defaults; for each application...
   // ------------------------------------------------------------------------
@@ -172,18 +183,18 @@ void MimeUtils::generateDefaults() {
 
       // If current mime is not mentioned in the list of defaults, add it
       // together with current application and continue
-      if (!defaults.contains(mime)) {
-        defaults.set(mime, name);
+      if (!defaults->contains(mime)) {
+        defaults->set(mime, name);
         defaultsChanged = true;
         continue;
       }
 
       // Retrieve list of default applications for current mime, if it does
       // not contain current application, add this application to list
-      QStringList appNames = defaults.value(mime).toString().split(";");
+      QStringList appNames = defaults->value(mime).toString().split(";");
       if (!appNames.contains(name)) {
         appNames.append(name);
-        defaults.set(mime, appNames.join(";"));
+        defaults->set(mime, appNames.join(";"));
         defaultsChanged = true;
       }
     }
@@ -191,8 +202,8 @@ void MimeUtils::generateDefaults() {
 
   // Delete dead defaults (non existing apps)
   // ------------------------------------------------------------------------
-  foreach (QString key, defaults.getKeys()) {
-    QStringList tmpNames1 = defaults.value(key).toString().split(";");
+  foreach (QString key, defaults->getKeys()) {
+    QStringList tmpNames1 = defaults->value(key).toString().split(";");
     QStringList tmpNames2 = QStringList();
     foreach (QString name, tmpNames1) {
       if (names.contains(name)) {
@@ -200,14 +211,47 @@ void MimeUtils::generateDefaults() {
       }
     }
     if (tmpNames1.size() != tmpNames2.size()) {
-      defaults.set(key, tmpNames2.join(";"));
+      defaults->set(key, tmpNames2.join(";"));
       defaultsChanged = true;
     }
   }
 
   // Save defaults if changed
+  saveDefaults();
+}
+//---------------------------------------------------------------------------
+
+/**
+ * @brief Sets default mime association
+ * @param mime mime name
+ * @param apps list of applications (desktop file names)
+ */
+void MimeUtils::setDefault(const QString &mime, const QStringList &apps) {
+  QString value = apps.join(";");
+  if (value.compare(defaults->value(mime, "").toString()) != 0) {
+    defaults->set(mime, value);
+    defaultsChanged = true;
+  }
+}
+//---------------------------------------------------------------------------
+
+/**
+ * @brief Returns default applications for given mime
+ * @param mime
+ * @return list of default applications name
+ */
+QStringList MimeUtils::getDefault(const QString &mime) const {
+  return defaults->value(mime).toString().split(";");
+}
+//---------------------------------------------------------------------------
+
+/**
+ * @brief Saves defaults
+ */
+void MimeUtils::saveDefaults() {
   if (defaultsChanged) {
-    defaults.save(QDir::homePath() + defaultsFileName, "Default Applications");
+    defaults->save(QDir::homePath() + defaultsFileName, "Default Applications");
+    defaultsChanged = false;
   }
 }
 //---------------------------------------------------------------------------

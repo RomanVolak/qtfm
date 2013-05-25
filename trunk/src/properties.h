@@ -13,7 +13,8 @@
  */
 class Properties {
 public:
-  Properties(const QString &fileName = "", const QString &group = "");
+  explicit Properties(const QString &fileName = "", const QString &group = "");
+  explicit Properties(const Properties &other);
   QVariant value(const QString &key, const QVariant &defaultValue = QVariant());
   bool load(const QString &fileName, const QString &group = "");
   bool save(const QString &fileName, const QString &group = "");

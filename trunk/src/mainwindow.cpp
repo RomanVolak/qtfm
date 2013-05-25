@@ -497,7 +497,7 @@ void MainWindow::treeSelectionChanged(QModelIndex current, QModelIndex previous)
     if(!name.exists()) return;
 
     curIndex = name;
-    setWindowTitle(curIndex.fileName() + " - QtFM 5.8");
+    setWindowTitle(curIndex.fileName() + " - QtFM 5.9");
 
     if(tree->hasFocus() && QApplication::mouseButtons() == Qt::MidButton)
     {
@@ -1311,8 +1311,7 @@ QMenu* MainWindow::createOpenWithMenu() {
 
   // Load default applications for current mime
   QString mime = mimeUtils->getMimeType(curIndex.filePath());
-  Properties defaults = mimeUtils->loadDefaults();
-  QStringList appNames = defaults.value(mime).toString().split(";");
+  QStringList appNames = mimeUtils->getDefault(mime);
 
   // Create actions for opening
   QList<QAction*> defaultApps;

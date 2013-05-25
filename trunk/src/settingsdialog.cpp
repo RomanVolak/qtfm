@@ -654,9 +654,6 @@ void SettingsDialog::loadMimes(int section) {
   // Init process
   progressMime->setRange(1, mimes.size());
 
-  // Load list of default applications
-  Properties defaults = mimeUtilsPtr->loadDefaults();
-
   // Default icon
   QIcon defaultIcon = QIcon::fromTheme("unknown");
 
@@ -701,13 +698,13 @@ void SettingsDialog::loadMimes(int section) {
     // Load icon and default application for current mime
     // NOTE: if icon is not found generic icon is used
     icon = FileUtils::searchMimeIcon(mime, icon);
-    QString appName = defaults.value(mime).toString();
+    QString appNames = mimeUtilsPtr->getDefault(mime).join(";");
 
     // Create item from current mime
     QTreeWidgetItem *item = new QTreeWidgetItem(category);
     item->setIcon(0, icon);
     item->setText(0, splitMime.at(1));
-    item->setText(1, appName.remove(".desktop"));
+    item->setText(1, appNames.remove(".desktop"));
     item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
   }
 
@@ -773,7 +770,7 @@ bool SettingsDialog::saveSettings() {
 
   // Mime types
   // ------------------------------------------------------------------------
-  QProcess *p = new QProcess(this);
+  //QProcess *p = new QProcess(this);
   for (int i = 0; i < mimesWidget->topLevelItemCount(); ++i) {
     QTreeWidgetItem* cathegory = mimesWidget->topLevelItem(i);
     QString cathegoryName = cathegory->text(0) + "/";
@@ -785,9 +782,10 @@ bool SettingsDialog::saveSettings() {
         for (int i = 0; i < temps.size(); i++) {
           temps[i] = temps[i] + ".desktop";
         }
-        QString appName = temps.join(";");
-        p->start("xdg-mime", QStringList() << "default" << appName << mime);
-        p->waitForFinished();
+        //QString appName = temps.join(";");
+        mimeUtilsPtr->setDefault(mime, temps);
+        //p->start("xdg-mime", QStringList() << "default" << appName << mime);
+        //p->waitForFinished();
       }
     }
   }

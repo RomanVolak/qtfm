@@ -1,0 +1,1 @@
+Lightweight Qt-based file manager
